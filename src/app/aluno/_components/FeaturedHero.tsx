@@ -8,7 +8,6 @@ import {
   Info,
   Play,
   Plus,
-  X,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { StudentContentItem } from "../_data/student-content";
@@ -48,146 +47,52 @@ function buildFavoritePayload(item: StudentContentItem) {
   };
 }
 
-function ContentInfoModal({
-  item,
-  onClose,
-}: {
-  item: StudentContentItem;
-  onClose: () => void;
-}) {
-  useEffect(() => {
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.body.style.overflow = originalOverflow;
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [onClose]);
-
+function ContentInfoBubble({ item }: { item: StudentContentItem }) {
   return (
-    <div
-      className="fixed inset-0 z-[130] flex items-center justify-center bg-black/78 px-4 backdrop-blur-md"
-      onClick={onClose}
-    >
-      <div
-        className="relative max-h-[90vh] w-full max-w-[880px] overflow-hidden rounded-[28px] border border-white/10 bg-[#101116] text-white shadow-[0_30px_110px_rgba(0,0,0,0.65)]"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute right-4 top-4 z-20 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/12 bg-black/55 text-white/76 transition hover:border-[#DBC094]/45 hover:text-[#DBC094]"
-          aria-label="Fechar informações"
-        >
-          <X size={20} />
-        </button>
+    <span className="pointer-events-none absolute bottom-[calc(100%+14px)] left-1/2 z-[60] hidden w-[330px] -translate-x-1/2 rounded-[18px] border border-white/18 bg-[#090a0f]/52 p-4 text-left shadow-[0_24px_90px_rgba(0,0,0,0.58)] ring-1 ring-white/[0.10] backdrop-blur-[42px] backdrop-saturate-200 group-hover/info:block">
+      <span className="mb-2 inline-flex rounded-full border border-[#DBC094]/24 bg-[#DBC094]/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-[#DBC094]">
+        {item.category || "Conteúdo"}
+      </span>
 
-        <div className="grid lg:grid-cols-[0.95fr_1.05fr]">
-          <div className="relative min-h-[280px] bg-black lg:min-h-[520px]">
-            {item.imageUrl || item.mobileImageUrl ? (
-              <img
-                src={item.imageUrl || item.mobileImageUrl}
-                alt={item.title}
-                className="absolute inset-0 h-full w-full object-cover"
-              />
-            ) : (
-              <div
-                className={[
-                  "absolute inset-0 bg-gradient-to-br",
-                  item.accent,
-                ].join(" ")}
-              />
-            )}
+      <span className="block text-[15px] font-black leading-tight text-white">
+        {item.infoTitle || item.title}
+      </span>
 
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/28 to-transparent" />
-          </div>
+      <span className="mt-2 line-clamp-4 block text-[12px] font-medium leading-5 text-white/68">
+        {item.infoDescription || item.subtitle || "Informações do conteúdo."}
+      </span>
 
-          <div className="flex max-h-[90vh] flex-col overflow-y-auto p-6 sm:p-8">
-            <div className="mb-4 inline-flex w-fit rounded-full border border-[#DBC094]/24 bg-[#DBC094]/10 px-3 py-1.5 text-[12px] font-black uppercase tracking-[0.18em] text-[#DBC094]">
-              {item.category || "Conteúdo"}
-            </div>
+      <span className="mt-3 flex flex-wrap gap-2">
+        {item.duration ? (
+          <span className="rounded-full bg-white/[0.08] px-2.5 py-1 text-[11px] font-bold text-white/72">
+            {item.duration}
+          </span>
+        ) : null}
 
-            <h3 className="text-[34px] font-black leading-[0.98] tracking-[-0.06em] text-white sm:text-[42px]">
-              {item.infoTitle || item.title}
-            </h3>
+        {item.level ? (
+          <span className="rounded-full bg-[#DBC094]/16 px-2.5 py-1 text-[11px] font-bold text-[#DBC094]">
+            {item.level}
+          </span>
+        ) : null}
 
-            <p className="mt-5 text-[16px] leading-7 text-white/68">
-              {item.infoDescription || item.subtitle || "Informações do conteúdo."}
-            </p>
+        {item.badge ? (
+          <span className="rounded-full bg-white/[0.08] px-2.5 py-1 text-[11px] font-bold text-white/72">
+            {item.badge}
+          </span>
+        ) : null}
+      </span>
 
-            <div className="mt-7 grid gap-3 sm:grid-cols-2">
-              {item.duration ? (
-                <div className="rounded-[18px] border border-white/8 bg-white/[0.04] p-4">
-                  <div className="text-[12px] font-bold uppercase tracking-[0.16em] text-white/38">
-                    Duração
-                  </div>
-                  <div className="mt-2 text-[15px] font-black text-white">
-                    {item.duration}
-                  </div>
-                </div>
-              ) : null}
-
-              {item.level ? (
-                <div className="rounded-[18px] border border-white/8 bg-white/[0.04] p-4">
-                  <div className="text-[12px] font-bold uppercase tracking-[0.16em] text-white/38">
-                    Nível
-                  </div>
-                  <div className="mt-2 text-[15px] font-black text-[#DBC094]">
-                    {item.level}
-                  </div>
-                </div>
-              ) : null}
-
-              {item.badge ? (
-                <div className="rounded-[18px] border border-white/8 bg-white/[0.04] p-4">
-                  <div className="text-[12px] font-bold uppercase tracking-[0.16em] text-white/38">
-                    Destaque
-                  </div>
-                  <div className="mt-2 text-[15px] font-black text-white">
-                    {item.badge}
-                  </div>
-                </div>
-              ) : null}
-
-              {typeof item.progress === "number" ? (
-                <div className="rounded-[18px] border border-white/8 bg-white/[0.04] p-4">
-                  <div className="text-[12px] font-bold uppercase tracking-[0.16em] text-white/38">
-                    Progresso
-                  </div>
-                  <div className="mt-2 text-[15px] font-black text-white">
-                    {Math.round(item.progress)}%
-                  </div>
-                </div>
-              ) : null}
-            </div>
-
-            <a
-              href={item.targetUrl || "#"}
-              className="mt-8 inline-flex h-13 w-fit items-center gap-3 rounded-[12px] bg-white px-5 text-[15px] font-black text-black transition hover:bg-white/86"
-            >
-              <Play size={20} fill="currentColor" />
-              {item.buttonLabel || "Assistir"}
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
+      <span className="absolute left-1/2 top-full h-3 w-3 -translate-x-1/2 -translate-y-1.5 rotate-45 border-b border-r border-white/18 bg-[#090a0f]/52 backdrop-blur-[42px]" />
+    </span>
   );
 }
+
 
 export function FeaturedHero({ items }: FeaturedHeroProps) {
   const safeItems = useMemo(() => items.filter(Boolean), [items]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [favoriteKeys, setFavoriteKeys] = useState<Set<string>>(new Set());
   const [savingFavoriteKey, setSavingFavoriteKey] = useState<string | null>(null);
-  const [infoItem, setInfoItem] = useState<StudentContentItem | null>(null);
 
   const activeContent = safeItems[activeIndex];
 
@@ -453,15 +358,18 @@ export function FeaturedHero({ items }: FeaturedHeroProps) {
                 )}
               </button>
 
-              <button
-                type="button"
-                onClick={() => setInfoItem(activeContent)}
-                className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-white/18 text-white backdrop-blur-md transition hover:bg-white/26"
-                aria-label="Mais informações"
-                title="Mais informações"
-              >
-                <Info size={25} strokeWidth={2.2} />
-              </button>
+              <span className="group/info relative inline-flex">
+                <button
+                  type="button"
+                  className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-white/18 text-white backdrop-blur-md transition hover:bg-white/26"
+                  aria-label="Mais informações"
+                  title="Mais informações"
+                >
+                  <Info size={25} strokeWidth={2.2} />
+                </button>
+
+                <ContentInfoBubble item={activeContent} />
+              </span>
             </div>
 
             <div className="mt-7 flex items-center gap-2 text-[15px] font-bold text-white/82">
@@ -490,10 +398,6 @@ export function FeaturedHero({ items }: FeaturedHeroProps) {
           </div>
         ) : null}
       </section>
-
-      {infoItem ? (
-        <ContentInfoModal item={infoItem} onClose={() => setInfoItem(null)} />
-      ) : null}
     </>
   );
 }
