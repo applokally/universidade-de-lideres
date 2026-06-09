@@ -1502,25 +1502,6 @@ function ContactSection() {
   );
 }
 
-function Footer() {
-  return (
-    <footer className="border-t border-white/8 bg-black px-4 py-6 text-white/58 sm:px-6 lg:px-8">
-      <div className="mx-auto flex max-w-[1720px] flex-col gap-3 text-sm sm:flex-row sm:items-center sm:justify-between">
-        <div>Todos os direitos reservados a Universidade de Líderes</div>
-
-        <a
-          href="https://wa.me/5535991284648"
-          target="_blank"
-          rel="noreferrer"
-          className="pr-16 transition hover:text-[#DBC094] sm:pr-20"
-        >
-          Desenvolvido por Optima Creative
-        </a>
-      </div>
-    </footer>
-  );
-}
-
 function BackToTopButton() {
   const [visible, setVisible] = useState(false);
 
@@ -1706,7 +1687,6 @@ export default function Page() {
 
       <ContactSection />
 
-      <Footer />
 
       <BackToTopButton />
     </main>
