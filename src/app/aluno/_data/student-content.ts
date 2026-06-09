@@ -1,3 +1,5 @@
+export type StudentContentType = "trail" | "course" | "lesson" | "live" | "content";
+
 export type StudentContentItem = {
   id: string;
   title: string;
@@ -13,6 +15,10 @@ export type StudentContentItem = {
   mobileImageUrl?: string;
   targetUrl?: string;
   buttonLabel?: string;
+  contentType?: StudentContentType;
+  contentId?: string;
+  infoTitle?: string;
+  infoDescription?: string;
 };
 
 export type StudentContentRow = {
@@ -33,6 +39,7 @@ export const heroItems: StudentContentItem[] = [
     buttonLabel: "Assistir agora",
     progress: 42,
     accent: "from-[#DBC094] via-[#6f5a34] to-[#18110a]",
+    contentType: "trail",
   },
   {
     id: "jornada-lideranca",
@@ -45,6 +52,7 @@ export const heroItems: StudentContentItem[] = [
     buttonLabel: "Assistir agora",
     progress: 18,
     accent: "from-[#d7bd82] via-[#59411f] to-[#090705]",
+    contentType: "trail",
   },
   {
     id: "comunicacao-influencia-hero",
@@ -57,6 +65,7 @@ export const heroItems: StudentContentItem[] = [
     buttonLabel: "Assistir agora",
     progress: 68,
     accent: "from-[#4f5968] via-[#20242d] to-[#08090d]",
+    contentType: "course",
   },
   {
     id: "cultura-expansao-hero",
@@ -69,6 +78,7 @@ export const heroItems: StudentContentItem[] = [
     buttonLabel: "Assistir agora",
     progress: 15,
     accent: "from-[#a68a55] via-[#282014] to-[#050609]",
+    contentType: "course",
   },
 ];
 
@@ -82,6 +92,7 @@ export const recommendedTrails: StudentContentItem[] = [
     level: "Executivo",
     badge: "Novo",
     accent: "from-[#c8aa73] via-[#49351e] to-[#111111]",
+    contentType: "trail",
   },
   {
     id: "gestao-times",
@@ -91,6 +102,7 @@ export const recommendedTrails: StudentContentItem[] = [
     duration: "9 aulas",
     level: "Líder",
     accent: "from-[#606b7d] via-[#202737] to-[#07080c]",
+    contentType: "course",
   },
   {
     id: "visao-negocio",
@@ -100,6 +112,7 @@ export const recommendedTrails: StudentContentItem[] = [
     duration: "12 aulas",
     level: "Diamante",
     accent: "from-[#b79b67] via-[#4b3924] to-[#0c0a08]",
+    contentType: "course",
   },
   {
     id: "lideranca-premium",
@@ -110,6 +123,7 @@ export const recommendedTrails: StudentContentItem[] = [
     level: "Diamond Elite",
     badge: "Premium",
     accent: "from-[#dfc48a] via-[#6f522b] to-[#0b0805]",
+    contentType: "trail",
   },
   {
     id: "crescimento-estruturado",
@@ -119,6 +133,7 @@ export const recommendedTrails: StudentContentItem[] = [
     duration: "6 aulas",
     level: "Imperial Diamond",
     accent: "from-[#86714a] via-[#302719] to-[#060606]",
+    contentType: "course",
   },
   {
     id: "mentalidade-lider",
@@ -128,6 +143,7 @@ export const recommendedTrails: StudentContentItem[] = [
     duration: "6 aulas",
     level: "Líder",
     accent: "from-[#9e8456] via-[#352819] to-[#090909]",
+    contentType: "course",
   },
 ];
 
@@ -141,6 +157,7 @@ export const featuredItems: StudentContentItem[] = [
     level: "Executivo",
     badge: "Nova série",
     accent: "from-[#d7bd82] via-[#59411f] to-[#090705]",
+    contentType: "trail",
   },
   {
     id: "comunicacao-influencia",
@@ -151,6 +168,7 @@ export const featuredItems: StudentContentItem[] = [
     level: "Diamante",
     badge: "Nova temporada",
     accent: "from-[#4f5968] via-[#20242d] to-[#08090d]",
+    contentType: "course",
   },
   {
     id: "alta-performance",
@@ -160,6 +178,7 @@ export const featuredItems: StudentContentItem[] = [
     duration: "9 aulas",
     level: "Diamond Pro",
     accent: "from-[#c5a46a] via-[#4c3820] to-[#080604]",
+    contentType: "course",
   },
   {
     id: "imperial-diamond",
@@ -170,6 +189,7 @@ export const featuredItems: StudentContentItem[] = [
     level: "Imperial Diamond",
     badge: "Top 10",
     accent: "from-[#e3ca91] via-[#6c4f28] to-[#080604]",
+    contentType: "course",
   },
   {
     id: "cultura-expansao",
@@ -179,6 +199,7 @@ export const featuredItems: StudentContentItem[] = [
     duration: "7 aulas",
     level: "Diamond Pro",
     accent: "from-[#a68a55] via-[#282014] to-[#050609]",
+    contentType: "course",
   },
 ];
 
@@ -192,6 +213,7 @@ export const liveItems: StudentContentItem[] = [
     level: "Todos os níveis",
     badge: "Ao vivo",
     accent: "from-[#DBC094] via-[#5c4728] to-[#0c0905]",
+    contentType: "live",
   },
   {
     id: "live-lideranca-pratica",
@@ -201,6 +223,7 @@ export const liveItems: StudentContentItem[] = [
     duration: "Sexta • 19h",
     level: "Líder",
     accent: "from-[#68758a] via-[#252d3d] to-[#07090d]",
+    contentType: "live",
   },
   {
     id: "live-expansao",
@@ -210,6 +233,7 @@ export const liveItems: StudentContentItem[] = [
     duration: "Segunda • 20h",
     level: "Diamante",
     accent: "from-[#b6955e] via-[#3a2b18] to-[#080604]",
+    contentType: "live",
   },
   {
     id: "live-performance",
@@ -219,5 +243,6 @@ export const liveItems: StudentContentItem[] = [
     duration: "Terça • 19h30",
     level: "Executivo",
     accent: "from-[#9e8456] via-[#352819] to-[#090909]",
+    contentType: "live",
   },
 ];

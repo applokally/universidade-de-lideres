@@ -1,7 +1,7 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, Info, Play, Plus } from "lucide-react";
-import { useRef } from "react";
+import { Check, ChevronLeft, ChevronRight, Info, Play, Plus, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import type { StudentContentItem } from "../_data/student-content";
 
 type ContentRowProps = {
@@ -48,9 +48,255 @@ const cardSizes = {
   }
 >;
 
+type FavoriteRecord = {
+  content_type: string;
+  content_id: string;
+};
+
+function getContentType(item: StudentContentItem) {
+  return item.contentType || "content";
+}
+
+function getContentId(item: StudentContentItem) {
+  return item.contentId || item.id;
+}
+
+function getFavoriteKey(item: StudentContentItem) {
+  return `${getContentType(item)}:${getContentId(item)}`;
+}
+
+function buildFavoritePayload(item: StudentContentItem) {
+  return {
+    content_type: getContentType(item),
+    content_id: getContentId(item),
+    title: item.title,
+    subtitle: item.subtitle || null,
+    category: item.category || null,
+    duration: item.duration || null,
+    level: item.level || null,
+    image_url: item.imageUrl || item.hoverImageUrl || null,
+    target_url: item.targetUrl || null,
+  };
+}
+
+function ContentInfoModal({
+  item,
+  onClose,
+}: {
+  item: StudentContentItem;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-[130] flex items-center justify-center bg-black/78 px-4 backdrop-blur-md"
+      onClick={onClose}
+    >
+      <div
+        className="relative max-h-[90vh] w-full max-w-[860px] overflow-hidden rounded-[28px] border border-white/10 bg-[#101116] text-white shadow-[0_30px_110px_rgba(0,0,0,0.65)]"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute right-4 top-4 z-20 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/12 bg-black/55 text-white/76 transition hover:border-[#DBC094]/45 hover:text-[#DBC094]"
+          aria-label="Fechar informações"
+        >
+          <X size={20} />
+        </button>
+
+        <div className="grid lg:grid-cols-[0.92fr_1.08fr]">
+          <div className="relative min-h-[280px] bg-black lg:min-h-[500px]">
+            {item.hoverImageUrl || item.imageUrl ? (
+              <img
+                src={item.hoverImageUrl || item.imageUrl}
+                alt={item.title}
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+            ) : (
+              <div
+                className={[
+                  "absolute inset-0 bg-gradient-to-br",
+                  item.accent,
+                ].join(" ")}
+              />
+            )}
+
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/28 to-transparent" />
+          </div>
+
+          <div className="flex max-h-[90vh] flex-col overflow-y-auto p-6 sm:p-8">
+            <div className="mb-4 inline-flex w-fit rounded-full border border-[#DBC094]/24 bg-[#DBC094]/10 px-3 py-1.5 text-[12px] font-black uppercase tracking-[0.18em] text-[#DBC094]">
+              {item.category || "Conteúdo"}
+            </div>
+
+            <h3 className="text-[32px] font-black leading-[0.98] tracking-[-0.06em] text-white sm:text-[40px]">
+              {item.infoTitle || item.title}
+            </h3>
+
+            <p className="mt-5 text-[16px] leading-7 text-white/68">
+              {item.infoDescription || item.subtitle || "Informações do conteúdo."}
+            </p>
+
+            <div className="mt-7 grid gap-3 sm:grid-cols-2">
+              {item.duration ? (
+                <div className="rounded-[18px] border border-white/8 bg-white/[0.04] p-4">
+                  <div className="text-[12px] font-bold uppercase tracking-[0.16em] text-white/38">
+                    Duração
+                  </div>
+                  <div className="mt-2 text-[15px] font-black text-white">
+                    {item.duration}
+                  </div>
+                </div>
+              ) : null}
+
+              {item.level ? (
+                <div className="rounded-[18px] border border-white/8 bg-white/[0.04] p-4">
+                  <div className="text-[12px] font-bold uppercase tracking-[0.16em] text-white/38">
+                    Nível
+                  </div>
+                  <div className="mt-2 text-[15px] font-black text-[#DBC094]">
+                    {item.level}
+                  </div>
+                </div>
+              ) : null}
+
+              {item.badge ? (
+                <div className="rounded-[18px] border border-white/8 bg-white/[0.04] p-4">
+                  <div className="text-[12px] font-bold uppercase tracking-[0.16em] text-white/38">
+                    Destaque
+                  </div>
+                  <div className="mt-2 text-[15px] font-black text-white">
+                    {item.badge}
+                  </div>
+                </div>
+              ) : null}
+
+              {typeof item.progress === "number" ? (
+                <div className="rounded-[18px] border border-white/8 bg-white/[0.04] p-4">
+                  <div className="text-[12px] font-bold uppercase tracking-[0.16em] text-white/38">
+                    Progresso
+                  </div>
+                  <div className="mt-2 text-[15px] font-black text-white">
+                    {Math.round(item.progress)}%
+                  </div>
+                </div>
+              ) : null}
+            </div>
+
+            <a
+              href={item.targetUrl || "#"}
+              className="mt-8 inline-flex h-13 w-fit items-center gap-3 rounded-[12px] bg-white px-5 text-[15px] font-black text-black transition hover:bg-white/86"
+            >
+              <Play size={20} fill="currentColor" />
+              Assistir
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
 export function ContentRow({ title, items, variant }: ContentRowProps) {
   const carouselRef = useRef<HTMLDivElement | null>(null);
   const sizes = cardSizes[variant];
+  const [favoriteKeys, setFavoriteKeys] = useState<Set<string>>(new Set());
+  const [savingFavoriteKey, setSavingFavoriteKey] = useState<string | null>(null);
+  const [infoItem, setInfoItem] = useState<StudentContentItem | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadFavorites() {
+      try {
+        const response = await fetch("/api/student/favorites", {
+          cache: "no-store",
+        });
+
+        if (!response.ok) return;
+
+        const data = (await response.json()) as {
+          favorites?: FavoriteRecord[];
+        };
+
+        const keys = new Set(
+          (data.favorites ?? []).map(
+            (favorite) => `${favorite.content_type}:${favorite.content_id}`
+          )
+        );
+
+        if (isMounted) {
+          setFavoriteKeys(keys);
+        }
+      } catch {
+        if (isMounted) {
+          setFavoriteKeys(new Set());
+        }
+      }
+    }
+
+    void loadFavorites();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  async function toggleFavorite(item: StudentContentItem) {
+    const key = getFavoriteKey(item);
+
+    if (savingFavoriteKey) return;
+
+    setSavingFavoriteKey(key);
+
+    try {
+      const response = await fetch("/api/student/favorites", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "toggle",
+          ...buildFavoritePayload(item),
+        }),
+      });
+
+      if (!response.ok) return;
+
+      const data = (await response.json()) as { saved?: boolean };
+
+      setFavoriteKeys((current) => {
+        const next = new Set(current);
+
+        if (data.saved) {
+          next.add(key);
+        } else {
+          next.delete(key);
+        }
+
+        return next;
+      });
+    } finally {
+      setSavingFavoriteKey(null);
+    }
+  }
 
   function scrollCarousel(direction: "left" | "right") {
     const carousel = carouselRef.current;
@@ -64,7 +310,8 @@ export function ContentRow({ title, items, variant }: ContentRowProps) {
   }
 
   return (
-    <section className="relative">
+    <>
+      <section className="relative">
       <div className="mb-5 flex items-center gap-5 px-6 sm:px-8 lg:px-10">
         <h2 className="text-[25px] font-black tracking-[-0.045em] text-white sm:text-[30px]">
           {title}
@@ -99,7 +346,11 @@ export function ContentRow({ title, items, variant }: ContentRowProps) {
           ref={carouselRef}
           className="flex snap-x snap-mandatory items-start gap-5 overflow-x-auto overflow-y-visible scroll-smooth px-6 pb-28 sm:px-8 lg:px-10 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
         >
-          {items.map((item) => (
+          {items.map((item) => {
+            const favoriteKey = getFavoriteKey(item);
+            const isFavorite = favoriteKeys.has(favoriteKey);
+
+            return (
             <article
               key={item.id}
               className={[
@@ -229,16 +480,42 @@ export function ContentRow({ title, items, variant }: ContentRowProps) {
 
                     <button
                       type="button"
-                      className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/16 text-white transition hover:bg-white/24"
-                      aria-label="Adicionar"
+                      onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        void toggleFavorite(item);
+                      }}
+                      disabled={savingFavoriteKey === favoriteKey}
+                      className={[
+                        "inline-flex h-11 w-11 items-center justify-center rounded-full transition disabled:cursor-not-allowed disabled:opacity-70",
+                        isFavorite
+                          ? "bg-[#DBC094] text-black hover:bg-[#e8cf9e]"
+                          : "bg-white/16 text-white hover:bg-white/24",
+                      ].join(" ")}
+                      aria-label={
+                        isFavorite
+                          ? "Remover dos favoritos"
+                          : "Adicionar aos favoritos"
+                      }
+                      title={
+                        isFavorite
+                          ? "Remover dos favoritos"
+                          : "Adicionar aos favoritos"
+                      }
                     >
-                      <Plus size={22} />
+                      {isFavorite ? <Check size={20} /> : <Plus size={22} />}
                     </button>
 
                     <button
                       type="button"
+                      onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        setInfoItem(item);
+                      }}
                       className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/16 text-white transition hover:bg-white/24"
                       aria-label="Informações"
+                      title="Informações"
                     >
                       <Info size={21} />
                     </button>
@@ -255,7 +532,8 @@ export function ContentRow({ title, items, variant }: ContentRowProps) {
                 </div>
               </div>
             </article>
-          ))}
+            );
+          })}
         </div>
 
         <button
@@ -270,6 +548,11 @@ export function ContentRow({ title, items, variant }: ContentRowProps) {
           <ChevronRight size={42} strokeWidth={2.6} />
         </button>
       </div>
-    </section>
+      </section>
+
+      {infoItem ? (
+        <ContentInfoModal item={infoItem} onClose={() => setInfoItem(null)} />
+      ) : null}
+    </>
   );
 }
