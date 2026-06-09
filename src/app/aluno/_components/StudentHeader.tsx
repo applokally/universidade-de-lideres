@@ -57,6 +57,21 @@ type HeaderNotification = {
 };
 
 
+type StudentFavorite = {
+  id: string;
+  content_type: string;
+  content_id: string;
+  title: string;
+  subtitle: string | null;
+  category: string | null;
+  duration: string | null;
+  level: string | null;
+  image_url: string | null;
+  target_url: string | null;
+  created_at: string;
+};
+
+
 type TrailSearchRow = {
   id: string;
   title: string | null;
@@ -287,6 +302,8 @@ export function StudentHeader() {
   const [searchTerm, setSearchTerm] = useState("");
   const [searching, setSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [favorites, setFavorites] = useState<StudentFavorite[]>([]);
+  const [loadingFavorites, setLoadingFavorites] = useState(false);
 
   useEffect(() => {
     function handleScroll() {
@@ -548,6 +565,31 @@ export function StudentHeader() {
     }
   }
 
+  async function loadFavorites() {
+    setLoadingFavorites(true);
+
+    try {
+      const response = await fetch("/api/student/favorites", {
+        cache: "no-store",
+      });
+
+      if (!response.ok) {
+        setFavorites([]);
+        return;
+      }
+
+      const data = (await response.json()) as {
+        favorites?: StudentFavorite[];
+      };
+
+      setFavorites(data.favorites ?? []);
+    } catch {
+      setFavorites([]);
+    } finally {
+      setLoadingFavorites(false);
+    }
+  }
+
   function isMenuItemActive(href: string) {
     if (!pathname) return false;
 
@@ -572,7 +614,7 @@ export function StudentHeader() {
       className={[
         "fixed left-0 right-0 top-0 z-50 transition-all duration-300",
         scrolled
-          ? "bg-[#050609]/96 shadow-[0_18px_45px_rgba(0,0,0,0.35)] backdrop-blur-xl"
+          ? "bg-[#050609]/42 shadow-[0_18px_45px_rgba(0,0,0,0.35)] backdrop-blur-[42px] backdrop-saturate-200"
           : "bg-gradient-to-b from-black/80 via-black/35 to-transparent",
       ].join(" ")}
     >
@@ -598,7 +640,7 @@ export function StudentHeader() {
                   "rounded-[10px] px-4 py-2 text-[15px] font-semibold transition",
                   isMenuItemActive(item.href)
                     ? "bg-[#DBC094] text-black shadow-[0_10px_28px_rgba(219,192,148,0.18)]"
-                    : "text-white/76 hover:bg-white/10 hover:text-white",
+                    : "text-white/76 hover:bg-white/[0.08] hover:text-white",
                 ].join(" ")}
               >
                 {item.label}
@@ -624,9 +666,9 @@ export function StudentHeader() {
             </button>
 
             {searchOpen ? (
-              <div className="absolute right-0 top-[calc(100%+12px)] w-[min(680px,calc(100vw-40px))] overflow-hidden rounded-[22px] border border-white/10 bg-[#101116]/98 shadow-[0_24px_70px_rgba(0,0,0,0.55)] backdrop-blur-xl">
-                <form onSubmit={handleSearchSubmit} className="border-b border-white/10 p-3">
-                  <div className="flex h-12 items-center gap-3 rounded-[14px] border border-white/10 bg-black/30 px-4">
+              <div className="absolute right-0 top-[calc(100%+14px)] w-[min(760px,calc(100vw-32px))] overflow-hidden rounded-[28px] border border-white/18 bg-[#090a0f]/48 shadow-[0_34px_120px_rgba(0,0,0,0.58)] ring-1 ring-white/[0.12] backdrop-blur-[42px] backdrop-saturate-200">
+                <form onSubmit={handleSearchSubmit} className="border-b border-white/10 p-4">
+                  <div className="flex h-12 items-center gap-3 rounded-[14px] border border-white/10 bg-black/16 px-4">
                     <Search className="h-5 w-5 text-[#DBC094]" />
 
                     <input
@@ -641,7 +683,7 @@ export function StudentHeader() {
                       <button
                         type="button"
                         onClick={() => setSearchTerm("")}
-                        className="rounded-full p-1 text-white/40 transition hover:bg-white/10 hover:text-white"
+                        className="rounded-full p-1 text-white/40 transition hover:bg-white/[0.08] hover:text-white"
                         aria-label="Limpar busca"
                       >
                         <X className="h-4 w-4" />
@@ -650,18 +692,18 @@ export function StudentHeader() {
                   </div>
                 </form>
 
-                <div className="max-h-[520px] overflow-y-auto p-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <div className="max-h-[600px] overflow-y-auto p-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                   {searchTerm.trim().length < 2 ? (
-                    <div className="rounded-[18px] border border-white/8 bg-black/20 px-4 py-5">
-                      <p className="text-[13px] font-black text-white">
+                    <div className="rounded-[22px] border border-white/10 bg-black/24 px-5 py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+                      <p className="text-[14px] font-black text-white">
                         Digite pelo menos 2 caracteres.
                       </p>
-                      <p className="mt-1 text-[12px] leading-5 text-white/42">
+                      <p className="mt-1.5 text-[13px] leading-5 text-white/52">
                         Pesquise por trilhas, cursos, aulas e lives publicadas.
                       </p>
                     </div>
                   ) : searching ? (
-                    <div className="rounded-[18px] border border-white/8 bg-black/20 px-4 py-5 text-[13px] font-bold text-white/50">
+                    <div className="rounded-[22px] border border-white/10 bg-black/24 px-5 py-5 text-[14px] font-bold text-white/60">
                       Buscando conteúdos...
                     </div>
                   ) : searchResults.length > 0 ? (
@@ -674,9 +716,9 @@ export function StudentHeader() {
                             key={`${result.type}-${result.id}`}
                             href={result.href}
                             onClick={() => setSearchOpen(false)}
-                            className="group grid gap-4 rounded-[18px] border border-white/8 bg-white/[0.035] p-3 transition hover:border-[#DBC094]/42 hover:bg-white/[0.07] sm:grid-cols-[150px_minmax(0,1fr)]"
+                            className="group grid gap-4 rounded-[22px] border border-white/10 bg-white/[0.045] p-4 transition hover:border-[#DBC094]/48 hover:bg-white/[0.075] sm:grid-cols-[178px_minmax(0,1fr)]"
                           >
-                            <div className="relative aspect-video overflow-hidden rounded-[14px] bg-[linear-gradient(135deg,#2d2414,#050609)]">
+                            <div className="relative aspect-video overflow-hidden rounded-[18px] bg-[linear-gradient(135deg,#2d2414,#050609)] shadow-[0_14px_34px_rgba(0,0,0,0.28)]">
                               {result.imageUrl ? (
                                 <img
                                   src={result.imageUrl}
@@ -703,16 +745,16 @@ export function StudentHeader() {
                                 </span>
                               </div>
 
-                              <h3 className="mt-2 line-clamp-2 text-[16px] font-black leading-[1.08] tracking-[-0.035em] text-white group-hover:text-[#DBC094]">
+                              <h3 className="mt-2 line-clamp-2 text-[18px] font-black leading-[1.08] tracking-[-0.04em] text-white group-hover:text-[#DBC094]">
                                 {result.title}
                               </h3>
 
-                              <p className="mt-2 line-clamp-2 text-[12px] leading-5 text-white/46">
+                              <p className="mt-2 line-clamp-2 text-[13px] leading-5 text-white/56">
                                 {result.description ||
                                   "Conteúdo disponível na área do aluno."}
                               </p>
 
-                              <span className="mt-3 inline-flex items-center gap-2 text-[12px] font-black text-[#DBC094]">
+                              <span className="mt-3 inline-flex items-center gap-2 text-[13px] font-black text-[#DBC094]">
                                 Acessar conteúdo
                                 <ChevronRight className="h-3.5 w-3.5 transition group-hover:translate-x-1" />
                               </span>
@@ -722,11 +764,11 @@ export function StudentHeader() {
                       })}
                     </div>
                   ) : (
-                    <div className="rounded-[18px] border border-white/8 bg-black/20 px-4 py-5">
-                      <p className="text-[13px] font-black text-white">
+                    <div className="rounded-[22px] border border-white/10 bg-black/24 px-5 py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+                      <p className="text-[14px] font-black text-white">
                         Nenhum conteúdo encontrado.
                       </p>
-                      <p className="mt-1 text-[12px] leading-5 text-white/42">
+                      <p className="mt-1.5 text-[13px] leading-5 text-white/52">
                         Tente buscar por outro termo.
                       </p>
                     </div>
@@ -760,7 +802,7 @@ export function StudentHeader() {
             {categoryMenuOpen ? (
               <div
                 onMouseLeave={() => setCategoryMenuOpen(false)}
-                className="absolute right-0 top-[calc(100%+12px)] w-[min(760px,calc(100vw-40px))] overflow-hidden rounded-[22px] border border-white/10 bg-[#101116]/98 shadow-[0_24px_70px_rgba(0,0,0,0.55)] backdrop-blur-xl"
+                className="absolute right-0 top-[calc(100%+14px)] w-[min(860px,calc(100vw-32px))] overflow-hidden rounded-[28px] border border-white/18 bg-[#090a0f]/48 shadow-[0_34px_120px_rgba(0,0,0,0.58)] ring-1 ring-white/[0.12] backdrop-blur-[42px] backdrop-saturate-200"
               >
                 <div className="grid gap-0 md:grid-cols-2">
                   {categoryGroups.map((group, groupIndex) => (
@@ -768,11 +810,11 @@ export function StudentHeader() {
                       key={group.title}
                       className={
                         groupIndex === 0
-                          ? "border-b border-white/10 p-4 md:border-b-0 md:border-r"
-                          : "p-4"
+                          ? "border-b border-white/10 p-5 md:border-b-0 md:border-r"
+                          : "p-5"
                       }
                     >
-                      <p className="mb-3 text-[11px] font-black uppercase tracking-[0.22em] text-[#DBC094]">
+                      <p className="mb-4 text-[12px] font-black uppercase tracking-[0.24em] text-[#DBC094]">
                         {group.title}
                       </p>
 
@@ -785,17 +827,17 @@ export function StudentHeader() {
                               key={item.href}
                               href={item.href}
                               onClick={() => setCategoryMenuOpen(false)}
-                              className="group flex items-center gap-3 rounded-[15px] px-3 py-3 transition hover:bg-white/8"
+                              className="group flex items-center gap-4 rounded-[18px] px-4 py-4 transition hover:bg-white/9"
                             >
-                              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/8 text-white/64 transition group-hover:bg-[#DBC094] group-hover:text-black">
+                              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] bg-white/9 text-white/68 transition group-hover:bg-[#DBC094] group-hover:text-black">
                                 <Icon className="h-5 w-5" />
                               </span>
 
                               <span className="min-w-0">
-                                <span className="block text-[14px] font-black text-white group-hover:text-[#DBC094]">
+                                <span className="block text-[15px] font-black tracking-[-0.02em] text-white group-hover:text-[#DBC094]">
                                   {item.label}
                                 </span>
-                                <span className="mt-0.5 block text-[12px] leading-5 text-white/40">
+                                <span className="mt-1 block text-[13px] leading-5 text-white/52">
                                   {item.description}
                                 </span>
                               </span>
@@ -819,13 +861,22 @@ export function StudentHeader() {
                 closeFloatingMenus();
                 setSearchOpen(false);
                 setNotificationMenuOpen(false);
-                setSavedMenuOpen((current) => !current);
+                setSavedMenuOpen((current) => {
+                  const next = !current;
+
+                  if (next) {
+                    void loadFavorites();
+                  }
+
+                  return next;
+                });
               }}
               onMouseEnter={() => {
                 setSearchOpen(false);
                 setCategoryMenuOpen(false);
                 setProfileMenuOpen(false);
                 setSavedMenuOpen(true);
+                void loadFavorites();
               }}
               className="h-10 w-10 items-center justify-center rounded-full text-white/86 transition hover:bg-white/12 hover:text-white md:inline-flex"
               aria-label="Salvos"
@@ -837,49 +888,117 @@ export function StudentHeader() {
             {savedMenuOpen ? (
               <div
                 onMouseLeave={() => setSavedMenuOpen(false)}
-                className="absolute right-0 top-[calc(100%+12px)] w-[320px] overflow-hidden rounded-[20px] border border-white/10 bg-[#101116]/98 shadow-[0_24px_70px_rgba(0,0,0,0.55)] backdrop-blur-xl"
+                className="absolute right-0 top-[calc(100%+14px)] w-[430px] overflow-hidden rounded-[28px] border border-white/18 bg-[#090a0f]/48 shadow-[0_34px_120px_rgba(0,0,0,0.58)] ring-1 ring-white/[0.12] backdrop-blur-[42px] backdrop-saturate-200"
               >
-                <div className="border-b border-white/10 px-4 py-4">
-                  <p className="text-[13px] font-black text-white">
+                <div className="border-b border-white/10 px-5 py-5">
+                  <p className="text-[14px] font-black text-white">
                     Meus salvos
                   </p>
-                  <p className="mt-1 text-[12px] leading-5 text-white/42">
+                  <p className="mt-1.5 text-[13px] leading-5 text-white/52">
                     Trilhas, aulas e conteúdos favoritados pelo aluno.
                   </p>
                 </div>
 
-                <div className="p-2">
+                <div className="p-3">
                   <Link
                     href="/aluno/minha-lista"
                     onClick={() => setSavedMenuOpen(false)}
-                    className="group flex items-center gap-3 rounded-[14px] px-3 py-3 transition hover:bg-white/8"
+                    className="group flex items-center gap-4 rounded-[18px] px-4 py-4 transition hover:bg-white/9"
                   >
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#DBC094] text-black">
+                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] bg-[#DBC094] text-black shadow-[0_12px_24px_rgba(219,192,148,0.18)]">
                       <Bookmark className="h-5 w-5" />
                     </span>
 
                     <span className="min-w-0">
-                      <span className="block text-[13px] font-black text-white group-hover:text-[#DBC094]">
+                      <span className="block text-[15px] font-black tracking-[-0.02em] text-white group-hover:text-[#DBC094]">
                         Abrir minha lista
                       </span>
-                      <span className="mt-0.5 block text-[12px] leading-5 text-white/40">
+                      <span className="mt-1 block text-[13px] leading-5 text-white/52">
                         Ver todos os conteúdos salvos.
                       </span>
                     </span>
+
+                    <ChevronRight className="ml-auto h-4 w-4 shrink-0 text-white/24 transition group-hover:translate-x-1 group-hover:text-[#DBC094]" />
                   </Link>
 
-                  <div className="mt-2 rounded-[14px] border border-white/8 bg-black/20 px-3 py-4">
-                    <div className="flex items-center gap-3">
-                      <Layers className="h-5 w-5 text-[#DBC094]" />
-                      <div>
-                        <p className="text-[12px] font-black text-white">
-                          Nenhum item salvo ainda
-                        </p>
-                        <p className="mt-1 text-[11px] leading-5 text-white/38">
-                          Quando o aluno favoritar trilhas ou aulas, elas aparecerão aqui.
-                        </p>
+                  <div className="mt-3 max-h-[430px] overflow-y-auto pr-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                    {loadingFavorites ? (
+                      <div className="rounded-[18px] border border-white/10 bg-black/24 px-4 py-5">
+                        <div className="flex items-center gap-3">
+                          <Layers className="h-5 w-5 animate-pulse text-[#DBC094]" />
+                          <div>
+                            <p className="text-[12px] font-black text-white">
+                              Carregando salvos...
+                            </p>
+                            <p className="mt-1 text-[11px] leading-5 text-white/38">
+                              Buscando seus conteúdos favoritos.
+                            </p>
+                          </div>
+                        </div>
                       </div>
-                    </div>
+                    ) : favorites.length > 0 ? (
+                      <div className="grid gap-1">
+                        {favorites.slice(0, 5).map((favorite) => (
+                          <Link
+                            key={favorite.id}
+                            href={favorite.target_url || "/aluno/minha-lista"}
+                            onClick={() => setSavedMenuOpen(false)}
+                            className="group flex items-center gap-4 rounded-[18px] px-4 py-4 transition hover:bg-white/9"
+                          >
+                            <span className="relative h-14 w-14 shrink-0 overflow-hidden rounded-[16px] bg-white/[0.075] shadow-[0_12px_26px_rgba(0,0,0,0.22)]">
+                              {favorite.image_url ? (
+                                <img
+                                  src={favorite.image_url}
+                                  alt={favorite.title}
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                <span className="flex h-full w-full items-center justify-center bg-[#DBC094]/12 text-[#DBC094]">
+                                  <Bookmark className="h-5 w-5" />
+                                </span>
+                              )}
+                            </span>
+
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-[15px] font-black tracking-[-0.02em] text-white group-hover:text-[#DBC094]">
+                                {favorite.title}
+                              </span>
+                              <span className="mt-1 block truncate text-[13px] leading-5 text-white/52">
+                                {[favorite.category, favorite.duration, favorite.level]
+                                  .filter(Boolean)
+                                  .join(" • ") || "Conteúdo salvo"}
+                              </span>
+                            </span>
+
+                            <ChevronRight className="h-4 w-4 shrink-0 text-white/24 transition group-hover:translate-x-1 group-hover:text-[#DBC094]" />
+                          </Link>
+                        ))}
+
+                        {favorites.length > 5 ? (
+                          <Link
+                            href="/aluno/minha-lista"
+                            onClick={() => setSavedMenuOpen(false)}
+                            className="mt-2 block rounded-[16px] border border-[#DBC094]/18 bg-[#DBC094]/8 px-4 py-3 text-center text-[13px] font-black text-[#DBC094] transition hover:bg-[#DBC094]/12"
+                          >
+                            Ver todos os {favorites.length} salvos
+                          </Link>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <div className="rounded-[18px] border border-white/10 bg-black/24 px-4 py-5">
+                        <div className="flex items-center gap-3">
+                          <Layers className="h-5 w-5 text-[#DBC094]" />
+                          <div>
+                            <p className="text-[12px] font-black text-white">
+                              Nenhum item salvo ainda
+                            </p>
+                            <p className="mt-1 text-[11px] leading-5 text-white/38">
+                              Quando o aluno favoritar trilhas ou aulas, elas aparecerão aqui.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -915,24 +1034,24 @@ export function StudentHeader() {
             {notificationMenuOpen ? (
               <div
                 onMouseLeave={() => setNotificationMenuOpen(false)}
-                className="absolute right-0 top-[calc(100%+12px)] w-[360px] overflow-hidden rounded-[20px] border border-white/10 bg-[#101116]/98 shadow-[0_24px_70px_rgba(0,0,0,0.55)] backdrop-blur-xl"
+                className="absolute right-0 top-[calc(100%+14px)] w-[460px] overflow-hidden rounded-[28px] border border-white/18 bg-[#090a0f]/48 shadow-[0_34px_120px_rgba(0,0,0,0.58)] ring-1 ring-white/[0.12] backdrop-blur-[42px] backdrop-saturate-200"
               >
-                <div className="flex items-center justify-between gap-4 border-b border-white/10 px-4 py-4">
+                <div className="flex items-start justify-between gap-5 border-b border-white/10 px-5 py-5">
                   <div>
-                    <p className="text-[13px] font-black text-white">
+                    <p className="text-[14px] font-black text-white">
                       Notificações
                     </p>
-                    <p className="mt-1 text-[12px] leading-5 text-white/42">
+                    <p className="mt-1.5 text-[13px] leading-5 text-white/52">
                       Atualizações importantes da sua área do aluno.
                     </p>
                   </div>
 
-                  <span className="rounded-full bg-[#DBC094]/12 px-2.5 py-1 text-[11px] font-black text-[#DBC094]">
+                  <span className="rounded-full bg-[#DBC094]/13 px-3 py-2 text-[12px] font-black leading-none text-[#DBC094]">
                     {headerNotifications.filter((item) => item.unread).length} nova(s)
                   </span>
                 </div>
 
-                <div className="max-h-[360px] overflow-y-auto p-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <div className="max-h-[440px] overflow-y-auto p-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                   {headerNotifications.length > 0 ? (
                     <div className="grid gap-1">
                       {headerNotifications.map((item) => {
@@ -948,13 +1067,13 @@ export function StudentHeader() {
                             key={item.id}
                             href={item.href}
                             onClick={() => setNotificationMenuOpen(false)}
-                            className="group flex items-start gap-3 rounded-[15px] px-3 py-3 transition hover:bg-white/8"
+                            className="group flex items-start gap-4 rounded-[18px] px-4 py-4 transition hover:bg-white/9"
                           >
                             <span
                               className={
                                 item.unread
-                                  ? "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#DBC094] text-black"
-                                  : "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/8 text-white/58"
+                                  ? "flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] bg-[#DBC094] text-black shadow-[0_12px_24px_rgba(219,192,148,0.18)]"
+                                  : "flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] bg-white/[0.075] text-white/62"
                               }
                             >
                               <Icon className="h-5 w-5" />
@@ -962,7 +1081,7 @@ export function StudentHeader() {
 
                             <span className="min-w-0 flex-1">
                               <span className="flex items-center gap-2">
-                                <span className="truncate text-[13px] font-black text-white group-hover:text-[#DBC094]">
+                                <span className="truncate text-[15px] font-black tracking-[-0.02em] text-white group-hover:text-[#DBC094]">
                                   {item.title}
                                 </span>
 
@@ -971,7 +1090,7 @@ export function StudentHeader() {
                                 ) : null}
                               </span>
 
-                              <span className="mt-1 line-clamp-2 block text-[12px] leading-5 text-white/42">
+                              <span className="mt-1.5 line-clamp-2 block text-[13px] leading-5 text-white/54">
                                 {item.description}
                               </span>
                             </span>
@@ -982,14 +1101,14 @@ export function StudentHeader() {
                       })}
                     </div>
                   ) : (
-                    <div className="flex flex-col items-center justify-center rounded-[16px] border border-white/8 bg-black/20 px-4 py-8 text-center">
+                    <div className="flex flex-col items-center justify-center rounded-[16px] border border-white/8 bg-black/12 px-4 py-8 text-center">
                       <Inbox className="h-8 w-8 text-[#DBC094]" />
 
                       <p className="mt-3 text-[13px] font-black text-white">
                         Nenhuma notificação
                       </p>
 
-                      <p className="mt-1 text-[12px] leading-5 text-white/42">
+                      <p className="mt-1.5 text-[13px] leading-5 text-white/52">
                         Novas mensagens e avisos aparecerão aqui.
                       </p>
                     </div>
@@ -1042,22 +1161,22 @@ export function StudentHeader() {
             {profileMenuOpen ? (
               <div
                 onMouseLeave={() => setProfileMenuOpen(false)}
-                className="absolute right-0 top-[calc(100%+12px)] w-[220px] overflow-hidden rounded-[18px] border border-white/10 bg-[#101116]/98 shadow-[0_22px_60px_rgba(0,0,0,0.5)] backdrop-blur-xl"
+                className="absolute right-0 top-[calc(100%+14px)] w-[280px] overflow-hidden rounded-[24px] border border-white/18 bg-[#090a0f]/48 shadow-[0_34px_110px_rgba(0,0,0,0.56)] ring-1 ring-white/[0.12] backdrop-blur-[42px] backdrop-saturate-200"
               >
-                <div className="border-b border-white/10 px-4 py-4">
-                  <p className="truncate text-[13px] font-black text-white">
+                <div className="border-b border-white/10 px-5 py-5">
+                  <p className="truncate text-[15px] font-black tracking-[-0.02em] text-white">
                     {profile?.full_name?.trim() || "Aluno"}
                   </p>
-                  <p className="mt-1 text-[11px] font-bold text-white/42">
+                  <p className="mt-1.5 text-[13px] font-bold text-white/52">
                     Área do aluno
                   </p>
                 </div>
 
-                <div className="p-2">
+                <div className="p-3">
                   <Link
                     href="/aluno/area/meus-dados"
                     onClick={() => setProfileMenuOpen(false)}
-                    className="flex items-center gap-3 rounded-[13px] px-3 py-3 text-[13px] font-black text-white/74 transition hover:bg-white/8 hover:text-[#DBC094]"
+                    className="flex items-center gap-3 rounded-[16px] px-4 py-3.5 text-[14px] font-black text-white/78 transition hover:bg-white/9 hover:text-[#DBC094]"
                   >
                     <UserRound className="h-4 w-4" />
                     Meu perfil
@@ -1067,7 +1186,7 @@ export function StudentHeader() {
                     type="button"
                     onClick={handleSignOut}
                     disabled={signingOut}
-                    className="flex w-full items-center gap-3 rounded-[13px] px-3 py-3 text-left text-[13px] font-black text-white/74 transition hover:bg-red-500/12 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="flex w-full items-center gap-3 rounded-[16px] px-4 py-3.5 text-left text-[14px] font-black text-white/78 transition hover:bg-red-500/12 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <LogOut className="h-4 w-4" />
                     {signingOut ? "Saindo..." : "Sair"}
@@ -1093,7 +1212,7 @@ export function StudentHeader() {
       </div>
 
       {mobileMenuOpen ? (
-        <div className="border-t border-white/10 bg-[#050609]/98 px-5 pb-5 pt-3 shadow-[0_22px_50px_rgba(0,0,0,0.35)] backdrop-blur-xl lg:hidden">
+        <div className="border-t border-white/10 bg-[#050609]/44 px-5 pb-5 pt-3 shadow-[0_22px_50px_rgba(0,0,0,0.35)] backdrop-blur-[42px] backdrop-saturate-200 lg:hidden">
           <nav className="grid gap-1">
             {menuItems.map((item) => (
               <Link
@@ -1104,7 +1223,7 @@ export function StudentHeader() {
                   "rounded-[12px] px-4 py-3 text-[15px] font-semibold transition",
                   isMenuItemActive(item.href)
                     ? "bg-[#DBC094] text-black"
-                    : "text-white/76 hover:bg-white/10 hover:text-white",
+                    : "text-white/76 hover:bg-white/[0.08] hover:text-white",
                 ].join(" ")}
               >
                 {item.label}
@@ -1114,7 +1233,7 @@ export function StudentHeader() {
             <Link
               href="/aluno/minha-lista"
               onClick={() => setMobileMenuOpen(false)}
-              className="rounded-[12px] px-4 py-3 text-[15px] font-semibold text-white/76 transition hover:bg-white/10 hover:text-white"
+              className="rounded-[12px] px-4 py-3 text-[15px] font-semibold text-white/76 transition hover:bg-white/[0.08] hover:text-white"
             >
               Minha lista
             </Link>
@@ -1122,7 +1241,7 @@ export function StudentHeader() {
             <Link
               href="/aluno/notificacoes"
               onClick={() => setMobileMenuOpen(false)}
-              className="rounded-[12px] px-4 py-3 text-[15px] font-semibold text-white/76 transition hover:bg-white/10 hover:text-white"
+              className="rounded-[12px] px-4 py-3 text-[15px] font-semibold text-white/76 transition hover:bg-white/[0.08] hover:text-white"
             >
               Notificações
             </Link>
@@ -1130,7 +1249,7 @@ export function StudentHeader() {
             <Link
               href="/aluno/area/meus-dados"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-3 rounded-[12px] px-4 py-3 text-[15px] font-semibold text-white/76 transition hover:bg-white/10 hover:text-white"
+              className="flex items-center gap-3 rounded-[12px] px-4 py-3 text-[15px] font-semibold text-white/76 transition hover:bg-white/[0.08] hover:text-white"
             >
               <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-[#DBC094] to-[#8a6f3d] text-black">
                 {avatarUrl ? (
