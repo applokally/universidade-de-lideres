@@ -35,19 +35,17 @@ const tutors = [
     id: "karina",
     name: "Karina Biribilli",
     role: "Líder MMN",
-    image: "/vVvkgclzheKHprmYgDW5JnmZr1Q.avif",
+    image: "/biribilli_home.jpg",
     quote:
       "Karina construiu uma trajetória sólida no MMN, combinando visão estratégica, liderança prática e capacidade real de formar equipes com consistência e resultado. Seu método une clareza, posicionamento e execução no mundo real.",
-    videoTitle: "Karina Biribilli • Apresentação",
   },
   {
     id: "leandro",
     name: "Leandro Morales",
     role: "Líder MMN",
-    image: "/vVvkgclzheKHprmYgDW5JnmZr1Q.avif",
+    image: "/morales.jpeg",
     quote:
       "Leandro desenvolveu sua autoridade no MMN com foco em crescimento sustentável, cultura de equipe e comunicação de alta influência. Sua experiência prática ajuda a transformar conhecimento em ação e ação em expansão.",
-    videoTitle: "Leandro Morales • Apresentação",
   },
 ] as const;
 
@@ -780,155 +778,10 @@ function LeadersPortalSection({
   );
 }
 
-function TutorVideoModal({
-  isOpen,
-  onClose,
-  tutor,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-  tutor: (typeof tutors)[number];
-}) {
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    window.addEventListener("keydown", handleEscape);
-
-    return () => {
-      document.body.style.overflow = originalOverflow;
-      window.removeEventListener("keydown", handleEscape);
-    };
-  }, [isOpen, onClose]);
-
-  return (
-    <AnimatePresence>
-      {isOpen ? (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[120] flex items-center justify-center bg-black/86 px-4 backdrop-blur-md"
-          onClick={onClose}
-        >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.94, y: 18 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: 12 }}
-            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-            onClick={(event) => event.stopPropagation()}
-            className="relative w-full max-w-[980px] overflow-hidden rounded-[28px] border border-white/10 bg-[#0b0b0b] shadow-[0_30px_120px_rgba(0,0,0,0.72)]"
-          >
-            <button
-              type="button"
-              onClick={onClose}
-              className="absolute right-4 top-4 z-20 inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-black/60 text-lg text-white/80 transition hover:border-white/30 hover:text-white"
-            >
-              ✕
-            </button>
-
-            <div className="grid lg:grid-cols-[1.25fr_0.75fr]">
-              <div className="relative min-h-[320px] bg-black lg:min-h-[560px]">
-                <Image
-                  src={tutor.image}
-                  alt={tutor.name}
-                  fill
-                  className="object-cover opacity-70"
-                />
-
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/18 to-black/12" />
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(219,192,148,0.18),transparent_45%)]" />
-
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <motion.button
-                    type="button"
-                    whileHover={{ scale: 1.04 }}
-                    whileTap={{ scale: 0.98 }}
-                    animate={{
-                      boxShadow: [
-                        "0 0 0 0 rgba(219,192,148,0.30)",
-                        "0 0 0 18px rgba(219,192,148,0)",
-                        "0 0 0 0 rgba(219,192,148,0)",
-                      ],
-                    }}
-                    transition={{
-                      duration: 2.1,
-                      repeat: Infinity,
-                      ease: "easeOut",
-                    }}
-                    className="flex h-[96px] w-[96px] items-center justify-center rounded-full border border-[#DBC094]/60 bg-black/55 text-[34px] text-[#DBC094] backdrop-blur-md"
-                  >
-                    ▶
-                  </motion.button>
-                </div>
-
-                <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
-                  <div className="mb-4 h-[6px] overflow-hidden rounded-full bg-white/10">
-                    <motion.div
-                      animate={{ width: ["8%", "58%", "24%"] }}
-                      transition={{
-                        duration: 4,
-                        repeat: Infinity,
-                        ease: "easeInOut",
-                      }}
-                      className="h-full rounded-full bg-[#DBC094]"
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between text-sm text-white/70">
-                    <span>{tutor.videoTitle}</span>
-                    <span>Vídeo demonstrativo</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex flex-col justify-between border-t border-white/10 bg-[linear-gradient(180deg,#0d0d0d_0%,#090909_100%)] p-6 lg:border-l lg:border-t-0 lg:p-8">
-                <div>
-                  <span className="mb-4 inline-flex rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs uppercase tracking-[0.28em] text-white/55">
-                    Player
-                  </span>
-
-                  <h3 className="text-[28px] font-semibold leading-[1.02] tracking-[-0.05em] text-white sm:text-[34px]">
-                    {tutor.name}
-                  </h3>
-
-                  <p className="mt-2 text-[17px] text-[#DBC094]">
-                    {tutor.role}
-                  </p>
-
-                  <p className="mt-6 text-[15px] leading-7 text-white/72 sm:text-[16px]">
-                    Este é um popup preparado para receber o vídeo real do
-                    tutor. No momento, mantive um player visual mockado para
-                    validarmos layout, animação e navegação.
-                  </p>
-                </div>
-
-                <div className="mt-8 rounded-[22px] border border-white/8 bg-white/[0.03] p-5">
-                  <div className="mb-3 text-sm text-white/45">Status</div>
-                  <div className="text-base font-medium text-white">
-                    Estrutura pronta para vídeo individual por tutor
-                  </div>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        </motion.div>
-      ) : null}
-    </AnimatePresence>
-  );
-}
-
 function TutorsSection() {
   const [activeTutorId, setActiveTutorId] = useState<
     (typeof tutors)[number]["id"]
   >("karina");
-  const [isVideoOpen, setIsVideoOpen] = useState(false);
-
   const activeTutor =
     tutors.find((tutor) => tutor.id === activeTutorId) ?? tutors[0];
 
@@ -1132,38 +985,12 @@ function TutorsSection() {
                       </motion.button>
                     );
                   })}
-
-                  <GlowFollowBorderCard
-                    roundedClass="rounded-full"
-                    className="inline-block"
-                    glowSize={170}
-                    glowStrength={1.15}
-                  >
-                    <motion.button
-                      type="button"
-                      onClick={() => setIsVideoOpen(true)}
-                      whileHover={{ scale: 1.02, y: -1 }}
-                      whileTap={{ scale: 0.985 }}
-                      className="inline-flex items-center gap-4 rounded-full bg-[#DBC094]/10 px-5 py-3 text-[15px] font-medium text-[#DBC094] transition hover:bg-[#DBC094]/14"
-                    >
-                      <span className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#DBC094]/40 bg-black/50 text-sm">
-                        ▶
-                      </span>
-                      Dê o play e saiba mais!
-                    </motion.button>
-                  </GlowFollowBorderCard>
                 </div>
               </div>
             </motion.div>
           </div>
         </div>
       </section>
-
-      <TutorVideoModal
-        isOpen={isVideoOpen}
-        onClose={() => setIsVideoOpen(false)}
-        tutor={activeTutor}
-      />
     </>
   );
 }
