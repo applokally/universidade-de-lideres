@@ -11,6 +11,7 @@ import {
   type MotionValue,
 } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { supabaseBrowser } from "@/lib/supabase/browser";
 
 const navItems = [
   { label: "Home", href: "#home" },
@@ -25,10 +26,21 @@ const capabilityItems = [
   { label: "iOS", className: "text-[#DBC094] normal-case" },
 ];
 
-const carouselItems = Array.from({ length: 8 }, (_, index) => ({
-  id: index + 1,
-  image: "/vVvkgclzheKHprmYgDW5JnmZr1Q.avif",
-}));
+type CarouselCourseItem = {
+  id: string;
+  title: string;
+  image: string;
+};
+
+const fallbackCarouselItems: CarouselCourseItem[] = [
+  {
+    id: "fallback-1",
+    title: "Universidade de Líderes",
+    image: "/vVvkgclzheKHprmYgDW5JnmZr1Q.avif",
+  },
+];
+
+const COURSE_COVERS_BUCKET = "covers";
 
 const tutors = [
   {
@@ -659,16 +671,52 @@ function HeroScene({
   );
 }
 
+
+function getCourseCoverUrl(path: string | null) {
+  if (!path) return "/vVvkgclzheKHprmYgDW5JnmZr1Q.avif";
+
+  if (path.startsWith("http://") || path.startsWith("https://")) {
+    return path;
+  }
+
+  const cleanPath = path.replace(/^\/+/, "");
+
+  if (cleanPath.startsWith("public/")) {
+    return `/${cleanPath.replace(/^public\//, "")}`;
+  }
+
+  const supabase = supabaseBrowser();
+  const { data } = supabase.storage
+    .from(COURSE_COVERS_BUCKET)
+    .getPublicUrl(cleanPath.replace(/^covers\//, ""));
+
+  return data.publicUrl || "/vVvkgclzheKHprmYgDW5JnmZr1Q.avif";
+}
+
+function buildLoopedCarouselItems(items: CarouselCourseItem[]) {
+  const baseItems = items.length > 0 ? items : fallbackCarouselItems;
+  const repeated: CarouselCourseItem[] = [];
+
+  while (repeated.length < 16) {
+    repeated.push(...baseItems);
+  }
+
+  return repeated.slice(0, 16).map((item, index) => ({
+    ...item,
+    loopId: `${item.id}-${index}`,
+  }));
+}
+
 function InfiniteCarouselRow({
   items,
   reverse = false,
   duration = 34,
 }: {
-  items: typeof carouselItems;
+  items: CarouselCourseItem[];
   reverse?: boolean;
   duration?: number;
 }) {
-  const repeated = useMemo(() => [...items, ...items], [items]);
+  const repeated = useMemo(() => buildLoopedCarouselItems(items), [items]);
 
   return (
     <div className="relative overflow-hidden py-1.5">
@@ -702,16 +750,22 @@ function InfiniteCarouselRow({
       >
         {repeated.map((item, index) => (
           <div
-            key={`${item.id}-${index}`}
+            key={item.loopId}
             className="relative h-[200px] w-[146px] shrink-0 overflow-hidden rounded-[20px] border border-white/7 bg-white/[0.02] sm:h-[228px] sm:w-[164px] lg:h-[252px] lg:w-[182px]"
           >
             <Image
               src={item.image}
-              alt={`Card ${index + 1}`}
+              alt={item.title || `Curso ${index + 1}`}
               fill
               className="object-cover"
             />
-            <div className="absolute inset-0 bg-black/[0.04]" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/78 via-black/10 to-black/[0.04]" />
+
+            <div className="absolute bottom-0 left-0 right-0 p-3">
+              <p className="line-clamp-2 text-[13px] font-semibold leading-[1.12] tracking-[-0.03em] text-white sm:text-[14px]">
+                {item.title}
+              </p>
+            </div>
           </div>
         ))}
       </motion.div>
@@ -722,9 +776,11 @@ function InfiniteCarouselRow({
 function LeadersPortalSection({
   contentY,
   contentOpacity,
+  carouselItems,
 }: {
   contentY: MotionValue<number>;
   contentOpacity: MotionValue<number>;
+  carouselItems: CarouselCourseItem[];
 }) {
   return (
     <section
@@ -1555,6 +1611,71 @@ export default function Page() {
     mass: 1.08,
   });
 
+  const [courseCarouselItems, setCourseCarouselItems] =
+    useState<CarouselCourseItem[]>(fallbackCarouselItems);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function carregarCursosDoCarrossel() {
+      const supabase = supabaseBrowser();
+
+      const { data, error } = await supabase
+        .from("courses")
+        .select(
+          [
+            "id",
+            "title",
+            "cover_path",
+            "cover_vertical_path",
+            "cover_horizontal_path",
+            "cover_featured_path",
+            "preferred_card_format",
+            "status",
+          ].join(",")
+        )
+        .eq("status", "published")
+        .order("updated_at", { ascending: false })
+        .limit(12);
+
+      if (error || !data) return;
+
+      const items = ((data ?? []) as Array<{
+        id: string;
+        title: string | null;
+        cover_path: string | null;
+        cover_vertical_path: string | null;
+        cover_horizontal_path: string | null;
+        cover_featured_path: string | null;
+        preferred_card_format: string | null;
+      }>)
+        .map((course) => {
+          const imagePath =
+            course.cover_featured_path ||
+            course.cover_vertical_path ||
+            course.cover_horizontal_path ||
+            course.cover_path;
+
+          return {
+            id: course.id,
+            title: course.title?.trim() || "Curso sem título",
+            image: getCourseCoverUrl(imagePath),
+          };
+        })
+        .filter((item) => item.title && item.image);
+
+      if (isMounted && items.length > 0) {
+        setCourseCarouselItems(items);
+      }
+    }
+
+    void carregarCursosDoCarrossel();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
     <main id="home" className="scroll-smooth bg-black pt-[98px] text-white">
       <Header />
@@ -1576,6 +1697,7 @@ export default function Page() {
       <LeadersPortalSection
         contentY={blockTwoY}
         contentOpacity={blockTwoOpacity}
+        carouselItems={courseCarouselItems}
       />
 
       <TutorsSection />
