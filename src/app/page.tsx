@@ -1621,7 +1621,7 @@ export default function Page() {
 
       if (error || !data) return;
 
-      const items = ((data ?? []) as Array<{
+      const items = ((data ?? []) as unknown as Array<{
         id: string;
         title: string | null;
         cover_path: string | null;
