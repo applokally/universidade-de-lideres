@@ -1,6 +1,16 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
+import {
+  Check,
+  ChevronRight,
+  Eye,
+  RefreshCw,
+  Save,
+  Search,
+  UserRound,
+  X,
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 
@@ -40,44 +50,38 @@ const ACCESS_LEVELS: AccessLevel[] = [
   {
     key: "executivo",
     label: "Executivo",
-    badge: "Nível de acesso básico",
-    description:
-      "Libera a base inicial de conteúdos, materiais introdutórios e estrutura de entrada.",
+    badge: "Base",
+    description: "Libera a base inicial de conteúdos e materiais introdutórios.",
   },
   {
     key: "lider",
     label: "Líder",
-    badge: "Nível de acesso médio",
-    description:
-      "Libera conteúdos intermediários, treinamentos de liderança e evolução operacional.",
+    badge: "Intermediário",
+    description: "Libera treinamentos de liderança e evolução operacional.",
   },
   {
     key: "diamante",
     label: "Diamante",
-    badge: "Nível de acesso plus",
-    description:
-      "Libera materiais avançados, módulos estratégicos e conteúdos de expansão.",
+    badge: "Avançado",
+    description: "Libera materiais estratégicos e conteúdos de expansão.",
   },
   {
     key: "diamond_pro",
     label: "Diamond Pro",
-    badge: "Nível de acesso premium",
-    description:
-      "Libera trilhas premium, conteúdos exclusivos e materiais de performance elevada.",
+    badge: "Premium",
+    description: "Libera trilhas premium e conteúdos exclusivos.",
   },
   {
     key: "diamond_elite",
     label: "Diamond Elite",
-    badge: "Nível de acesso premium",
-    description:
-      "Libera acesso avançado a conteúdos especiais, aulas estratégicas e materiais elite.",
+    badge: "Elite",
+    description: "Libera aulas estratégicas e materiais de alta performance.",
   },
   {
     key: "imperial_diamond",
     label: "Imperial Diamond",
-    badge: "Nível de acesso premium",
-    description:
-      "Libera o topo da estrutura, com acesso completo aos conteúdos premium da plataforma.",
+    badge: "Topo",
+    description: "Libera o topo da esteira de formação e conteúdos especiais.",
   },
 ];
 
@@ -87,6 +91,7 @@ function cn(...classes: Array<string | false | null | undefined>) {
 
 function formatDateTime(value: string | null) {
   if (!value) return "—";
+
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "—";
 
@@ -108,27 +113,27 @@ function getDisplayName(item: StudentWithPermission) {
 }
 
 function getLevelLabel(levelKey: string | null | undefined) {
-  return (
-    ACCESS_LEVELS.find((level) => level.key === levelKey)?.label ||
-    "Executivo"
-  );
+  return ACCESS_LEVELS.find((level) => level.key === levelKey)?.label || "Executivo";
 }
 
-function SectionCard({
-  children,
-  className = "",
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
+function getLevelBadge(levelKey: string | null | undefined) {
+  return ACCESS_LEVELS.find((level) => level.key === levelKey)?.badge || "Base";
+}
+
+function getLocation(item: StudentWithPermission) {
+  return [item.city, item.state].filter(Boolean).join(" / ") || "—";
+}
+
+function AvatarCell({ name, size = 42 }: { name: string; size?: number }) {
+  const initial = name.trim().slice(0, 1).toUpperCase() || "A";
+
   return (
     <div
-      className={cn(
-        "rounded-[20px] border border-[#e8ebf2] bg-white shadow-[0_8px_24px_rgba(31,34,48,0.04)]",
-        className
-      )}
+      className="inline-flex shrink-0 items-center justify-center rounded-full bg-[#f3eee5] text-[15px] font-semibold text-[#8a6836]"
+      style={{ width: size, height: size }}
+      aria-label={`Avatar de ${name}`}
     >
-      {children}
+      {initial}
     </div>
   );
 }
@@ -137,7 +142,7 @@ function FilterSelect({
   value,
   onChange,
   options,
-  className = "",
+  className,
 }: {
   value: string;
   onChange: (value: string) => void;
@@ -147,10 +152,10 @@ function FilterSelect({
   return (
     <select
       value={value}
-      onChange={(e) => onChange(e.target.value)}
+      onChange={(event) => onChange(event.target.value)}
       className={cn(
-        "h-12 rounded-[14px] border border-[#d9dfeb] bg-white px-5 text-[15px] text-[#1f2230] outline-none transition focus:border-[#DBC094]/60",
-        className
+        "h-11 rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] font-medium text-[#27272a] outline-none transition focus:border-[#DBC094]",
+        className,
       )}
     >
       {options.map((option) => (
@@ -162,42 +167,35 @@ function FilterSelect({
   );
 }
 
+function LevelBadge({ value }: { value: string | null | undefined }) {
+  return (
+    <span className="inline-flex items-center gap-2 rounded-full bg-[#f3eee5] px-3 py-1.5 text-[13px] font-semibold text-[#8a6836]">
+      <span className="h-2 w-2 rounded-full bg-[#DBC094]" />
+      {getLevelLabel(value)}
+    </span>
+  );
+}
+
 function ActionButton({
   title,
+  children,
   onClick,
-  disabled = false,
+  disabled,
 }: {
   title: string;
+  children: React.ReactNode;
   onClick?: () => void;
   disabled?: boolean;
 }) {
   return (
     <button
       type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className="inline-flex h-11 min-w-[118px] shrink-0 items-center justify-center rounded-[16px] bg-[#DBC094] px-5 text-[15px] font-medium text-black transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
-    >
-      {title}
-    </button>
-  );
-}
-
-function ViewCircleButton({
-  title,
-  onClick,
-}: {
-  title: string;
-  onClick?: () => void;
-}) {
-  return (
-    <button
-      type="button"
       title={title}
       onClick={onClick}
-      className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#f3f4f8] text-[15px] text-[#8b6831] transition hover:bg-[#eceef5]"
+      disabled={disabled}
+      className="inline-flex h-9 w-9 items-center justify-center rounded-[10px] border border-[#e5e5e5] bg-white text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836] disabled:cursor-not-allowed disabled:opacity-50"
     >
-      👁
+      {children}
     </button>
   );
 }
@@ -213,10 +211,10 @@ function LevelPickerButton({
     <button
       type="button"
       onClick={onClick}
-      className="flex h-12 w-full items-center justify-between rounded-[18px] border border-[#e6d4b3] bg-[#fdf8ee] px-5 text-left text-[15px] text-[#2c2418] transition hover:border-[#DBC094] hover:bg-[#fffaf2]"
+      className="inline-flex h-10 w-full items-center justify-between gap-3 rounded-[10px] border border-[#e5e5e5] bg-white px-3 text-left text-[14px] font-semibold text-[#27272a] transition hover:border-[#DBC094]"
     >
       <span className="truncate">{getLevelLabel(value)}</span>
-      <span className="ml-3 shrink-0 text-[11px] text-[#8b6831]">▾</span>
+      <ChevronRight className="h-4 w-4 shrink-0 text-[#b89a65]" />
     </button>
   );
 }
@@ -229,145 +227,121 @@ function DetailRow({
   value: string | null | undefined;
 }) {
   return (
-    <div className="rounded-[14px] border border-[#edf0f5] bg-[#fbfcff] p-4">
-      <div className="text-[11px] font-medium uppercase tracking-[0.18em] text-[#99a0b2]">
+    <div className="border-b border-[#ededed] py-4 last:border-b-0">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8a8f9d]">
         {label}
-      </div>
-      <div className="mt-2 text-[15px] leading-7 text-[#1f2230]">
-        {value && value.trim() ? value : "—"}
-      </div>
-    </div>
-  );
-}
+      </p>
 
-function AvatarCell({ size = 42 }: { size?: number }) {
-  return (
-    <div
-      className="inline-flex shrink-0 items-center justify-center rounded-full bg-[#f7f0e2] text-[15px] text-[#8b6831]"
-      style={{ width: size, height: size }}
-      aria-label="Avatar padrão do aluno"
-    >
-      👤
+      <p className="mt-1 break-words text-[15px] leading-6 text-[#18181b]">
+        {value && value.trim() ? value : "—"}
+      </p>
     </div>
   );
 }
 
 function LevelPickerModal({
   open,
-  studentName,
-  selectedLevel,
+  value,
   onSelect,
   onClose,
 }: {
   open: boolean;
-  studentName: string;
-  selectedLevel: string;
-  onSelect: (value: string) => void;
+  value: string;
+  onSelect: (value: AccessLevelKey) => void;
   onClose: () => void;
 }) {
+  if (!open) return null;
+
   return (
     <AnimatePresence>
-      {open ? (
-        <motion.div
-          key="level-picker-modal"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[140]"
-        >
-          <div
-            className="absolute inset-0 bg-black/35"
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[140] bg-black/30"
+        onClick={onClose}
+      />
+
+      <motion.div
+        initial={{ opacity: 0, y: 18, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 18, scale: 0.98 }}
+        transition={{ duration: 0.2 }}
+        className="fixed left-1/2 top-1/2 z-[141] w-[calc(100vw-32px)] max-w-[720px] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[18px] border border-[#e5e5e5] bg-white shadow-[0_24px_80px_rgba(31,34,48,0.16)]"
+      >
+        <div className="flex items-start justify-between gap-4 border-b border-[#e5e5e5] px-6 py-5">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8a8f9d]">
+              Permissão
+            </p>
+
+            <h2 className="mt-2 text-[26px] font-semibold tracking-[-0.04em] text-[#141414]">
+              Definir nível de acesso
+            </h2>
+
+            <p className="mt-2 text-[14px] leading-6 text-[#666b76]">
+              Selecione qual esteira de conteúdos o aluno poderá acessar.
+            </p>
+          </div>
+
+          <button
+            type="button"
             onClick={onClose}
-          />
-
-          <motion.div
-            initial={{ opacity: 0, y: 18, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 18, scale: 0.98 }}
-            transition={{ duration: 0.18 }}
-            className="absolute left-1/2 top-1/2 w-[92vw] max-w-[560px] -translate-x-1/2 -translate-y-1/2"
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] border border-[#e5e5e5] text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836]"
+            aria-label="Fechar"
           >
-            <div className="overflow-hidden rounded-[24px] border border-[#e8ebf2] bg-white shadow-[0_24px_64px_rgba(31,34,48,0.18)]">
-              <div className="border-b border-[#edf0f5] px-6 py-5">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <div className="text-[12px] uppercase tracking-[0.18em] text-[#99a0b2]">
-                      Selecionar nível
-                    </div>
-                    <div className="mt-2 text-[26px] font-semibold tracking-[-0.03em] text-[#131824]">
-                      {studentName}
-                    </div>
-                  </div>
+            <X className="h-4 w-4" />
+          </button>
+        </div>
 
-                  <button
-                    type="button"
-                    onClick={onClose}
-                    className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-[#f3f4f8] text-[#505567] transition hover:bg-[#eceef5] hover:text-[#1f2230]"
-                  >
-                    ✕
-                  </button>
-                </div>
-              </div>
+        <div className="grid gap-0 divide-y divide-[#ededed]">
+          {ACCESS_LEVELS.map((level) => {
+            const selected = level.key === value;
 
-              <div className="px-4 py-4">
-                <div className="max-h-[360px] overflow-y-auto pr-1">
-                  <div className="grid gap-3">
-                    {ACCESS_LEVELS.map((level) => {
-                      const isActive = level.key === selectedLevel;
+            return (
+              <button
+                key={level.key}
+                type="button"
+                onClick={() => {
+                  onSelect(level.key);
+                  onClose();
+                }}
+                className={cn(
+                  "flex items-start gap-4 px-6 py-5 text-left transition hover:bg-[#f7f7f7]",
+                  selected && "bg-[#faf7f0]",
+                )}
+              >
+                <span
+                  className={cn(
+                    "mt-1 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border",
+                    selected
+                      ? "border-[#DBC094] bg-[#DBC094] text-black"
+                      : "border-[#d4d4d8] bg-white text-transparent",
+                  )}
+                >
+                  <Check className="h-3.5 w-3.5" />
+                </span>
 
-                      return (
-                        <button
-                          key={level.key}
-                          type="button"
-                          onClick={() => onSelect(level.key)}
-                          className={cn(
-                            "rounded-[18px] border px-5 py-4 text-left transition",
-                            isActive
-                              ? "border-[#DBC094] bg-[#fbf5ea]"
-                              : "border-[#e8ebf2] bg-white hover:border-[#DBC094]/60 hover:bg-[#fcfcfe]"
-                          )}
-                        >
-                          <div className="flex items-start justify-between gap-4">
-                            <div>
-                              <div className="text-[17px] font-medium text-[#141925]">
-                                {level.label}
-                              </div>
-                              <div className="mt-1 text-[13px] text-[#8b6831]">
-                                {level.badge}
-                              </div>
-                              <div className="mt-2 text-[14px] leading-6 text-[#677086]">
-                                {level.description}
-                              </div>
-                            </div>
+                <span className="min-w-0 flex-1">
+                  <span className="flex flex-wrap items-center gap-2">
+                    <span className="text-[17px] font-semibold text-[#18181b]">
+                      {level.label}
+                    </span>
 
-                            {isActive ? (
-                              <span className="rounded-full border border-[#e4d6bc] bg-[#fffaf0] px-3 py-1 text-[11px] font-medium uppercase tracking-[0.12em] text-[#8b6831]">
-                                Selecionado
-                              </span>
-                            ) : null}
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
+                    <span className="rounded-full bg-[#f3eee5] px-2.5 py-1 text-[11px] font-semibold text-[#8a6836]">
+                      {level.badge}
+                    </span>
+                  </span>
 
-              <div className="border-t border-[#edf0f5] px-6 py-4">
-                <div className="flex justify-end">
-                  <button
-                    type="button"
-                    onClick={onClose}
-                    className="inline-flex h-11 items-center justify-center rounded-[14px] border border-[#dde2ec] bg-white px-5 text-[15px] font-medium text-[#1f2230] transition hover:bg-[#f8f9fc]"
-                  >
-                    Fechar
-                  </button>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        </motion.div>
-      ) : null}
+                  <span className="mt-1 block text-[14px] leading-6 text-[#666b76]">
+                    {level.description}
+                  </span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </motion.div>
     </AnimatePresence>
   );
 }
@@ -390,9 +364,9 @@ export default function AdminNiveisPage() {
     useState<StudentWithPermission | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
 
-  const [levelPickerStudentId, setLevelPickerStudentId] = useState<
-    string | null
-  >(null);
+  const [levelPickerStudentId, setLevelPickerStudentId] = useState<string | null>(
+    null,
+  );
 
   async function loadStudents(isRefresh = false) {
     if (isRefresh) setRefreshing(true);
@@ -403,7 +377,7 @@ export default function AdminNiveisPage() {
     const { data, error: fetchError } = await supabase
       .from("student_registration_requests")
       .select(
-        "id, full_name, first_name, last_name, email, phone, mmn_login, leader_name, city, state, full_address, status, created_at, access_level"
+        "id, full_name, first_name, last_name, email, phone, mmn_login, leader_name, city, state, full_address, status, created_at, access_level",
       )
       .eq("status", "approved")
       .order("created_at", { ascending: false });
@@ -412,7 +386,7 @@ export default function AdminNiveisPage() {
       console.error("Erro ao buscar níveis e permissões:", fetchError);
       setError(
         fetchError.message ||
-          "Não foi possível carregar os alunos para configuração de acesso."
+          "Não foi possível carregar os alunos para configuração de acesso.",
       );
       setStudents([]);
       setDraftLevels({});
@@ -448,22 +422,20 @@ export default function AdminNiveisPage() {
         console.error("Erro ao salvar nível do aluno:", updateError);
         setSaveError(
           updateError.message ||
-            "Não foi possível salvar o nível de acesso do aluno."
+            "Não foi possível salvar o nível de acesso do aluno.",
         );
         return;
       }
 
       setStudents((prev) =>
         prev.map((item) =>
-          item.id === student.id
-            ? { ...item, access_level: selectedLevel }
-            : item
-        )
+          item.id === student.id ? { ...item, access_level: selectedLevel } : item,
+        ),
       );
 
       if (selectedStudent?.id === student.id) {
         setSelectedStudent((prev) =>
-          prev ? { ...prev, access_level: selectedLevel } : prev
+          prev ? { ...prev, access_level: selectedLevel } : prev,
         );
       }
 
@@ -471,7 +443,7 @@ export default function AdminNiveisPage() {
     } catch (err) {
       console.error("Erro inesperado ao salvar nível do aluno:", err);
       setSaveError(
-        "Não foi possível salvar o nível. Verifique se a coluna access_level já foi criada no Supabase."
+        "Não foi possível salvar o nível. Verifique se a coluna access_level já foi criada no Supabase.",
       );
     } finally {
       setSavingId(null);
@@ -491,13 +463,15 @@ export default function AdminNiveisPage() {
       : students.filter((item) => {
           const values = [
             getDisplayName(item),
+            item.email,
             item.phone,
             item.mmn_login,
+            item.leader_name,
             item.access_level,
           ];
 
           return values.some((value) =>
-            (value ?? "").toLowerCase().includes(q)
+            (value ?? "").toLowerCase().includes(q),
           );
         });
 
@@ -505,7 +479,7 @@ export default function AdminNiveisPage() {
       base = base.filter(
         (item) =>
           (draftLevels[item.id] || item.access_level || "executivo") ===
-          levelFilter
+          levelFilter,
       );
     }
 
@@ -515,86 +489,102 @@ export default function AdminNiveisPage() {
 
   const levelPickerStudent = useMemo(
     () => students.find((item) => item.id === levelPickerStudentId) ?? null,
-    [students, levelPickerStudentId]
+    [students, levelPickerStudentId],
   );
+
+  const configuredStudents = students.filter((student) => student.access_level).length;
+  const withoutConfiguredLevel = Math.max(students.length - configuredStudents, 0);
+  const premiumStudents = students.filter((student) =>
+    ["diamond_pro", "diamond_elite", "imperial_diamond"].includes(
+      student.access_level || "",
+    ),
+  ).length;
 
   return (
     <>
-      <div className="space-y-6">
-        <div>
-          <div className="text-[12px] uppercase tracking-[0.22em] text-[#8e93a5]">
-            Módulo alunos
-          </div>
-          <h1 className="mt-2 text-[46px] font-semibold leading-none tracking-[-0.05em] text-[#111827]">
-            Níveis e permissões
-          </h1>
-        </div>
+      <div className="space-y-7">
+        <section className="flex flex-col gap-5 border-b border-[#e5e5e5] pb-7 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8a8f9d]">
+              Módulo alunos
+            </p>
 
-        <SectionCard>
-          <div className="p-6">
-            <div className="mb-6">
-              <div className="text-[22px] font-semibold tracking-[-0.03em] text-[#161b27]">
-                Estrutura de níveis da plataforma
-              </div>
-              <p className="mt-2 text-[15px] leading-7 text-[#6b7285]">
-                Estes níveis serão utilizados posteriormente para liberar os
-                conteúdos corretos em cada trilha, curso, aula e material da
-                Universidade de Líderes.
+            <h1 className="mt-2 text-[38px] font-semibold leading-none tracking-[-0.04em] text-[#141414] sm:text-[46px]">
+              Níveis e permissões
+            </h1>
+
+            <p className="mt-3 max-w-2xl text-[15px] leading-6 text-[#5d6472]">
+              Defina o nível de acesso de cada aluno aprovado e controle quais esteiras de conteúdos serão liberadas.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => loadStudents(true)}
+            disabled={refreshing || Boolean(savingId)}
+            className="inline-flex h-12 items-center justify-center gap-3 self-start rounded-[12px] bg-[#DBC094] px-5 text-[14px] font-semibold text-black transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60 lg:self-auto"
+          >
+            <RefreshCw
+              className={cn("h-4 w-4", refreshing && "animate-spin")}
+              strokeWidth={1.9}
+            />
+            {refreshing ? "Atualizando" : "Atualizar lista"}
+          </button>
+        </section>
+
+        <section className="overflow-hidden rounded-[18px] border border-[#e5e5e5] bg-white">
+          <div className="grid divide-y divide-[#e5e5e5] md:grid-cols-3 md:divide-x md:divide-y-0">
+            <div className="p-5">
+              <p className="text-[13px] font-medium text-[#666b76]">
+                Alunos aprovados
               </p>
+
+              <strong className="mt-3 block text-[36px] font-semibold leading-none tracking-[-0.05em] text-[#141414]">
+                {students.length}
+              </strong>
             </div>
 
-            <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
-              {ACCESS_LEVELS.map((level) => (
-                <div
-                  key={level.key}
-                  className="rounded-[18px] border border-[#e8ebf2] bg-[#fbfcff] p-5"
-                >
-                  <div className="inline-flex rounded-full border border-[#e4d6bc] bg-[#fbf5ea] px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-[#8b6831]">
-                    {level.badge}
-                  </div>
+            <div className="p-5">
+              <p className="text-[13px] font-medium text-[#666b76]">
+                Nível configurado
+              </p>
 
-                  <div className="mt-4 text-[24px] font-semibold tracking-[-0.03em] text-[#111827]">
-                    {level.label}
-                  </div>
+              <strong className="mt-3 block text-[36px] font-semibold leading-none tracking-[-0.05em] text-[#141414]">
+                {configuredStudents}
+              </strong>
+            </div>
 
-                  <p className="mt-3 text-[15px] leading-7 text-[#6b7285]">
-                    {level.description}
-                  </p>
-                </div>
-              ))}
+            <div className="p-5">
+              <p className="text-[13px] font-medium text-[#666b76]">
+                Acessos premium
+              </p>
+
+              <strong className="mt-3 block text-[36px] font-semibold leading-none tracking-[-0.05em] text-[#141414]">
+                {premiumStudents}
+              </strong>
+
+              {withoutConfiguredLevel > 0 ? (
+                <p className="mt-2 text-[12px] font-medium text-[#8a8f9d]">
+                  {withoutConfiguredLevel} usando nível padrão
+                </p>
+              ) : null}
             </div>
           </div>
-        </SectionCard>
+        </section>
 
-        <SectionCard>
-          <div className="border-b border-[#edf0f5] px-6 py-6">
+        <section className="rounded-[18px] border border-[#e5e5e5] bg-white">
+          <div className="border-b border-[#e5e5e5] px-5 py-4">
             <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-              <div className="flex flex-wrap items-center gap-4">
-                <div className="flex items-center gap-4">
-                  <span className="text-[15px] text-[#4f5568]">Mostrar</span>
-                  <FilterSelect
-                    value={showCount}
-                    onChange={setShowCount}
-                    options={[
-                      { label: "10", value: "10" },
-                      { label: "20", value: "20" },
-                      { label: "50", value: "50" },
-                      { label: "100", value: "100" },
-                    ]}
-                    className="w-[110px]"
-                  />
-                </div>
-
+              <div className="flex flex-wrap items-center gap-3">
                 <div className="relative w-[420px] max-w-full">
-                  <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#8d92a4]">
-                    ⌕
-                  </span>
+                  <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8a8f9d]" />
+
                   <input
                     type="text"
-                    placeholder="Buscar"
+                    placeholder="Buscar por nome, e-mail, telefone, líder ou MMN..."
                     value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="h-12 w-full rounded-[14px] border border-[#d9dfeb] bg-white pl-12 pr-4 text-[15px] text-[#1f2230] outline-none transition placeholder:text-[#8d92a4] focus:border-[#DBC094]/60"
+                    onChange={(event) => setSearch(event.target.value)}
+                    className="h-11 w-full rounded-[12px] border border-[#e5e5e5] bg-white pl-11 pr-4 text-[14px] font-medium text-[#27272a] outline-none transition placeholder:text-[#8a8f9d] focus:border-[#DBC094]"
                   />
                 </div>
 
@@ -612,240 +602,231 @@ export default function AdminNiveisPage() {
                   ]}
                   className="w-[220px]"
                 />
+
+                <div className="flex items-center gap-2">
+                  <span className="text-[13px] font-medium text-[#666b76]">
+                    Mostrar
+                  </span>
+
+                  <FilterSelect
+                    value={showCount}
+                    onChange={setShowCount}
+                    options={[
+                      { label: "10", value: "10" },
+                      { label: "20", value: "20" },
+                      { label: "50", value: "50" },
+                      { label: "100", value: "100" },
+                    ]}
+                    className="w-[104px]"
+                  />
+                </div>
               </div>
 
-              <button
-                type="button"
-                onClick={() => loadStudents(true)}
-                disabled={refreshing}
-                className="inline-flex h-12 items-center justify-center rounded-[14px] bg-[#DBC094] px-8 text-[15px] font-medium text-black transition hover:brightness-105 disabled:opacity-60"
-              >
-                {refreshing ? "Atualizando..." : "Atualizar lista"}
-              </button>
+              <p className="text-[13px] font-medium text-[#8a8f9d]">
+                Dados carregados de student_registration_requests
+              </p>
             </div>
           </div>
 
-          <div className="px-6 py-6">
+          <div className="px-5 py-5">
             {saveSuccess ? (
-              <div className="mb-4 rounded-[14px] border border-green-200 bg-green-50 px-4 py-3 text-[14px] text-green-700">
+              <div className="mb-4 rounded-[12px] border border-green-200 bg-green-50 px-4 py-3 text-[14px] font-medium text-green-700">
                 {saveSuccess}
               </div>
             ) : null}
 
             {saveError ? (
-              <div className="mb-4 rounded-[14px] border border-red-200 bg-red-50 px-4 py-3 text-[14px] text-red-700">
+              <div className="mb-4 rounded-[12px] border border-red-200 bg-red-50 px-4 py-3 text-[14px] font-medium text-red-700">
                 {saveError}
               </div>
             ) : null}
 
             {loading ? (
-              <div className="grid gap-3">
+              <div className="divide-y divide-[#ededed]">
                 {Array.from({ length: 6 }).map((_, index) => (
                   <div
                     key={index}
-                    className="h-[84px] animate-pulse rounded-[16px] bg-[#f4f6fa]"
-                  />
+                    className="grid gap-4 py-5 lg:grid-cols-[1fr_160px_220px_100px]"
+                  >
+                    <div className="h-5 animate-pulse rounded bg-[#f3f4f6]" />
+                    <div className="h-5 animate-pulse rounded bg-[#f3f4f6]" />
+                    <div className="h-5 animate-pulse rounded bg-[#f3f4f6]" />
+                    <div className="h-5 animate-pulse rounded bg-[#f3f4f6]" />
+                  </div>
                 ))}
               </div>
             ) : error ? (
-              <div className="rounded-[16px] border border-red-200 bg-red-50 px-5 py-4 text-[15px] text-red-700">
+              <div className="rounded-[12px] border border-red-200 bg-red-50 px-4 py-4 text-[14px] font-medium text-red-700">
                 {error}
+              </div>
+            ) : filteredStudents.length === 0 ? (
+              <div className="flex min-h-[220px] flex-col items-center justify-center border border-dashed border-[#e5e5e5] px-6 text-center">
+                <UserRound className="h-8 w-8 text-[#DBC094]" />
+
+                <h2 className="mt-4 text-[22px] font-semibold tracking-[-0.03em] text-[#141414]">
+                  Nenhum aluno encontrado
+                </h2>
+
+                <p className="mt-2 max-w-[520px] text-[14px] leading-6 text-[#666b76]">
+                  Ajuste os filtros ou atualize a lista para consultar os alunos aprovados.
+                </p>
               </div>
             ) : (
               <>
-                <div className="mb-6 flex items-center justify-between gap-4">
-                  <div className="text-[16px] text-[#6b7285]">
-                    Total de alunos aprovados:{" "}
-                    <span className="font-semibold text-[#1f2230]">
-                      {students.length}
-                    </span>
-                  </div>
+                <div className="hidden xl:block">
+                  <table className="w-full table-auto">
+                    <thead>
+                      <tr className="border-b border-[#e5e5e5]">
+                        <th className="whitespace-nowrap px-4 py-3 text-left text-[12px] font-semibold uppercase tracking-[0.16em] text-[#8a8f9d]">
+                          Aluno
+                        </th>
+                        <th className="whitespace-nowrap px-4 py-3 text-left text-[12px] font-semibold uppercase tracking-[0.16em] text-[#8a8f9d]">
+                          MMN
+                        </th>
+                        <th className="whitespace-nowrap px-4 py-3 text-left text-[12px] font-semibold uppercase tracking-[0.16em] text-[#8a8f9d]">
+                          Nível atual
+                        </th>
+                        <th className="whitespace-nowrap px-4 py-3 text-left text-[12px] font-semibold uppercase tracking-[0.16em] text-[#8a8f9d]">
+                          Definir nível
+                        </th>
+                        <th className="whitespace-nowrap px-4 py-3 text-right text-[12px] font-semibold uppercase tracking-[0.16em] text-[#8a8f9d]">
+                          Ações
+                        </th>
+                      </tr>
+                    </thead>
 
-                  <div className="text-[16px] text-[#6b7285]">
-                    Exibindo:{" "}
-                    <span className="font-semibold text-[#1f2230]">
-                      {filteredStudents.length}
-                    </span>
-                  </div>
-                </div>
-
-                {filteredStudents.length === 0 ? (
-                  <div className="flex min-h-[240px] flex-col items-center justify-center rounded-[18px] border border-dashed border-[#e1e6ee] bg-[#fbfcff] px-6 text-center">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#f7f0e2] text-[28px]">
-                      🔐
-                    </div>
-                    <div className="mt-5 text-[24px] font-semibold tracking-[-0.03em] text-[#1a1f2c]">
-                      Nenhum aluno encontrado
-                    </div>
-                    <p className="mt-2 max-w-[520px] text-[15px] leading-7 text-[#6b7285]">
-                      Ajuste os filtros ou aguarde novos alunos aprovados para
-                      configurar o acesso.
-                    </p>
-                  </div>
-                ) : (
-                  <>
-                    <div className="hidden xl:block">
-                      <div className="rounded-[18px] border border-[#e6eaf1] bg-white overflow-hidden">
-                        <div className="grid grid-cols-[2.8fr_1.35fr_1.1fr_1.35fr_auto] items-center gap-6 rounded-t-[18px] bg-[#f7f8fc] px-6 py-4">
-                          <div className="text-[13px] font-semibold text-[#111827]">
-                            Nome
-                          </div>
-                          <div className="text-[13px] font-semibold text-[#111827]">
-                            Login MMN
-                          </div>
-                          <div className="text-[13px] font-semibold text-[#111827]">
-                            Nível atual
-                          </div>
-                          <div className="text-[13px] font-semibold text-[#111827]">
-                            Definir nível
-                          </div>
-                          <div className="text-right text-[13px] font-semibold text-[#111827]">
-                            Ação
-                          </div>
-                        </div>
-
-                        <div>
-                          {filteredStudents.map((item, index) => {
-                            const displayName = getDisplayName(item);
-                            const currentDraft =
-                              draftLevels[item.id] || "executivo";
-                            const isSaving = savingId === item.id;
-
-                            return (
-                              <div
-                                key={item.id}
-                                className={cn(
-                                  "grid grid-cols-[2.8fr_1.35fr_1.1fr_1.35fr_auto] items-center gap-6 px-6 py-6",
-                                  index > 0 && "border-t border-[#edf0f5]"
-                                )}
-                              >
-                                <div className="min-w-0">
-                                  <div className="flex items-center gap-4">
-                                    <AvatarCell size={44} />
-                                    <div className="min-w-0">
-                                      <div className="text-[16px] leading-6 text-[#1f2230] break-words">
-                                        {displayName}
-                                      </div>
-                                      <div className="mt-2 text-[15px] leading-5 text-[#7d8495] break-words">
-                                        {item.phone || "Sem telefone"}
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-
-                                <div className="min-w-0 text-[15px] leading-6 text-[#465066] break-all">
-                                  {item.mmn_login || "—"}
-                                </div>
-
-                                <div className="min-w-0 text-[15px] leading-6 text-[#465066]">
-                                  {getLevelLabel(item.access_level || currentDraft)}
-                                </div>
-
-                                <div className="min-w-0">
-                                  <LevelPickerButton
-                                    value={currentDraft}
-                                    onClick={() => setLevelPickerStudentId(item.id)}
-                                  />
-                                </div>
-
-                                <div className="flex items-center justify-end gap-3">
-                                  <ViewCircleButton
-                                    title="Visualizar aluno"
-                                    onClick={() => setSelectedStudent(item)}
-                                  />
-
-                                  <ActionButton
-                                    title={isSaving ? "Salvando..." : "Salvar"}
-                                    onClick={() => saveStudentLevel(item)}
-                                    disabled={isSaving}
-                                  />
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="grid gap-4 xl:hidden">
+                    <tbody>
                       {filteredStudents.map((item) => {
                         const displayName = getDisplayName(item);
-                        const currentDraft =
-                          draftLevels[item.id] || "executivo";
+                        const currentDraft = draftLevels[item.id] || "executivo";
                         const isSaving = savingId === item.id;
 
                         return (
-                          <div
-                            key={item.id}
-                            className="rounded-[18px] border border-[#e8ebf2] bg-[#fbfcff] p-5"
-                          >
-                            <div className="flex items-start gap-4">
-                              <AvatarCell size={50} />
+                          <tr key={item.id} className="border-b border-[#ededed] last:border-b-0">
+                            <td className="px-4 py-5">
+                              <div className="flex items-center gap-3">
+                                <AvatarCell name={displayName} />
 
-                              <div className="min-w-0 flex-1">
-                                <div className="text-[18px] font-semibold tracking-[-0.02em] text-[#161b27]">
-                                  {displayName}
-                                </div>
-                                <div className="mt-1 text-sm text-[#7a8092]">
-                                  {item.phone || "Sem telefone"}
+                                <div className="min-w-0">
+                                  <p className="truncate text-[15px] font-semibold text-[#18181b]">
+                                    {displayName}
+                                  </p>
+
+                                  <p className="mt-1 truncate text-[13px] text-[#8a8f9d]">
+                                    {item.phone || item.email || "Sem contato"}
+                                  </p>
                                 </div>
                               </div>
-                            </div>
+                            </td>
 
-                            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                              <DetailRow
-                                label="Login MMN"
-                                value={item.mmn_login}
-                              />
-                              <DetailRow
-                                label="Nível atual"
-                                value={getLevelLabel(
-                                  item.access_level || currentDraft
-                                )}
-                              />
-                              <DetailRow
-                                label="Cadastro aprovado em"
-                                value={formatDateTime(item.created_at)}
-                              />
-                            </div>
+                            <td className="px-4 py-5 text-[14px] font-medium text-[#52525b]">
+                              {item.mmn_login || "—"}
+                            </td>
 
-                            <div className="mt-4">
+                            <td className="px-4 py-5">
+                              <LevelBadge value={item.access_level || currentDraft} />
+                            </td>
+
+                            <td className="px-4 py-5">
                               <LevelPickerButton
                                 value={currentDraft}
                                 onClick={() => setLevelPickerStudentId(item.id)}
                               />
-                            </div>
+                            </td>
 
-                            <div className="mt-4 flex items-center justify-between gap-3">
-                              <ViewCircleButton
-                                title="Visualizar aluno"
-                                onClick={() => setSelectedStudent(item)}
-                              />
+                            <td className="px-4 py-5">
+                              <div className="flex items-center justify-end gap-2">
+                                <ActionButton
+                                  title="Visualizar aluno"
+                                  onClick={() => setSelectedStudent(item)}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </ActionButton>
 
-                              <ActionButton
-                                title={isSaving ? "Salvando..." : "Salvar"}
-                                onClick={() => saveStudentLevel(item)}
-                                disabled={isSaving}
-                              />
-                            </div>
-                          </div>
+                                <ActionButton
+                                  title={isSaving ? "Salvando..." : "Salvar nível"}
+                                  onClick={() => saveStudentLevel(item)}
+                                  disabled={isSaving}
+                                >
+                                  <Save className="h-4 w-4" />
+                                </ActionButton>
+                              </div>
+                            </td>
+                          </tr>
                         );
                       })}
-                    </div>
-                  </>
-                )}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="divide-y divide-[#ededed] xl:hidden">
+                  {filteredStudents.map((item) => {
+                    const displayName = getDisplayName(item);
+                    const currentDraft = draftLevels[item.id] || "executivo";
+                    const isSaving = savingId === item.id;
+
+                    return (
+                      <div key={item.id} className="py-5">
+                        <div className="flex items-start gap-3">
+                          <AvatarCell name={displayName} size={46} />
+
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[16px] font-semibold tracking-[-0.02em] text-[#18181b]">
+                              {displayName}
+                            </p>
+
+                            <p className="mt-1 text-[13px] text-[#666b76]">
+                              {item.phone || item.email || "Sem contato"}
+                            </p>
+
+                            <div className="mt-3">
+                              <LevelBadge value={item.access_level || currentDraft} />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="mt-4 grid gap-3">
+                          <DetailRow label="Login MMN" value={item.mmn_login} />
+                          <DetailRow label="Líder" value={item.leader_name} />
+                          <DetailRow label="Cidade / Estado" value={getLocation(item)} />
+                        </div>
+
+                        <div className="mt-4">
+                          <LevelPickerButton
+                            value={currentDraft}
+                            onClick={() => setLevelPickerStudentId(item.id)}
+                          />
+                        </div>
+
+                        <div className="mt-4 flex items-center gap-2">
+                          <ActionButton
+                            title="Visualizar aluno"
+                            onClick={() => setSelectedStudent(item)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </ActionButton>
+
+                          <ActionButton
+                            title={isSaving ? "Salvando..." : "Salvar nível"}
+                            onClick={() => saveStudentLevel(item)}
+                            disabled={isSaving}
+                          >
+                            <Save className="h-4 w-4" />
+                          </ActionButton>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </>
             )}
           </div>
-        </SectionCard>
+        </section>
       </div>
 
       <LevelPickerModal
         open={Boolean(levelPickerStudent)}
-        studentName={
-          levelPickerStudent ? getDisplayName(levelPickerStudent) : ""
-        }
-        selectedLevel={
+        value={
           levelPickerStudent
             ? draftLevels[levelPickerStudent.id] ||
               levelPickerStudent.access_level ||
@@ -854,6 +835,7 @@ export default function AdminNiveisPage() {
         }
         onSelect={(value) => {
           if (!levelPickerStudent) return;
+
           setDraftLevels((prev) => ({
             ...prev,
             [levelPickerStudent.id]: value,
@@ -878,123 +860,113 @@ export default function AdminNiveisPage() {
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: 24, opacity: 0 }}
               transition={{ duration: 0.22 }}
-              className="fixed inset-y-0 right-0 z-[121] w-full max-w-[640px] overflow-y-auto border-l border-[#e7ebf2] bg-white shadow-[-12px_0_32px_rgba(31,34,48,0.08)]"
+              className="fixed inset-y-0 right-0 z-[121] w-full max-w-[640px] overflow-y-auto border-l border-[#e5e5e5] bg-white shadow-[-12px_0_32px_rgba(31,34,48,0.08)]"
             >
-              <div className="sticky top-0 z-10 border-b border-[#edf0f5] bg-white px-6 py-5">
+              <div className="sticky top-0 z-10 border-b border-[#e5e5e5] bg-white px-6 py-5">
                 <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                    <AvatarCell size={64} />
+                  <div className="flex min-w-0 items-center gap-4">
+                    <AvatarCell name={getDisplayName(selectedStudent)} size={58} />
 
-                    <div>
-                      <div className="text-[12px] uppercase tracking-[0.18em] text-[#99a0b2]">
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8a8f9d]">
                         Nível e permissão do aluno
-                      </div>
-                      <div className="mt-2 text-[30px] font-semibold tracking-[-0.04em] text-[#131824]">
+                      </p>
+
+                      <h2 className="mt-2 truncate text-[26px] font-semibold tracking-[-0.035em] text-[#141414]">
                         {getDisplayName(selectedStudent)}
-                      </div>
-                      <div className="mt-2 text-sm text-[#7f8597]">
+                      </h2>
+
+                      <p className="mt-1 text-[13px] text-[#666b76]">
                         Nível atual:{" "}
                         {getLevelLabel(
                           draftLevels[selectedStudent.id] ||
-                            selectedStudent.access_level
+                            selectedStudent.access_level,
                         )}
-                      </div>
+                      </p>
                     </div>
                   </div>
 
                   <button
                     type="button"
                     onClick={() => setSelectedStudent(null)}
-                    className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-[#f3f4f8] text-[#505567] transition hover:bg-[#eceef5] hover:text-[#1f2230]"
+                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] border border-[#e5e5e5] text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836]"
+                    aria-label="Fechar"
                   >
-                    ✕
+                    <X className="h-4 w-4" />
                   </button>
                 </div>
               </div>
 
-              <div className="space-y-6 p-6">
-                <SectionCard>
-                  <div className="p-5">
-                    <div className="text-[22px] font-semibold tracking-[-0.03em] text-[#161b27]">
-                      Dados do aluno
-                    </div>
+              <div className="p-6">
+                <section className="border-b border-[#e5e5e5] pb-6">
+                  <h3 className="text-[20px] font-semibold tracking-[-0.03em] text-[#141414]">
+                    Dados do aluno
+                  </h3>
 
-                    <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                      <DetailRow
-                        label="Nome completo"
-                        value={getDisplayName(selectedStudent)}
-                      />
-                      <DetailRow label="E-mail" value={selectedStudent.email} />
-                      <DetailRow
-                        label="Telefone"
-                        value={selectedStudent.phone}
-                      />
-                      <DetailRow
-                        label="Login MMN"
-                        value={selectedStudent.mmn_login}
-                      />
-                      <DetailRow
-                        label="Patrocínio/Líder"
-                        value={selectedStudent.leader_name}
-                      />
-                      <DetailRow
-                        label="Cidade / Estado"
-                        value={[selectedStudent.city, selectedStudent.state]
-                          .filter(Boolean)
-                          .join(" / ")}
-                      />
-                    </div>
+                  <div className="mt-4 divide-y divide-[#ededed]">
+                    <DetailRow
+                      label="Nome completo"
+                      value={getDisplayName(selectedStudent)}
+                    />
+                    <DetailRow label="E-mail" value={selectedStudent.email} />
+                    <DetailRow label="Telefone" value={selectedStudent.phone} />
+                    <DetailRow label="Login MMN" value={selectedStudent.mmn_login} />
+                    <DetailRow
+                      label="Patrocínio / Líder"
+                      value={selectedStudent.leader_name}
+                    />
+                    <DetailRow
+                      label="Cidade / Estado"
+                      value={getLocation(selectedStudent)}
+                    />
                   </div>
-                </SectionCard>
+                </section>
 
-                <SectionCard>
-                  <div className="p-5">
-                    <div className="text-[22px] font-semibold tracking-[-0.03em] text-[#161b27]">
-                      Configuração de acesso
-                    </div>
+                <section className="border-b border-[#e5e5e5] py-6">
+                  <h3 className="text-[20px] font-semibold tracking-[-0.03em] text-[#141414]">
+                    Configuração de acesso
+                  </h3>
 
-                    <div className="mt-4">
-                      <LevelPickerButton
-                        value={
-                          draftLevels[selectedStudent.id] ||
-                          selectedStudent.access_level ||
-                          "executivo"
-                        }
-                        onClick={() => setLevelPickerStudentId(selectedStudent.id)}
-                      />
-                    </div>
-
-                    <p className="mt-4 text-[15px] leading-7 text-[#6b7285]">
-                      Este nível será utilizado posteriormente para determinar
-                      quais conteúdos, trilhas, aulas e materiais o aluno poderá
-                      acessar.
-                    </p>
-
-                    <div className="mt-5">
-                      <ActionButton
-                        title={
-                          savingId === selectedStudent.id
-                            ? "Salvando..."
-                            : "Salvar nível"
-                        }
-                        onClick={() => saveStudentLevel(selectedStudent)}
-                        disabled={savingId === selectedStudent.id}
-                      />
-                    </div>
+                  <div className="mt-4 max-w-[360px]">
+                    <LevelPickerButton
+                      value={
+                        draftLevels[selectedStudent.id] ||
+                        selectedStudent.access_level ||
+                        "executivo"
+                      }
+                      onClick={() => setLevelPickerStudentId(selectedStudent.id)}
+                    />
                   </div>
-                </SectionCard>
 
-                <SectionCard>
-                  <div className="p-5">
-                    <div className="text-[22px] font-semibold tracking-[-0.03em] text-[#161b27]">
-                      Endereço informado
-                    </div>
+                  <p className="mt-4 text-[14px] leading-6 text-[#666b76]">
+                    Este nível será utilizado para determinar quais conteúdos, trilhas,
+                    aulas e materiais o aluno poderá acessar.
+                  </p>
 
-                    <div className="mt-4 rounded-[16px] border border-[#edf0f5] bg-[#fbfcff] p-4 text-[15px] leading-7 text-[#1f2230]">
-                      {selectedStudent.full_address?.trim() || "—"}
-                    </div>
+                  <div className="mt-5">
+                    <button
+                      type="button"
+                      onClick={() => saveStudentLevel(selectedStudent)}
+                      disabled={savingId === selectedStudent.id}
+                      className="inline-flex h-11 items-center justify-center gap-2 rounded-[10px] bg-[#DBC094] px-5 text-[14px] font-semibold text-black transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <Save className="h-4 w-4" />
+                      {savingId === selectedStudent.id
+                        ? "Salvando..."
+                        : "Salvar nível"}
+                    </button>
                   </div>
-                </SectionCard>
+                </section>
+
+                <section className="pt-6">
+                  <h3 className="text-[20px] font-semibold tracking-[-0.03em] text-[#141414]">
+                    Endereço informado
+                  </h3>
+
+                  <p className="mt-3 text-[15px] leading-7 text-[#52525b]">
+                    {selectedStudent.full_address?.trim() || "—"}
+                  </p>
+                </section>
               </div>
             </motion.div>
           </>

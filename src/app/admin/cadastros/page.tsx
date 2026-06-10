@@ -1,6 +1,16 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
+import {
+  Check,
+  Eye,
+  Mail,
+  Phone,
+  RefreshCw,
+  Search,
+  UserRound,
+  X,
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 
@@ -26,6 +36,7 @@ function cn(...classes: Array<string | false | null | undefined>) {
 
 function formatDateShort(value: string | null) {
   if (!value) return "—";
+
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "—";
 
@@ -38,6 +49,7 @@ function formatDateShort(value: string | null) {
 
 function formatDateTime(value: string | null) {
   if (!value) return "—";
+
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "—";
 
@@ -58,21 +70,20 @@ function getDisplayName(item: RegistrationRequest) {
   );
 }
 
-function SectionCard({
-  children,
-  className = "",
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
+function getLocation(item: RegistrationRequest) {
+  return [item.city, item.state].filter(Boolean).join(" / ") || "—";
+}
+
+function AvatarCell({ name, size = 42 }: { name: string; size?: number }) {
+  const initial = name.trim().slice(0, 1).toUpperCase() || "A";
+
   return (
     <div
-      className={cn(
-        "rounded-[20px] border border-[#e8ebf2] bg-white shadow-[0_8px_24px_rgba(31,34,48,0.04)]",
-        className
-      )}
+      className="inline-flex shrink-0 items-center justify-center rounded-full bg-[#f3eee5] text-[15px] font-semibold text-[#8a6836]"
+      style={{ width: size, height: size }}
+      aria-label={`Avatar de ${name}`}
     >
-      {children}
+      {initial}
     </div>
   );
 }
@@ -81,21 +92,16 @@ function FilterSelect({
   value,
   onChange,
   options,
-  className = "",
 }: {
   value: string;
   onChange: (value: string) => void;
   options: Array<{ label: string; value: string }>;
-  className?: string;
 }) {
   return (
     <select
       value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className={cn(
-        "h-12 rounded-[14px] border border-[#d9dfeb] bg-white px-5 text-[15px] text-[#1f2230] outline-none transition focus:border-[#DBC094]/60",
-        className
-      )}
+      onChange={(event) => onChange(event.target.value)}
+      className="h-11 rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] font-medium text-[#27272a] outline-none transition focus:border-[#DBC094]"
     >
       {options.map((option) => (
         <option key={option.value} value={option.value}>
@@ -106,7 +112,7 @@ function FilterSelect({
   );
 }
 
-function ActionCircleButton({
+function ActionButton({
   title,
   children,
   tone = "default",
@@ -121,10 +127,10 @@ function ActionCircleButton({
 }) {
   const toneClasses =
     tone === "green"
-      ? "bg-[#edf7ef] text-[#2f8b4b] hover:bg-[#e3f1e7]"
+      ? "border-green-200 text-green-700 hover:bg-green-50"
       : tone === "red"
-      ? "bg-[#fcf0f2] text-[#d25769] hover:bg-[#f9e5e9]"
-      : "bg-[#eef1fb] text-[#8b6831] hover:bg-[#e7ebf7]";
+      ? "border-red-200 text-red-700 hover:bg-red-50"
+      : "border-[#e5e5e5] text-[#52525b] hover:border-[#DBC094] hover:text-[#8a6836]";
 
   return (
     <button
@@ -133,9 +139,8 @@ function ActionCircleButton({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        "inline-flex h-8 w-8 items-center justify-center rounded-full text-[13px] transition",
+        "inline-flex h-9 w-9 items-center justify-center rounded-[10px] border bg-white transition disabled:cursor-not-allowed disabled:opacity-50",
         toneClasses,
-        disabled && "cursor-not-allowed opacity-55"
       )}
     >
       {children}
@@ -143,7 +148,7 @@ function ActionCircleButton({
   );
 }
 
-function DetailRow({
+function DetailItem({
   label,
   value,
 }: {
@@ -151,25 +156,14 @@ function DetailRow({
   value: string | null | undefined;
 }) {
   return (
-    <div className="rounded-[14px] border border-[#edf0f5] bg-[#fbfcff] p-4">
-      <div className="text-[11px] font-medium uppercase tracking-[0.18em] text-[#99a0b2]">
+    <div className="border-b border-[#ededed] py-4 last:border-b-0">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8a8f9d]">
         {label}
-      </div>
-      <div className="mt-2 text-[15px] leading-7 text-[#1f2230]">
-        {value && value.trim() ? value : "—"}
-      </div>
-    </div>
-  );
-}
+      </p>
 
-function AvatarCell({ size = 42 }: { size?: number }) {
-  return (
-    <div
-      className="inline-flex shrink-0 items-center justify-center rounded-full bg-[#f7f0e2] text-[17px] text-[#8b6831]"
-      style={{ width: size, height: size }}
-      aria-label="Avatar padrão do aluno"
-    >
-      👤
+      <p className="mt-1 break-words text-[15px] leading-6 text-[#18181b]">
+        {value && value.trim() ? value : "—"}
+      </p>
     </div>
   );
 }
@@ -198,7 +192,7 @@ export default function AdminCadastrosPage() {
     const { data, error: fetchError } = await supabase
       .from("student_registration_requests")
       .select(
-        "id, full_name, first_name, last_name, email, phone, mmn_login, leader_name, city, state, full_address, status, created_at"
+        "id, full_name, first_name, last_name, email, phone, mmn_login, leader_name, city, state, full_address, status, created_at",
       )
       .eq("status", "pending")
       .order("created_at", { ascending: false });
@@ -223,7 +217,7 @@ export default function AdminCadastrosPage() {
 
     if (userError) {
       throw new Error(
-        userError.message || "Não foi possível identificar o administrador logado."
+        userError.message || "Não foi possível identificar o administrador logado.",
       );
     }
 
@@ -236,7 +230,7 @@ export default function AdminCadastrosPage() {
 
   async function updateRequestStatus(
     request: RegistrationRequest,
-    nextStatus: "approved" | "rejected"
+    nextStatus: "approved" | "rejected",
   ) {
     if (processingId) return;
 
@@ -254,7 +248,7 @@ export default function AdminCadastrosPage() {
 
       if (sessionError) {
         throw new Error(
-          sessionError.message || "Não foi possível validar a sessão do administrador."
+          sessionError.message || "Não foi possível validar a sessão do administrador.",
         );
       }
 
@@ -281,7 +275,7 @@ export default function AdminCadastrosPage() {
 
       if (!response.ok) {
         throw new Error(
-          result?.error || "Não foi possível atualizar o status do cadastro."
+          result?.error || "Não foi possível atualizar o status do cadastro.",
         );
       }
 
@@ -294,14 +288,15 @@ export default function AdminCadastrosPage() {
       setActionSuccess(
         result?.message ||
           (nextStatus === "approved"
-            ? "Cadastro aprovado com sucesso. Login do aluno criado."
-            : "Cadastro reprovado com sucesso.")
+            ? "Cadastro aprovado com sucesso."
+            : "Cadastro reprovado com sucesso."),
       );
     } catch (err) {
       const message =
         err instanceof Error
           ? err.message
           : "Não foi possível concluir a ação administrativa.";
+
       console.error("Erro ao processar cadastro:", err);
       setActionError(message);
     } finally {
@@ -315,9 +310,9 @@ export default function AdminCadastrosPage() {
   }, []);
 
   const filteredRequests = useMemo(() => {
-    const q = search.trim().toLowerCase();
+    const query = search.trim().toLowerCase();
 
-    const base = !q
+    const base = !query
       ? requests
       : requests.filter((item) => {
           const values = [
@@ -331,11 +326,12 @@ export default function AdminCadastrosPage() {
           ];
 
           return values.some((value) =>
-            (value ?? "").toLowerCase().includes(q)
+            (value ?? "").toLowerCase().includes(query),
           );
         });
 
     const limit = Number(showCount);
+
     return Number.isFinite(limit) ? base.slice(0, limit) : base;
   }, [requests, search, showCount]);
 
@@ -343,310 +339,333 @@ export default function AdminCadastrosPage() {
 
   return (
     <>
-      <div className="space-y-6">
-        <div>
-          <div className="text-[12px] uppercase tracking-[0.22em] text-[#8e93a5]">
-            Módulo alunos
+      <div className="space-y-7">
+        <section className="flex flex-col gap-5 border-b border-[#e5e5e5] pb-7 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8a8f9d]">
+              Módulo alunos
+            </p>
+
+            <h1 className="mt-2 text-[38px] font-semibold leading-none tracking-[-0.04em] text-[#141414] sm:text-[46px]">
+              Cadastros pendentes
+            </h1>
+
+            <p className="mt-3 max-w-2xl text-[15px] leading-6 text-[#5d6472]">
+              Analise solicitações de acesso, aprove alunos válidos ou reprove cadastros incorretos.
+            </p>
           </div>
-          <h1 className="mt-2 text-[46px] font-semibold leading-none tracking-[-0.05em] text-[#111827]">
-            Cadastros pendentes
-          </h1>
-        </div>
 
-        <SectionCard className="overflow-hidden">
-          <div className="border-b border-[#edf0f5] px-6 py-6">
-            <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-              <div className="flex flex-wrap items-center gap-4">
-                <div className="flex items-center gap-4">
-                  <span className="text-[15px] text-[#4f5568]">Mostrar</span>
-                  <FilterSelect
-                    value={showCount}
-                    onChange={setShowCount}
-                    options={[
-                      { label: "10", value: "10" },
-                      { label: "20", value: "20" },
-                      { label: "50", value: "50" },
-                      { label: "100", value: "100" },
-                    ]}
-                    className="w-[110px]"
-                  />
-                </div>
+          <button
+            type="button"
+            onClick={() => loadRequests(true)}
+            disabled={refreshing || Boolean(processingId)}
+            className="inline-flex h-12 items-center justify-center gap-3 self-start rounded-[12px] bg-[#DBC094] px-5 text-[14px] font-semibold text-black transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60 lg:self-auto"
+          >
+            <RefreshCw
+              className={cn("h-4 w-4", refreshing && "animate-spin")}
+              strokeWidth={1.9}
+            />
+            {refreshing ? "Atualizando" : "Atualizar lista"}
+          </button>
+        </section>
 
-                <div className="relative w-[420px] max-w-full">
-                  <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#8d92a4]">
-                    ⌕
-                  </span>
-                  <input
-                    type="text"
-                    placeholder="Buscar"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="h-12 w-full rounded-[14px] border border-[#d9dfeb] bg-white pl-12 pr-4 text-[15px] text-[#1f2230] outline-none transition placeholder:text-[#8d92a4] focus:border-[#DBC094]/60"
-                  />
-                </div>
+        <section className="overflow-hidden rounded-[18px] border border-[#e5e5e5] bg-white">
+          <div className="grid divide-y divide-[#e5e5e5] md:grid-cols-3 md:divide-x md:divide-y-0">
+            <div className="p-5">
+              <p className="text-[13px] font-medium text-[#666b76]">
+                Total em análise
+              </p>
+
+              <strong className="mt-3 block text-[36px] font-semibold leading-none tracking-[-0.05em] text-[#141414]">
+                {totalInAnalysis}
+              </strong>
+            </div>
+
+            <div className="p-5">
+              <p className="text-[13px] font-medium text-[#666b76]">
+                Exibindo agora
+              </p>
+
+              <strong className="mt-3 block text-[36px] font-semibold leading-none tracking-[-0.05em] text-[#141414]">
+                {filteredRequests.length}
+              </strong>
+            </div>
+
+            <div className="p-5">
+              <p className="text-[13px] font-medium text-[#666b76]">
+                Status
+              </p>
+
+              <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#f3eee5] px-3 py-1.5 text-[13px] font-semibold text-[#8a6836]">
+                <span className="h-2 w-2 rounded-full bg-[#DBC094]" />
+                Aguardando aprovação
               </div>
-
-              <button
-                type="button"
-                onClick={() => loadRequests(true)}
-                disabled={refreshing || Boolean(processingId)}
-                className="inline-flex h-12 items-center justify-center rounded-[14px] bg-[#DBC094] px-8 text-[15px] font-medium text-black transition hover:brightness-105 disabled:opacity-60"
-              >
-                {refreshing ? "Atualizando..." : "Atualizar lista"}
-              </button>
             </div>
           </div>
+        </section>
 
-          <div className="px-6 py-6">
+        <section className="rounded-[18px] border border-[#e5e5e5] bg-white">
+          <div className="flex flex-col gap-4 border-b border-[#e5e5e5] px-5 py-4 xl:flex-row xl:items-center xl:justify-between">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="relative w-[420px] max-w-full">
+                <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8a8f9d]" />
+
+                <input
+                  type="text"
+                  placeholder="Buscar por nome, e-mail, telefone, líder..."
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  className="h-11 w-full rounded-[12px] border border-[#e5e5e5] bg-white pl-11 pr-4 text-[14px] font-medium text-[#27272a] outline-none transition placeholder:text-[#8a8f9d] focus:border-[#DBC094]"
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-[13px] font-medium text-[#666b76]">
+                  Mostrar
+                </span>
+
+                <FilterSelect
+                  value={showCount}
+                  onChange={setShowCount}
+                  options={[
+                    { label: "10", value: "10" },
+                    { label: "20", value: "20" },
+                    { label: "50", value: "50" },
+                    { label: "100", value: "100" },
+                  ]}
+                />
+              </div>
+            </div>
+
+            <p className="text-[13px] font-medium text-[#8a8f9d]">
+              Dados carregados de student_registration_requests
+            </p>
+          </div>
+
+          <div className="px-5 py-5">
             {actionSuccess ? (
-              <div className="mb-4 rounded-[14px] border border-green-200 bg-green-50 px-4 py-3 text-[14px] text-green-700">
+              <div className="mb-4 rounded-[12px] border border-green-200 bg-green-50 px-4 py-3 text-[14px] font-medium text-green-700">
                 {actionSuccess}
               </div>
             ) : null}
 
             {actionError ? (
-              <div className="mb-4 rounded-[14px] border border-red-200 bg-red-50 px-4 py-3 text-[14px] text-red-700">
+              <div className="mb-4 rounded-[12px] border border-red-200 bg-red-50 px-4 py-3 text-[14px] font-medium text-red-700">
                 {actionError}
               </div>
             ) : null}
 
             {loading ? (
-              <div className="grid gap-3">
+              <div className="divide-y divide-[#ededed]">
                 {Array.from({ length: 6 }).map((_, index) => (
-                  <div
-                    key={index}
-                    className="h-[84px] animate-pulse rounded-[16px] bg-[#f4f6fa]"
-                  />
+                  <div key={index} className="grid gap-4 py-5 lg:grid-cols-[180px_1fr_1fr_170px]">
+                    <div className="h-5 animate-pulse rounded bg-[#f3f4f6]" />
+                    <div className="h-5 animate-pulse rounded bg-[#f3f4f6]" />
+                    <div className="h-5 animate-pulse rounded bg-[#f3f4f6]" />
+                    <div className="h-5 animate-pulse rounded bg-[#f3f4f6]" />
+                  </div>
                 ))}
               </div>
             ) : error ? (
-              <div className="rounded-[16px] border border-red-200 bg-red-50 px-5 py-4 text-[15px] text-red-700">
+              <div className="rounded-[12px] border border-red-200 bg-red-50 px-4 py-4 text-[14px] font-medium text-red-700">
                 {error}
+              </div>
+            ) : filteredRequests.length === 0 ? (
+              <div className="flex min-h-[220px] flex-col items-center justify-center border border-dashed border-[#e5e5e5] px-6 text-center">
+                <Check className="h-8 w-8 text-[#DBC094]" />
+
+                <h2 className="mt-4 text-[22px] font-semibold tracking-[-0.03em] text-[#141414]">
+                  Nenhum cadastro pendente
+                </h2>
+
+                <p className="mt-2 max-w-[520px] text-[14px] leading-6 text-[#666b76]">
+                  Todos os cadastros pendentes já foram analisados.
+                </p>
               </div>
             ) : (
               <>
-                <div className="mb-6 flex items-center justify-between gap-4">
-                  <div className="text-[16px] text-[#6b7285]">
-                    Total em análise:{" "}
-                    <span className="font-semibold text-[#1f2230]">
-                      {totalInAnalysis}
-                    </span>
-                  </div>
+                <div className="hidden xl:block">
+                  <table className="w-full table-auto">
+                    <thead>
+                      <tr className="border-b border-[#e5e5e5]">
+                        <th className="whitespace-nowrap px-4 py-3 text-left text-[12px] font-semibold uppercase tracking-[0.16em] text-[#8a8f9d]">
+                          Data
+                        </th>
+                        <th className="whitespace-nowrap px-4 py-3 text-left text-[12px] font-semibold uppercase tracking-[0.16em] text-[#8a8f9d]">
+                          Aluno
+                        </th>
+                        <th className="whitespace-nowrap px-4 py-3 text-left text-[12px] font-semibold uppercase tracking-[0.16em] text-[#8a8f9d]">
+                          Contato
+                        </th>
+                        <th className="whitespace-nowrap px-4 py-3 text-left text-[12px] font-semibold uppercase tracking-[0.16em] text-[#8a8f9d]">
+                          Líder / MMN
+                        </th>
+                        <th className="whitespace-nowrap px-4 py-3 text-right text-[12px] font-semibold uppercase tracking-[0.16em] text-[#8a8f9d]">
+                          Ações
+                        </th>
+                      </tr>
+                    </thead>
 
-                  <div className="text-[16px] text-[#6b7285]">
-                    Exibindo:{" "}
-                    <span className="font-semibold text-[#1f2230]">
-                      {filteredRequests.length}
-                    </span>
-                  </div>
-                </div>
-
-                {filteredRequests.length === 0 ? (
-                  <div className="flex min-h-[240px] flex-col items-center justify-center rounded-[18px] border border-dashed border-[#e1e6ee] bg-[#fbfcff] px-6 text-center">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#f7f0e2] text-[28px]">
-                      📭
-                    </div>
-                    <div className="mt-5 text-[24px] font-semibold tracking-[-0.03em] text-[#1a1f2c]">
-                      Nenhum cadastro pendente
-                    </div>
-                    <p className="mt-2 max-w-[520px] text-[15px] leading-7 text-[#6b7285]">
-                      Todos os cadastros pendentes já foram analisados.
-                    </p>
-                  </div>
-                ) : (
-                  <>
-                    <div className="hidden xl:block">
-                      <div className="overflow-hidden rounded-[18px] border border-[#e6eaf1]">
-                        <table className="w-full table-auto">
-                          <thead className="bg-[#f7f8fc]">
-                            <tr>
-                              <th className="whitespace-nowrap px-6 py-4 text-left text-[13px] font-semibold text-[#111827]">
-                                Data
-                              </th>
-                              <th className="whitespace-nowrap px-6 py-4 text-left text-[13px] font-semibold text-[#111827]">
-                                Nome
-                              </th>
-                              <th className="whitespace-nowrap px-6 py-4 text-left text-[13px] font-semibold text-[#111827]">
-                                E-mail
-                              </th>
-                              <th className="whitespace-nowrap px-6 py-4 text-left text-[13px] font-semibold text-[#111827]">
-                                Patrocínio/Líder
-                              </th>
-                              <th className="whitespace-nowrap px-6 py-4 text-left text-[13px] font-semibold text-[#111827]">
-                                Login MMN
-                              </th>
-                              <th className="whitespace-nowrap px-4 py-4 text-left text-[13px] font-semibold text-[#111827]">
-                                Ação
-                              </th>
-                            </tr>
-                          </thead>
-
-                          <tbody>
-                            {filteredRequests.map((item) => {
-                              const displayName = getDisplayName(item);
-                              const isProcessing = processingId === item.id;
-
-                              return (
-                                <tr key={item.id} className="align-middle">
-                                  <td className="whitespace-nowrap border-t border-[#edf0f5] px-6 py-5 text-left text-[15px] text-[#465066]">
-                                    {formatDateShort(item.created_at)}
-                                  </td>
-
-                                  <td className="border-t border-[#edf0f5] px-6 py-5 text-left">
-                                    <div className="flex items-center gap-3 whitespace-nowrap">
-                                      <AvatarCell />
-                                      <div>
-                                        <div className="text-[16px] leading-6 text-[#1f2230] whitespace-nowrap">
-                                          {displayName}
-                                        </div>
-                                        <div className="mt-1 text-[15px] leading-5 text-[#7d8495] whitespace-nowrap">
-                                          {item.phone || "Sem telefone"}
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </td>
-
-                                  <td className="border-t border-[#edf0f5] px-6 py-5 text-left text-[15px] leading-6 text-[#465066] whitespace-nowrap">
-                                    {item.email || "—"}
-                                  </td>
-
-                                  <td className="border-t border-[#edf0f5] px-6 py-5 text-left text-[15px] leading-6 text-[#465066] whitespace-nowrap">
-                                    {item.leader_name || "—"}
-                                  </td>
-
-                                  <td className="border-t border-[#edf0f5] px-6 py-5 text-left text-[15px] leading-6 text-[#465066] whitespace-nowrap">
-                                    {item.mmn_login || "—"}
-                                  </td>
-
-                                  <td className="border-t border-[#edf0f5] px-4 py-5 text-left whitespace-nowrap">
-                                    <div className="flex items-center gap-1.5">
-                                      <ActionCircleButton
-                                        title="Visualizar cadastro"
-                                        onClick={() => setSelectedRequest(item)}
-                                        disabled={isProcessing}
-                                      >
-                                        👁
-                                      </ActionCircleButton>
-
-                                      <ActionCircleButton
-                                        title="Aprovar cadastro"
-                                        tone="green"
-                                        onClick={() =>
-                                          updateRequestStatus(item, "approved")
-                                        }
-                                        disabled={isProcessing}
-                                      >
-                                        ✓
-                                      </ActionCircleButton>
-
-                                      <ActionCircleButton
-                                        title="Reprovar cadastro"
-                                        tone="red"
-                                        onClick={() =>
-                                          updateRequestStatus(item, "rejected")
-                                        }
-                                        disabled={isProcessing}
-                                      >
-                                        ✕
-                                      </ActionCircleButton>
-                                    </div>
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-
-                    <div className="grid gap-4 xl:hidden">
+                    <tbody>
                       {filteredRequests.map((item) => {
                         const displayName = getDisplayName(item);
                         const isProcessing = processingId === item.id;
 
                         return (
-                          <div
-                            key={item.id}
-                            className="rounded-[18px] border border-[#e8ebf2] bg-[#fbfcff] p-5"
-                          >
-                            <div className="flex items-start gap-4">
-                              <AvatarCell size={50} />
+                          <tr key={item.id} className="border-b border-[#ededed] last:border-b-0">
+                            <td className="whitespace-nowrap px-4 py-5 text-[14px] font-medium text-[#666b76]">
+                              {formatDateShort(item.created_at)}
+                            </td>
 
-                              <div className="min-w-0 flex-1">
-                                <div className="text-[18px] font-semibold tracking-[-0.02em] text-[#161b27]">
-                                  {displayName}
-                                </div>
-                                <div className="mt-1 break-all text-sm text-[#7a8092]">
-                                  {item.email || "—"}
-                                </div>
-                                <div className="mt-1 text-sm text-[#7a8092]">
-                                  {item.phone || "Sem telefone"}
+                            <td className="px-4 py-5">
+                              <div className="flex items-center gap-3">
+                                <AvatarCell name={displayName} />
+
+                                <div className="min-w-0">
+                                  <p className="truncate text-[15px] font-semibold text-[#18181b]">
+                                    {displayName}
+                                  </p>
+
+                                  <p className="mt-1 truncate text-[13px] text-[#8a8f9d]">
+                                    {getLocation(item)}
+                                  </p>
                                 </div>
                               </div>
-                            </div>
+                            </td>
 
-                            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                              <DetailRow
-                                label="Data"
-                                value={formatDateTime(item.created_at)}
-                              />
-                              <DetailRow
-                                label="Patrocínio/Líder"
-                                value={item.leader_name}
-                              />
-                              <DetailRow
-                                label="Login MMN"
-                                value={item.mmn_login}
-                              />
-                              <DetailRow
-                                label="Cidade / Estado"
-                                value={[item.city, item.state]
-                                  .filter(Boolean)
-                                  .join(" / ")}
-                              />
-                            </div>
+                            <td className="px-4 py-5">
+                              <div className="space-y-1 text-[14px] text-[#52525b]">
+                                <div className="flex items-center gap-2">
+                                  <Mail className="h-3.5 w-3.5 text-[#b89a65]" />
+                                  <span className="max-w-[250px] truncate">
+                                    {item.email || "—"}
+                                  </span>
+                                </div>
 
-                            <div className="mt-4 flex items-center gap-2">
-                              <ActionCircleButton
-                                title="Visualizar cadastro"
-                                onClick={() => setSelectedRequest(item)}
-                                disabled={isProcessing}
-                              >
-                                👁
-                              </ActionCircleButton>
+                                <div className="flex items-center gap-2">
+                                  <Phone className="h-3.5 w-3.5 text-[#b89a65]" />
+                                  <span>{item.phone || "Sem telefone"}</span>
+                                </div>
+                              </div>
+                            </td>
 
-                              <ActionCircleButton
-                                title="Aprovar cadastro"
-                                tone="green"
-                                onClick={() =>
-                                  updateRequestStatus(item, "approved")
-                                }
-                                disabled={isProcessing}
-                              >
-                                ✓
-                              </ActionCircleButton>
+                            <td className="px-4 py-5 text-[14px] text-[#52525b]">
+                              <p className="max-w-[250px] truncate">
+                                {item.leader_name || "—"}
+                              </p>
 
-                              <ActionCircleButton
-                                title="Reprovar cadastro"
-                                tone="red"
-                                onClick={() =>
-                                  updateRequestStatus(item, "rejected")
-                                }
-                                disabled={isProcessing}
-                              >
-                                ✕
-                              </ActionCircleButton>
-                            </div>
-                          </div>
+                              <p className="mt-1 text-[13px] text-[#8a8f9d]">
+                                MMN: {item.mmn_login || "—"}
+                              </p>
+                            </td>
+
+                            <td className="px-4 py-5">
+                              <div className="flex items-center justify-end gap-2">
+                                <ActionButton
+                                  title="Visualizar cadastro"
+                                  onClick={() => setSelectedRequest(item)}
+                                  disabled={isProcessing}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </ActionButton>
+
+                                <ActionButton
+                                  title="Aprovar cadastro"
+                                  tone="green"
+                                  onClick={() =>
+                                    updateRequestStatus(item, "approved")
+                                  }
+                                  disabled={isProcessing}
+                                >
+                                  <Check className="h-4 w-4" />
+                                </ActionButton>
+
+                                <ActionButton
+                                  title="Reprovar cadastro"
+                                  tone="red"
+                                  onClick={() =>
+                                    updateRequestStatus(item, "rejected")
+                                  }
+                                  disabled={isProcessing}
+                                >
+                                  <X className="h-4 w-4" />
+                                </ActionButton>
+                              </div>
+                            </td>
+                          </tr>
                         );
                       })}
-                    </div>
-                  </>
-                )}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="divide-y divide-[#ededed] xl:hidden">
+                  {filteredRequests.map((item) => {
+                    const displayName = getDisplayName(item);
+                    const isProcessing = processingId === item.id;
+
+                    return (
+                      <div key={item.id} className="py-5">
+                        <div className="flex items-start gap-3">
+                          <AvatarCell name={displayName} size={46} />
+
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[16px] font-semibold tracking-[-0.02em] text-[#18181b]">
+                              {displayName}
+                            </p>
+
+                            <p className="mt-1 break-all text-[13px] text-[#666b76]">
+                              {item.email || "—"}
+                            </p>
+
+                            <p className="mt-1 text-[13px] text-[#8a8f9d]">
+                              {formatDateTime(item.created_at)}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                          <DetailItem label="Telefone" value={item.phone} />
+                          <DetailItem label="Líder" value={item.leader_name} />
+                          <DetailItem label="Login MMN" value={item.mmn_login} />
+                          <DetailItem label="Cidade / Estado" value={getLocation(item)} />
+                        </div>
+
+                        <div className="mt-4 flex items-center gap-2">
+                          <ActionButton
+                            title="Visualizar cadastro"
+                            onClick={() => setSelectedRequest(item)}
+                            disabled={isProcessing}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </ActionButton>
+
+                          <ActionButton
+                            title="Aprovar cadastro"
+                            tone="green"
+                            onClick={() => updateRequestStatus(item, "approved")}
+                            disabled={isProcessing}
+                          >
+                            <Check className="h-4 w-4" />
+                          </ActionButton>
+
+                          <ActionButton
+                            title="Reprovar cadastro"
+                            tone="red"
+                            onClick={() => updateRequestStatus(item, "rejected")}
+                            disabled={isProcessing}
+                          >
+                            <X className="h-4 w-4" />
+                          </ActionButton>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </>
             )}
           </div>
-        </SectionCard>
+        </section>
       </div>
 
       <AnimatePresence>
@@ -665,122 +684,115 @@ export default function AdminCadastrosPage() {
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: 24, opacity: 0 }}
               transition={{ duration: 0.22 }}
-              className="fixed inset-y-0 right-0 z-[121] w-full max-w-[640px] overflow-y-auto border-l border-[#e7ebf2] bg-white shadow-[-12px_0_32px_rgba(31,34,48,0.08)]"
+              className="fixed inset-y-0 right-0 z-[121] w-full max-w-[640px] overflow-y-auto border-l border-[#e5e5e5] bg-white shadow-[-12px_0_32px_rgba(31,34,48,0.08)]"
             >
-              <div className="sticky top-0 z-10 border-b border-[#edf0f5] bg-white px-6 py-5">
+              <div className="sticky top-0 z-10 border-b border-[#e5e5e5] bg-white px-6 py-5">
                 <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                    <AvatarCell size={64} />
+                  <div className="flex min-w-0 items-center gap-4">
+                    <AvatarCell
+                      name={getDisplayName(selectedRequest)}
+                      size={58}
+                    />
 
-                    <div>
-                      <div className="text-[12px] uppercase tracking-[0.18em] text-[#99a0b2]">
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8a8f9d]">
                         Solicitação de cadastro
-                      </div>
-                      <div className="mt-2 text-[30px] font-semibold tracking-[-0.04em] text-[#131824]">
+                      </p>
+
+                      <h2 className="mt-2 truncate text-[26px] font-semibold tracking-[-0.035em] text-[#141414]">
                         {getDisplayName(selectedRequest)}
-                      </div>
-                      <div className="mt-2 text-sm text-[#7f8597]">
+                      </h2>
+
+                      <p className="mt-1 text-[13px] text-[#666b76]">
                         Recebido em {formatDateTime(selectedRequest.created_at)}
-                      </div>
+                      </p>
                     </div>
                   </div>
 
                   <button
                     type="button"
                     onClick={() => setSelectedRequest(null)}
-                    className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-[#f3f4f8] text-[#505567] transition hover:bg-[#eceef5] hover:text-[#1f2230]"
+                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] border border-[#e5e5e5] text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836]"
+                    aria-label="Fechar"
                   >
-                    ✕
+                    <X className="h-4 w-4" />
                   </button>
                 </div>
               </div>
 
-              <div className="space-y-6 p-6">
-                <SectionCard>
-                  <div className="p-5">
-                    <div className="text-[22px] font-semibold tracking-[-0.03em] text-[#161b27]">
-                      Dados principais
-                    </div>
+              <div className="p-6">
+                <section className="border-b border-[#e5e5e5] pb-6">
+                  <h3 className="text-[20px] font-semibold tracking-[-0.03em] text-[#141414]">
+                    Dados principais
+                  </h3>
 
-                    <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                      <DetailRow
-                        label="Nome completo"
-                        value={getDisplayName(selectedRequest)}
-                      />
-                      <DetailRow label="E-mail" value={selectedRequest.email} />
-                      <DetailRow
-                        label="Telefone"
-                        value={selectedRequest.phone}
-                      />
-                      <DetailRow
-                        label="Login MMN"
-                        value={selectedRequest.mmn_login}
-                      />
-                      <DetailRow
-                        label="Patrocínio/Líder"
-                        value={selectedRequest.leader_name}
-                      />
-                      <DetailRow
-                        label="Cidade / Estado"
-                        value={[selectedRequest.city, selectedRequest.state]
-                          .filter(Boolean)
-                          .join(" / ")}
-                      />
-                    </div>
+                  <div className="mt-4 divide-y divide-[#ededed]">
+                    <DetailItem
+                      label="Nome completo"
+                      value={getDisplayName(selectedRequest)}
+                    />
+                    <DetailItem label="E-mail" value={selectedRequest.email} />
+                    <DetailItem label="Telefone" value={selectedRequest.phone} />
+                    <DetailItem
+                      label="Login MMN"
+                      value={selectedRequest.mmn_login}
+                    />
+                    <DetailItem
+                      label="Patrocínio / Líder"
+                      value={selectedRequest.leader_name}
+                    />
+                    <DetailItem
+                      label="Cidade / Estado"
+                      value={getLocation(selectedRequest)}
+                    />
                   </div>
-                </SectionCard>
+                </section>
 
-                <SectionCard>
-                  <div className="p-5">
-                    <div className="text-[22px] font-semibold tracking-[-0.03em] text-[#161b27]">
-                      Endereço informado
-                    </div>
+                <section className="border-b border-[#e5e5e5] py-6">
+                  <h3 className="text-[20px] font-semibold tracking-[-0.03em] text-[#141414]">
+                    Endereço informado
+                  </h3>
 
-                    <div className="mt-4 rounded-[16px] border border-[#edf0f5] bg-[#fbfcff] p-4 text-[15px] leading-7 text-[#1f2230]">
-                      {selectedRequest.full_address?.trim() || "—"}
-                    </div>
+                  <p className="mt-3 text-[15px] leading-7 text-[#52525b]">
+                    {selectedRequest.full_address?.trim() || "—"}
+                  </p>
+                </section>
+
+                <section className="pt-6">
+                  <h3 className="text-[20px] font-semibold tracking-[-0.03em] text-[#141414]">
+                    Ações administrativas
+                  </h3>
+
+                  <p className="mt-2 text-[14px] leading-6 text-[#666b76]">
+                    Ao aprovar ou reprovar, este cadastro sai da listagem de pendentes.
+                  </p>
+
+                  <div className="mt-5 flex flex-wrap gap-3">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        updateRequestStatus(selectedRequest, "approved")
+                      }
+                      disabled={processingId === selectedRequest.id}
+                      className="inline-flex h-11 items-center justify-center gap-2 rounded-[10px] bg-[#DBC094] px-5 text-[14px] font-semibold text-black transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <Check className="h-4 w-4" />
+                      Aprovar cadastro
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        updateRequestStatus(selectedRequest, "rejected")
+                      }
+                      disabled={processingId === selectedRequest.id}
+                      className="inline-flex h-11 items-center justify-center gap-2 rounded-[10px] border border-red-200 bg-white px-5 text-[14px] font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <X className="h-4 w-4" />
+                      Reprovar cadastro
+                    </button>
                   </div>
-                </SectionCard>
-
-                <SectionCard>
-                  <div className="p-5">
-                    <div className="text-[22px] font-semibold tracking-[-0.03em] text-[#161b27]">
-                      Ações administrativas
-                    </div>
-                    <p className="mt-2 text-[15px] leading-7 text-[#6b7285]">
-                      Ao aprovar ou reprovar, este cadastro sai imediatamente da
-                      listagem de pendentes e a base já fica pronta para a tela
-                      de alunos ativos.
-                    </p>
-
-                    <div className="mt-5 flex flex-wrap gap-3">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          updateRequestStatus(selectedRequest, "approved")
-                        }
-                        disabled={processingId === selectedRequest.id}
-                        className="inline-flex items-center gap-3 rounded-[14px] bg-[#DBC094] px-5 py-3 text-[15px] font-medium text-black transition hover:brightness-105 disabled:opacity-60"
-                      >
-                        Aprovar cadastro
-                        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-black text-white">
-                          →
-                        </span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          updateRequestStatus(selectedRequest, "rejected")
-                        }
-                        disabled={processingId === selectedRequest.id}
-                        className="inline-flex items-center rounded-[14px] border border-[#f0c5cd] bg-white px-5 py-3 text-[15px] font-medium text-[#d25769] transition hover:bg-[#fff5f7] disabled:opacity-60"
-                      >
-                        Reprovar cadastro
-                      </button>
-                    </div>
-                  </div>
-                </SectionCard>
+                </section>
               </div>
             </motion.div>
           </>
