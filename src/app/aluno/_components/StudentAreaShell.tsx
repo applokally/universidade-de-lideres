@@ -17,31 +17,37 @@ const studentAreaMenu = [
   {
     label: "Dashboard",
     href: "/aluno/area",
+    activePaths: ["/aluno/area"],
     icon: LayoutDashboard,
   },
   {
     label: "Meus Dados",
     href: "/aluno/area/meus-dados",
+    activePaths: ["/aluno/area/meus-dados"],
     icon: User,
   },
   {
     label: "Meus Cursos",
-    href: "/aluno/area/meus-cursos",
+    href: "/aluno/cursos",
+    activePaths: ["/aluno/cursos", "/aluno/aulas"],
     icon: BookOpen,
   },
   {
     label: "Minhas Trilhas",
-    href: "/aluno/area/minhas-trilhas",
+    href: "/aluno/trilhas",
+    activePaths: ["/aluno/trilhas"],
     icon: GraduationCap,
   },
   {
     label: "Gamificação",
-    href: "/aluno/area/gamificacao",
+    href: "/aluno/gamificacao",
+    activePaths: ["/aluno/gamificacao"],
     icon: Gamepad2,
   },
   {
     label: "Meus Certificados",
     href: "/aluno/area/certificados",
+    activePaths: ["/aluno/area/certificados"],
     icon: Award,
   },
 ];
@@ -86,10 +92,12 @@ export function StudentAreaShell({
               <nav className="grid gap-2 p-3">
                 {studentAreaMenu.map((item) => {
                   const Icon = item.icon;
-                  const isActive =
-                    item.href === "/aluno/area"
-                      ? pathname === item.href
-                      : pathname?.startsWith(item.href);
+
+                  const isActive = item.activePaths.some((activePath) =>
+                    activePath === "/aluno/area"
+                      ? pathname === activePath
+                      : pathname?.startsWith(activePath)
+                  );
 
                   return (
                     <Link
