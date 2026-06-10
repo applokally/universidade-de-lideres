@@ -432,114 +432,97 @@ export default function AdminStudentHomePage() {
   }
 
   return (
-    <div className="mx-auto max-w-[1440px]">
-      <section className="mb-8 overflow-hidden rounded-[18px] border border-[#e5e5e5] bg-white ">
-        <div className="grid gap-6 p-6 sm:p-7 xl:grid-cols-[1fr_auto] xl:items-end">
-          <div className="min-w-0">
-            <div className="mb-5 flex flex-wrap items-center gap-3">
-              <span className="inline-flex items-center rounded-full border border-[#DBC094]/40 bg-[#DBC094]/12 px-4 py-2 text-[14px] font-semibold text-[#8a6836]">
-                Área do aluno
-              </span>
+    <div className="mx-auto max-w-[1440px] space-y-6 text-[#141414]">
+      <section className="flex flex-col gap-5 border-b border-[#e5e5e5] pb-6 lg:flex-row lg:items-end lg:justify-between">
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8a8f9d]">
+            Área do aluno
+          </p>
 
-              <span className="hidden h-px w-14 bg-[#e4e7ef] sm:block" />
+          <h1 className="mt-2 text-[38px] font-semibold leading-none tracking-[-0.04em] text-[#141414] sm:text-[46px]">
+            Categorias e cards
+          </h1>
 
-              <span className="text-[14px] font-semibold text-[#8a8f9d]">
-                Home / Vitrine de conteúdos
-              </span>
-            </div>
+          <p className="mt-3 max-w-[760px] text-[15px] leading-6 text-[#5d6472]">
+            Controle as fileiras da home do aluno e os conteúdos exibidos em
+            cada uma delas.
+          </p>
+        </div>
 
-            <h1 className="text-[34px] font-semibold leading-none tracking-[-0.05em] text-[#141414] sm:text-[46px]">
-              Categorias/Cards
-            </h1>
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <Link
+            href="/admin/home-aluno/novo?tipo=categoria"
+            className="inline-flex h-12 items-center justify-center gap-2 rounded-[12px] bg-[#DBC094] px-5 text-[14px] font-semibold text-black transition hover:brightness-105"
+          >
+            <Plus size={18} />
+            Nova categoria
+          </Link>
 
-            <p className="mt-4 max-w-[800px] text-[16px] leading-7 text-[#666b76]">
-              Organize as categorias da home do aluno e escolha quais cursos,
-              aulas ou lives aparecem em cada fileira.
-            </p>
-          </div>
+          <Link
+            href="/admin/home-aluno/novo?tipo=card"
+            className="inline-flex h-12 items-center justify-center gap-2 rounded-[12px] border border-[#e5e5e5] bg-white px-5 text-[14px] font-semibold text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836]"
+          >
+            <Plus size={18} />
+            Inserir card
+          </Link>
+        </div>
+      </section>
 
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-end xl:justify-end">
-            <div className="grid grid-cols-3 gap-3">
-              <div className="min-w-[96px] rounded-[18px] border border-[#e5e5e5] bg-white px-5 py-4">
-                <p className="text-[14px] font-medium text-[#666b76]">Categorias</p>
-                <strong className="mt-2 block text-[30px] leading-none tracking-[-0.04em] text-[#141414]">
-                  {sections.length}
-                </strong>
-              </div>
+      <section className="grid gap-3 md:grid-cols-3">
+        <div className="rounded-[14px] border border-[#e5e5e5] bg-white px-5 py-4">
+          <p className="text-[13px] font-medium text-[#666b76]">Categorias</p>
+          <strong className="mt-2 block text-[34px] font-semibold leading-none tracking-[-0.05em] text-[#141414]">
+            {sections.length}
+          </strong>
+        </div>
 
-              <div className="min-w-[96px] rounded-[18px] border border-[#e5e5e5] bg-white px-5 py-4">
-                <p className="text-[14px] font-medium text-[#666b76]">Ativas</p>
-                <strong className="mt-2 block text-[30px] leading-none tracking-[-0.04em] text-[#141414]">
-                  {activeSectionsCount}
-                </strong>
-              </div>
+        <div className="rounded-[14px] border border-[#e5e5e5] bg-white px-5 py-4">
+          <p className="text-[13px] font-medium text-[#666b76]">Ativas</p>
+          <strong className="mt-2 block text-[34px] font-semibold leading-none tracking-[-0.05em] text-[#141414]">
+            {activeSectionsCount}
+          </strong>
+        </div>
 
-              <div className="min-w-[96px] rounded-[18px] border border-[#e5e5e5] bg-white px-5 py-4">
-                <p className="text-[14px] font-medium text-[#666b76]">Cards</p>
-                <strong className="mt-2 block text-[30px] leading-none tracking-[-0.04em] text-[#141414]">
-                  {activeItemsCount}
-                </strong>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <Link
-                href="/admin/home-aluno/novo?tipo=categoria"
-                className="inline-flex h-[56px] items-center justify-center gap-2 rounded-[18px] bg-[#DBC094] px-6 text-[14px] font-bold text-black transition hover:bg-[#cfb27a]"
-              >
-                <Plus size={18} />
-                Nova categoria
-              </Link>
-
-              <Link
-                href="/admin/home-aluno/novo?tipo=card"
-                className="inline-flex h-[56px] items-center justify-center gap-2 rounded-[18px] bg-[#141414] px-6 text-[14px] font-bold text-white transition hover:bg-black"
-              >
-                <Plus size={18} />
-                Inserir card
-              </Link>
-            </div>
-          </div>
+        <div className="rounded-[14px] border border-[#e5e5e5] bg-white px-5 py-4">
+          <p className="text-[13px] font-medium text-[#666b76]">Cards exibidos</p>
+          <strong className="mt-2 block text-[34px] font-semibold leading-none tracking-[-0.05em] text-[#141414]">
+            {activeItemsCount}
+          </strong>
         </div>
       </section>
 
       {message ? (
-        <div className="mb-5 flex items-center gap-3 rounded-[18px] border border-emerald-200 bg-emerald-50 px-5 py-4 text-[14px] font-semibold text-emerald-700">
+        <div className="flex items-center gap-3 rounded-[12px] border border-emerald-200 bg-emerald-50 px-5 py-4 text-[14px] font-semibold text-emerald-700">
           <CheckCircle2 size={20} />
           {message}
         </div>
       ) : null}
 
       {errorMessage ? (
-        <div className="mb-5 rounded-[18px] border border-red-200 bg-red-50 px-5 py-4 text-[14px] font-semibold text-red-700">
+        <div className="rounded-[12px] border border-red-200 bg-red-50 px-5 py-4 text-[14px] font-semibold text-red-700">
           {errorMessage}
         </div>
       ) : null}
 
-      <section className="rounded-[18px] border border-[#e5e5e5] bg-white p-5  sm:p-6">
-        <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h2 className="text-[22px] font-semibold tracking-[-0.03em] text-[#141414]">
-              Categorias cadastradas
-            </h2>
-            <p className="mt-1 text-[14px] text-[#666b76]">
-              Edite categorias, remova cards e controle o que aparece na home do
-              aluno.
-            </p>
-          </div>
+      <section className="overflow-hidden rounded-[18px] border border-[#e5e5e5] bg-white">
+        <div className="grid grid-cols-[minmax(0,1fr)_120px_120px_180px] gap-4 border-b border-[#e5e5e5] bg-[#fafafa] px-5 py-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8a8f9d] max-lg:hidden">
+          <div>Categoria</div>
+          <div>Status</div>
+          <div>Layout</div>
+          <div className="text-right">Ações</div>
         </div>
 
         {loading ? (
-          <div className="flex min-h-[460px] items-center justify-center rounded-[18px] border border-[#e5e5e5] bg-white">
+          <div className="flex min-h-[320px] items-center justify-center">
             <div className="flex items-center gap-3 text-[14px] font-semibold text-[#666b76]">
               <Loader2 size={18} className="animate-spin" />
               Carregando categorias e cards...
             </div>
           </div>
         ) : sections.length === 0 ? (
-          <div className="flex min-h-[460px] items-center justify-center rounded-[18px] border border-dashed border-[#e5e5e5] bg-white px-6 text-center">
+          <div className="flex min-h-[320px] items-center justify-center px-6 text-center">
             <div>
-              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#f3eee5] text-[#8a6836]">
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-[#e2d2b6] bg-[#f3eee5] text-[#8a6836]">
                 <Layers3 size={24} />
               </div>
 
@@ -554,7 +537,7 @@ export default function AdminStudentHomePage() {
 
               <Link
                 href="/admin/home-aluno/novo?tipo=categoria"
-                className="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-[14px] bg-[#DBC094] px-5 text-[14px] font-bold text-black transition hover:bg-[#cfb27a]"
+                className="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-[12px] bg-[#DBC094] px-5 text-[14px] font-semibold text-black transition hover:brightness-105"
               >
                 <Plus size={17} />
                 Nova categoria
@@ -562,212 +545,242 @@ export default function AdminStudentHomePage() {
             </div>
           </div>
         ) : (
-          <div className="grid gap-5">
+          <div className="divide-y divide-[#ededed]">
             {sections.map((section) => {
               const sectionItems = items.filter(
                 (item) => item.section_id === section.id
               );
 
               return (
-                <article
-                  key={section.id}
-                  className="overflow-hidden rounded-[18px] border border-[#e5e5e5] bg-white"
-                >
-                  <div className="border-b border-[#e5e5e5] bg-white p-5">
-                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                      <div>
-                        <div className="mb-3 flex flex-wrap items-center gap-2">
-                          <span
-                            className={[
-                              "rounded-full px-3 py-1 text-[12px] font-bold",
-                              section.is_active
-                                ? "bg-emerald-100 text-emerald-700"
-                                : "bg-red-100 text-red-700",
-                            ].join(" ")}
-                          >
-                            {section.is_active ? "Ativa" : "Inativa"}
-                          </span>
+                <details key={section.id} className="group bg-white" open>
+                  <summary className="grid cursor-pointer list-none gap-4 px-5 py-5 transition hover:bg-[#fafafa] lg:grid-cols-[minmax(0,1fr)_120px_120px_180px] lg:items-center">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2 lg:hidden">
+                        <span
+                          className={[
+                            "rounded-full border px-2.5 py-1 text-[12px] font-semibold",
+                            section.is_active
+                              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                              : "border-red-200 bg-red-50 text-red-700",
+                          ].join(" ")}
+                        >
+                          {section.is_active ? "Ativa" : "Inativa"}
+                        </span>
 
-                          <span className="rounded-full bg-[#f3eee5] px-3 py-1 text-[12px] font-bold text-[#8a6836]">
-                            {getLayoutLabel(section.layout_variant)}
-                          </span>
+                        <span className="rounded-full border border-[#e2d2b6] bg-[#f3eee5] px-2.5 py-1 text-[12px] font-semibold text-[#8a6836]">
+                          {getLayoutLabel(section.layout_variant)}
+                        </span>
+                      </div>
 
-                          <span className="rounded-full bg-[#f4f4f5] px-3 py-1 text-[12px] font-bold text-[#596174]">
-                            Ordem {section.sort_order}
-                          </span>
+                      <h3 className="text-[18px] font-semibold tracking-[-0.03em] text-[#141414]">
+                        {section.title}
+                      </h3>
 
-                          <span className="rounded-full bg-[#141414] px-3 py-1 text-[12px] font-bold text-white">
-                            {sectionItems.length} card(s)
-                          </span>
-                        </div>
+                      <p className="mt-1 text-[13px] font-medium text-[#8a8f9d]">
+                        /{section.slug} • Ordem {section.sort_order} • {sectionItems.length} card(s)
+                      </p>
 
-                        <h3 className="text-[25px] font-semibold tracking-[-0.04em] text-[#141414]">
-                          {section.title}
-                        </h3>
-
-                        <p className="mt-1 text-[14px] font-medium text-[#8a8f9d]">
-                          /{section.slug}
+                      {section.description ? (
+                        <p className="mt-2 line-clamp-2 max-w-[720px] text-[14px] leading-6 text-[#666b76]">
+                          {section.description}
                         </p>
-
-                        {section.description ? (
-                          <p className="mt-3 max-w-[760px] text-[14px] leading-6 text-[#666b76]">
-                            {section.description}
-                          </p>
-                        ) : null}
-                      </div>
-
-                      <div className="flex flex-wrap gap-2">
-                        <Link
-                          href={`/admin/home-aluno/novo?tipo=categoria&id=${section.id}`}
-                          className="inline-flex h-10 items-center gap-2 rounded-[12px] bg-[#141414] px-4 text-[14px] font-semibold text-white transition hover:bg-black"
-                        >
-                          <Pencil size={16} />
-                          Editar
-                        </Link>
-
-                        <button
-                          type="button"
-                          onClick={() => toggleSectionStatus(section)}
-                          className="inline-flex h-10 items-center gap-2 rounded-[12px] bg-[#f4f4f5] px-4 text-[14px] font-semibold text-[#52525b] transition hover:bg-[#e2e6ef]"
-                        >
-                          {section.is_active ? (
-                            <EyeOff size={16} />
-                          ) : (
-                            <Eye size={16} />
-                          )}
-                          {section.is_active ? "Desativar" : "Ativar"}
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => deleteSection(section)}
-                          className="inline-flex h-10 items-center gap-2 rounded-[12px] bg-red-50 px-4 text-[14px] font-semibold text-red-700 transition hover:bg-red-100"
-                        >
-                          <Trash2 size={16} />
-                          Excluir
-                        </button>
-                      </div>
+                      ) : null}
                     </div>
-                  </div>
 
-                  <div className="p-5">
+                    <div className="hidden lg:block">
+                      <span
+                        className={[
+                          "inline-flex rounded-full border px-2.5 py-1 text-[12px] font-semibold",
+                          section.is_active
+                            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                            : "border-red-200 bg-red-50 text-red-700",
+                        ].join(" ")}
+                      >
+                        {section.is_active ? "Ativa" : "Inativa"}
+                      </span>
+                    </div>
+
+                    <div className="hidden lg:block">
+                      <span className="inline-flex rounded-full border border-[#e2d2b6] bg-[#f3eee5] px-2.5 py-1 text-[12px] font-semibold text-[#8a6836]">
+                        {getLayoutLabel(section.layout_variant)}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+                      <Link
+                        href={`/admin/home-aluno/novo?tipo=categoria&id=${section.id}`}
+                        className="inline-flex h-9 items-center gap-2 rounded-[10px] border border-[#e5e5e5] bg-white px-3 text-[13px] font-semibold text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836]"
+                        onClick={(event) => event.stopPropagation()}
+                      >
+                        <Pencil size={14} />
+                        Editar
+                      </Link>
+
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          toggleSectionStatus(section);
+                        }}
+                        className="inline-flex h-9 items-center gap-2 rounded-[10px] border border-[#e5e5e5] bg-white px-3 text-[13px] font-semibold text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836]"
+                      >
+                        {section.is_active ? (
+                          <EyeOff size={14} />
+                        ) : (
+                          <Eye size={14} />
+                        )}
+                        {section.is_active ? "Ocultar" : "Exibir"}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          deleteSection(section);
+                        }}
+                        className="inline-flex h-9 items-center gap-2 rounded-[10px] border border-red-200 bg-red-50 px-3 text-[13px] font-semibold text-red-700 transition hover:bg-red-100"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </summary>
+
+                  <div className="border-t border-[#ededed] bg-[#fcfcfc] px-5 py-4">
                     {sectionItems.length === 0 ? (
-                      <div className="rounded-[18px] border border-dashed border-[#e5e5e5] bg-white px-5 py-8 text-center">
-                        <p className="text-[14px] font-semibold text-[#666b76]">
-                          Nenhum card inserido nesta categoria.
+                      <div className="flex flex-col items-start justify-between gap-3 rounded-[12px] border border-dashed border-[#d9d9d9] bg-white px-4 py-4 sm:flex-row sm:items-center">
+                        <p className="text-[14px] font-medium text-[#666b76]">
+                          Esta categoria ainda não possui cards.
                         </p>
 
                         <Link
                           href={`/admin/home-aluno/novo?tipo=card&section=${section.id}`}
-                          className="mt-4 inline-flex h-10 items-center justify-center gap-2 rounded-[12px] bg-[#141414] px-4 text-[14px] font-semibold text-white transition hover:bg-black"
+                          className="inline-flex h-10 items-center justify-center gap-2 rounded-[10px] border border-[#e5e5e5] bg-white px-4 text-[13px] font-semibold text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836]"
                         >
-                          <Plus size={16} />
+                          <Plus size={15} />
                           Inserir card
                         </Link>
                       </div>
                     ) : (
-                      <div className="grid gap-3">
-                        {sectionItems.map((item) => {
-                          const imageUrl = getItemImage(item);
+                      <div className="overflow-hidden rounded-[12px] border border-[#e5e5e5] bg-white">
+                        <div className="grid grid-cols-[92px_minmax(0,1fr)_150px_170px] gap-4 border-b border-[#ededed] bg-white px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8a8f9d] max-lg:hidden">
+                          <div>Capa</div>
+                          <div>Conteúdo</div>
+                          <div>Tipo</div>
+                          <div className="text-right">Ações</div>
+                        </div>
 
-                          return (
-                            <div
-                              key={item.id}
-                              className="grid gap-4 rounded-[18px] border border-[#e5e5e5] bg-white p-4 lg:grid-cols-[120px_1fr_auto]"
-                            >
-                              <div className="h-[82px] overflow-hidden rounded-[14px] bg-[#171a24]">
-                                {imageUrl ? (
-                                  <img
-                                    src={imageUrl}
-                                    alt={getItemTitle(item)}
-                                    className="h-full w-full object-cover"
-                                  />
-                                ) : (
-                                  <div className="flex h-full w-full items-center justify-center text-[11px] font-bold text-white/50">
-                                    SEM CAPA
+                        <div className="divide-y divide-[#ededed]">
+                          {sectionItems.map((item) => {
+                            const imageUrl = getItemImage(item);
+
+                            return (
+                              <div
+                                key={item.id}
+                                className="grid gap-4 p-4 lg:grid-cols-[92px_minmax(0,1fr)_150px_170px] lg:items-center"
+                              >
+                                <div className="h-[58px] overflow-hidden rounded-[8px] bg-[#141414]">
+                                  {imageUrl ? (
+                                    <img
+                                      src={imageUrl}
+                                      alt={getItemTitle(item)}
+                                      className="h-full w-full object-cover"
+                                    />
+                                  ) : (
+                                    <div className="flex h-full w-full items-center justify-center text-[10px] font-semibold text-white/45">
+                                      SEM CAPA
+                                    </div>
+                                  )}
+                                </div>
+
+                                <div className="min-w-0">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <span
+                                      className={[
+                                        "rounded-full border px-2.5 py-1 text-[12px] font-semibold lg:hidden",
+                                        item.is_active
+                                          ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                                          : "border-red-200 bg-red-50 text-red-700",
+                                      ].join(" ")}
+                                    >
+                                      {item.is_active ? "Ativo" : "Inativo"}
+                                    </span>
+
+                                    {item.badge_override ? (
+                                      <span className="rounded-full border border-[#e5e5e5] bg-[#f4f4f5] px-2.5 py-1 text-[12px] font-semibold text-[#52525b]">
+                                        {item.badge_override}
+                                      </span>
+                                    ) : null}
                                   </div>
-                                )}
-                              </div>
 
-                              <div className="min-w-0">
-                                <div className="mb-2 flex flex-wrap items-center gap-2">
+                                  <h4 className="mt-1 text-[15px] font-semibold tracking-[-0.02em] text-[#141414]">
+                                    {getItemTitle(item)}
+                                  </h4>
+
+                                  <p className="mt-1 line-clamp-2 text-[13px] leading-5 text-[#666b76]">
+                                    {getItemSubtitle(item)}
+                                  </p>
+
+                                  <p className="mt-1 text-[12px] font-medium text-[#8a8f9d]">
+                                    {getItemMeta(item)} • Ordem {item.sort_order}
+                                  </p>
+                                </div>
+
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <span className="rounded-full border border-[#e5e5e5] bg-[#f4f4f5] px-2.5 py-1 text-[12px] font-semibold text-[#52525b]">
+                                    {getContentTypeLabel(item.content_type)}
+                                  </span>
+
                                   <span
                                     className={[
-                                      "rounded-full px-3 py-1 text-[12px] font-bold",
+                                      "hidden rounded-full border px-2.5 py-1 text-[12px] font-semibold lg:inline-flex",
                                       item.is_active
-                                        ? "bg-emerald-100 text-emerald-700"
-                                        : "bg-red-100 text-red-700",
+                                        ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                                        : "border-red-200 bg-red-50 text-red-700",
                                     ].join(" ")}
                                   >
                                     {item.is_active ? "Ativo" : "Inativo"}
                                   </span>
-
-                                  <span className="rounded-full bg-[#f4f4f5] px-3 py-1 text-[12px] font-bold text-[#596174]">
-                                    {getContentTypeLabel(item.content_type)}
-                                  </span>
-
-                                  <span className="rounded-full bg-[#f3eee5] px-3 py-1 text-[12px] font-bold text-[#8a6836]">
-                                    Ordem {item.sort_order}
-                                  </span>
-
-                                  {item.badge_override ? (
-                                    <span className="rounded-full bg-[#141414] px-3 py-1 text-[12px] font-bold text-white">
-                                      {item.badge_override}
-                                    </span>
-                                  ) : null}
                                 </div>
 
-                                <h4 className="text-[18px] font-semibold tracking-[-0.03em] text-[#141414]">
-                                  {getItemTitle(item)}
-                                </h4>
+                                <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+                                  <Link
+                                    href={`/admin/home-aluno/novo?tipo=card&id=${item.id}`}
+                                    className="inline-flex h-9 items-center gap-2 rounded-[10px] border border-[#e5e5e5] bg-white px-3 text-[13px] font-semibold text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836]"
+                                  >
+                                    <Pencil size={14} />
+                                    Editar
+                                  </Link>
 
-                                <p className="mt-1 line-clamp-2 max-w-[760px] text-[14px] leading-6 text-[#666b76]">
-                                  {getItemSubtitle(item)}
-                                </p>
+                                  <button
+                                    type="button"
+                                    onClick={() => toggleItemStatus(item)}
+                                    className="inline-flex h-9 items-center gap-2 rounded-[10px] border border-[#e5e5e5] bg-white px-3 text-[13px] font-semibold text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836]"
+                                  >
+                                    {item.is_active ? (
+                                      <EyeOff size={14} />
+                                    ) : (
+                                      <Eye size={14} />
+                                    )}
+                                  </button>
 
-                                <p className="mt-2 text-[12px] font-semibold text-[#8a8f9d]">
-                                  {getItemMeta(item)}
-                                </p>
+                                  <button
+                                    type="button"
+                                    onClick={() => deleteItem(item)}
+                                    className="inline-flex h-9 items-center gap-2 rounded-[10px] border border-red-200 bg-red-50 px-3 text-[13px] font-semibold text-red-700 transition hover:bg-red-100"
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                </div>
                               </div>
-
-                              <div className="flex flex-wrap items-start gap-2 lg:justify-end">
-                                <Link
-                                  href={`/admin/home-aluno/novo?tipo=card&id=${item.id}`}
-                                  className="inline-flex h-10 items-center gap-2 rounded-[12px] bg-[#141414] px-4 text-[14px] font-semibold text-white transition hover:bg-black"
-                                >
-                                  <Pencil size={16} />
-                                  Editar
-                                </Link>
-
-                                <button
-                                  type="button"
-                                  onClick={() => toggleItemStatus(item)}
-                                  className="inline-flex h-10 items-center gap-2 rounded-[12px] bg-[#f4f4f5] px-4 text-[14px] font-semibold text-[#52525b] transition hover:bg-[#e2e6ef]"
-                                >
-                                  {item.is_active ? (
-                                    <EyeOff size={16} />
-                                  ) : (
-                                    <Eye size={16} />
-                                  )}
-                                  {item.is_active ? "Desativar" : "Ativar"}
-                                </button>
-
-                                <button
-                                  type="button"
-                                  onClick={() => deleteItem(item)}
-                                  className="inline-flex h-10 items-center gap-2 rounded-[12px] bg-red-50 px-4 text-[14px] font-semibold text-red-700 transition hover:bg-red-100"
-                                >
-                                  <Trash2 size={16} />
-                                  Remover
-                                </button>
-                              </div>
-                            </div>
-                          );
-                        })}
+                            );
+                          })}
+                        </div>
                       </div>
                     )}
                   </div>
-                </article>
+                </details>
               );
             })}
           </div>

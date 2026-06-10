@@ -1886,9 +1886,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
               </h1>
 
               <p className="mt-3 max-w-3xl text-[15px] leading-6 text-[#5d6472]">
-                {carregando
-                  ? "Buscando módulos, aulas e materiais reais do curso selecionado."
-                  : resumoCurso(curso)}
+                {carregando ? "Carregando estrutura do curso." : resumoCurso(curso)}
               </p>
             </div>
 
@@ -1923,19 +1921,28 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
           </div>
         </section>
 
-        <section className="rounded-[18px] border border-[#e5e5e5] bg-white">
-          <div className="border-b border-[#e5e5e5] px-5 py-4">
+        {!(moduloVisualizando ||
+            moduloEditando ||
+            moduloExcluindo ||
+            modalNovoModuloAberto ||
+            modalNovaAulaAberto ||
+            modalMateriaisAberto ||
+            aulaVisualizando ||
+            aulaEditando ||
+            aulaExcluindo ||
+            materialVisualizando ||
+            materialEditando ||
+            materialExcluindo) ? (
+        <section className="overflow-hidden rounded-[18px] border border-[#e5e5e5] bg-white">
+          <div className="border-b border-[#e5e5e5] px-5 py-4 sm:px-6">
             <h2 className="text-[22px] font-semibold tracking-[-0.03em] text-[#141414]">
               Gestão operacional
             </h2>
-            <p className="mt-1 text-[13px] text-[#767b87]">
-              Organize o curso em módulos, aulas e materiais sem sair desta tela.
-            </p>
           </div>
 
           {erro ? (
             <div className="p-6">
-              <div className="rounded-[18px] border border-rose-200 bg-rose-50 p-5">
+              <div className="rounded-[12px] border border-rose-200 bg-rose-50 p-5">
                 <h3 className="text-[14px] font-semibold text-rose-700">
                   Erro ao carregar estrutura
                 </h3>
@@ -1943,33 +1950,43 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
               </div>
             </div>
           ) : carregando ? (
-            <div className="p-6">
-              <div className="space-y-4">
-                {Array.from({ length: 3 }).map((_, index) => (
-                  <div
-                    key={index}
-                    className="rounded-[12px] border border-[#e5e5e5] bg-white p-5"
-                  >
-                    <div className="animate-pulse space-y-3">
-                      <div className="h-4 w-40 rounded bg-[#E9EDF3]" />
-                      <div className="h-3 w-72 rounded bg-[#EEF2F6]" />
-                      <div className="h-3 w-56 rounded bg-[#EEF2F6]" />
-                    </div>
+            <div className="space-y-3 p-5 sm:p-6">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="rounded-[12px] border border-[#e5e5e5] bg-white p-5"
+                >
+                  <div className="animate-pulse space-y-3">
+                    <div className="h-4 w-44 rounded bg-[#e5e5e5]" />
+                    <div className="h-3 w-80 rounded bg-[#ededed]" />
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
           ) : modulos.length === 0 ? (
-            <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
-              <div className="mb-4 rounded-full border border-[#e5e5e5] bg-white p-4">
-                <FolderKanban className="h-6 w-6 text-[#8a8f9d]" />
+            <div className="flex min-h-[320px] items-center justify-center px-6 text-center">
+              <div>
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-[#e2d2b6] bg-[#f3eee5] text-[#8a6836]">
+                  <FolderKanban className="h-6 w-6" />
+                </div>
+
+                <h3 className="text-[18px] font-semibold text-[#141414]">
+                  Nenhum módulo cadastrado
+                </h3>
+
+                <p className="mx-auto mt-2 max-w-md text-[14px] leading-6 text-[#666b76]">
+                  Este curso ainda não possui módulos cadastrados.
+                </p>
+
+                <button
+                  type="button"
+                  onClick={abrirModalNovoModulo}
+                  className="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-[12px] bg-[#DBC094] px-5 text-[14px] font-semibold text-black transition hover:brightness-105"
+                >
+                  <Plus className="h-4 w-4" />
+                  Criar primeiro módulo
+                </button>
               </div>
-              <h3 className="text-[16px] font-semibold text-[#141414]">
-                Nenhum módulo cadastrado
-              </h3>
-              <p className="mt-2 max-w-md text-[14px] text-[#666b76]">
-                Este curso ainda não possui módulos cadastrados no banco.
-              </p>
             </div>
           ) : (
             <div className="divide-y divide-[#ededed]">
@@ -1977,84 +1994,130 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                 const aulasDoModulo = aulasPorModulo.get(modulo.id) ?? [];
 
                 return (
-                  <article key={modulo.id} className="p-5 md:p-6">
-                    <div className="rounded-[18px] border border-[#e5e5e5] bg-white">
-                      <div className="flex flex-col gap-4 border-b border-[#e5e5e5] p-5 md:flex-row md:items-start md:justify-between">
-                        <div className="min-w-0">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="inline-flex items-center rounded-full border border-[#e2d2b6] bg-[#f3eee5] px-2.5 py-1 text-[11px] font-semibold text-[#8a6836]">
-                              Módulo {moduloIndex + 1}
-                            </span>
+                  <details key={modulo.id} className="group bg-white">
+                    <summary className="grid cursor-pointer list-none gap-4 px-5 py-4 transition hover:bg-[#fafafa] sm:px-6 lg:grid-cols-[minmax(0,1fr)_110px_90px_190px] lg:items-center">
+                      <div className="min-w-0">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <ChevronRight className="h-4 w-4 shrink-0 text-[#8a8f9d] transition group-open:rotate-90" />
 
-                            <span
-                              className={cx(
-                                "inline-flex items-center rounded-full border px-2.5 py-1 text-[12px] font-medium",
-                                statusClasses(modulo.status)
-                              )}
-                            >
-                              {traduzirStatus(modulo.status)}
-                            </span>
+                          <div className="min-w-0">
+                            <h3 className="truncate text-[16px] font-semibold text-[#141414]">
+                              Módulo {String(moduloIndex + 1).padStart(2, "0")} - {modulo.title}
+                            </h3>
+
+                            <p className="mt-1 line-clamp-1 text-[13px] text-[#666b76]">
+                              {modulo.description?.trim() || "Sem descrição cadastrada."}
+                            </p>
+
+                            <div className="mt-2 flex flex-wrap items-center gap-2 lg:hidden">
+                              <span className={cx("rounded-full border px-2.5 py-1 text-[11px] font-semibold", statusClasses(modulo.status))}>
+                                {traduzirStatus(modulo.status)}
+                              </span>
+
+                              <span className="rounded-full border border-[#e5e5e5] bg-white px-2.5 py-1 text-[11px] font-semibold text-[#52525b]">
+                                {aulasDoModulo.length} aula(s)
+                              </span>
+                            </div>
                           </div>
-
-                          <h3 className="mt-3 text-[17px] font-semibold text-[#141414]">
-                            {modulo.title}
-                          </h3>
-
-                          <p className="mt-2 text-[14px] leading-6 text-[#666b76]">
-                            {modulo.description?.trim() ||
-                              "Sem descrição cadastrada para este módulo."}
-                          </p>
-                        </div>
-
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="rounded-full border border-[#e5e5e5] bg-white px-3 py-1.5 text-[12px] font-medium text-[#52525b]">
-                            Ordem {modulo.sort_order}
-                          </span>
-                          <span className="rounded-full border border-[#e5e5e5] bg-white px-3 py-1.5 text-[12px] font-medium text-[#52525b]">
-                            {aulasDoModulo.length} aula(s)
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => abrirVisualizacaoModulo(modulo)}
-                            className="inline-flex items-center gap-1 rounded-full border border-[#e5e5e5] bg-white px-3 py-1.5 text-[12px] font-semibold text-[#52525b] transition hover:bg-[#f7f7f7]"
-                          >
-                            <Eye className="h-3.5 w-3.5" />
-                            Visualizar
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => abrirEdicaoModulo(modulo)}
-                            className="inline-flex items-center gap-1 rounded-full border border-[#e5e5e5] bg-white px-3 py-1.5 text-[12px] font-semibold text-[#52525b] transition hover:bg-[#f7f7f7]"
-                          >
-                            <PencilLine className="h-3.5 w-3.5" />
-                            Editar
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => abrirExclusaoModulo(modulo)}
-                            className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-[12px] font-semibold text-rose-700 transition hover:bg-rose-100"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                            Excluir
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => abrirModalNovaAula(modulo)}
-                            className="inline-flex items-center gap-1 rounded-full border border-[#e5e5e5] bg-white px-3 py-1.5 text-[12px] font-semibold text-[#52525b] transition hover:bg-[#f7f7f7]"
-                          >
-                            <Plus className="h-3.5 w-3.5" />
-                            Nova aula
-                          </button>
                         </div>
                       </div>
 
-                      <div className="p-5">
-                        {aulasDoModulo.length === 0 ? (
-                          <div className="border border-dashed border-[#e5e5e5] bg-white px-4 py-5 text-[14px] text-[#666b76]">
+                      <div className="hidden lg:block">
+                        <span className={cx("inline-flex rounded-full border px-2.5 py-1 text-[12px] font-semibold", statusClasses(modulo.status))}>
+                          {traduzirStatus(modulo.status)}
+                        </span>
+                      </div>
+
+                      <div className="hidden text-[13px] font-semibold text-[#52525b] lg:block">
+                        {aulasDoModulo.length} aula(s)
+                      </div>
+
+                      <div className="flex flex-nowrap items-center gap-2 lg:justify-end">
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            abrirVisualizacaoModulo(modulo);
+                          }}
+                          title="Visualizar módulo"
+                          aria-label="Visualizar módulo"
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-[10px] border border-[#e5e5e5] bg-white text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836]"
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            abrirEdicaoModulo(modulo);
+                          }}
+                          title="Editar módulo"
+                          aria-label="Editar módulo"
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-[10px] border border-[#e5e5e5] bg-white text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836]"
+                        >
+                          <PencilLine className="h-3.5 w-3.5" />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            abrirExclusaoModulo(modulo);
+                          }}
+                          title="Excluir módulo"
+                          aria-label="Excluir módulo"
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-[10px] border border-rose-200 bg-rose-50 text-rose-700 transition hover:bg-rose-100"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            abrirModalNovaAula(modulo);
+                          }}
+                          title="Nova aula"
+                          aria-label="Nova aula"
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-[10px] border border-[#DBC094] bg-[#DBC094] text-black transition hover:brightness-105"
+                        >
+                          <Plus className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </summary>
+
+                    <div className="border-t border-[#ededed] bg-white px-5 py-4 sm:px-6">
+                      {aulasDoModulo.length === 0 ? (
+                        <div className="flex flex-col items-start justify-between gap-3 border border-dashed border-[#d9d9d9] bg-white px-4 py-4 sm:flex-row sm:items-center">
+                          <p className="text-[14px] font-medium text-[#666b76]">
                             Este módulo ainda não possui aulas cadastradas.
+                          </p>
+
+                          <button
+                            type="button"
+                            onClick={() => abrirModalNovaAula(modulo)}
+                            title="Cadastrar aula"
+                            aria-label="Cadastrar aula"
+                            className="inline-flex h-10 w-10 items-center justify-center rounded-[10px] border border-[#DBC094] bg-[#DBC094] text-black transition hover:brightness-105"
+                          >
+                            <Plus className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div>
+                          <div className="hidden grid-cols-[minmax(0,1fr)_110px_90px_190px] gap-4 border-b border-[#ededed] px-1 pb-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8a8f9d] lg:grid">
+                            <div>Aula</div>
+                            <div>Tipo</div>
+                            <div>Status</div>
+                            <div className="text-right">Ações</div>
                           </div>
-                        ) : (
-                          <div className="space-y-3">
+
+                          <div className="divide-y divide-[#ededed]">
                             {aulasDoModulo.map((aula, aulaIndex) => {
                               const totalMateriaisAula =
                                 (materiaisPorAula.get(aula.id) ?? []).length;
@@ -2062,136 +2125,105 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                               return (
                                 <div
                                   key={aula.id}
-                                  className="rounded-[12px] border border-[#e5e5e5] bg-white p-4"
+                                  className="grid gap-4 px-1 py-4 lg:grid-cols-[minmax(0,1fr)_110px_90px_190px] lg:items-center"
                                 >
-                                  <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                                    <div className="min-w-0">
-                                      <div className="flex flex-wrap items-center gap-2">
-                                        <span className="inline-flex items-center rounded-full border border-[#e2d2b6] bg-[#f3eee5] px-2.5 py-1 text-[11px] font-medium text-[#8a6836]">
-                                          Aula {aulaIndex + 1}
-                                        </span>
+                                  <div className="min-w-0">
+                                    <h4 className="truncate text-[15px] font-semibold text-[#141414]">
+                                      Aula {String(aulaIndex + 1).padStart(2, "0")} - {aula.title}
+                                    </h4>
 
-                                        <span
-                                          className={cx(
-                                            "inline-flex items-center rounded-full border px-2.5 py-1 text-[12px] font-medium",
-                                            statusClasses(aula.status)
-                                          )}
-                                        >
-                                          {traduzirStatus(aula.status)}
-                                        </span>
+                                    <p className="mt-1 line-clamp-1 text-[13px] text-[#666b76]">
+                                      {aula.description?.trim() || "Sem descrição cadastrada."}
+                                    </p>
 
-                                        {aula.is_preview ? (
-                                          <span className="inline-flex items-center gap-1 rounded-full border border-[#e2d2b6] bg-[#f3eee5] px-2.5 py-1 text-[11px] font-semibold text-[#8a6836]">
-                                            <Star className="h-3 w-3" />
-                                            Prévia
-                                          </span>
-                                        ) : null}
+                                    <p className="mt-1 text-[12px] font-medium text-[#8a8f9d]">
+                                      Ordem {aula.sort_order} • {totalMateriaisAula} material(is)
+                                      {aula.is_preview ? " • Prévia" : ""}
+                                    </p>
 
-                                        <span className="inline-flex items-center gap-1 rounded-full border border-[#e5e5e5] bg-white px-2.5 py-1 text-[11px] font-medium text-[#52525b]">
-                                          {iconeConteudo(aula.content_type)}
-                                          {traduzirTipoConteudo(aula.content_type)}
-                                        </span>
+                                    <div className="mt-2 flex flex-wrap items-center gap-2 lg:hidden">
+                                      <span className={cx("rounded-full border px-2.5 py-1 text-[11px] font-semibold", statusClasses(aula.status))}>
+                                        {traduzirStatus(aula.status)}
+                                      </span>
 
-                                        <span className="inline-flex items-center gap-1 rounded-full border border-[#e5e5e5] bg-white px-2.5 py-1 text-[11px] font-medium text-[#52525b]">
-                                          <Paperclip className="h-3 w-3" />
-                                          {totalMateriaisAula} material(is)
-                                        </span>
-
-                                        <span className="inline-flex items-center gap-1 rounded-full border border-[#e5e5e5] bg-white px-2.5 py-1 text-[11px] font-medium text-[#666b76]">
-                                          <LinkIcon className="h-3 w-3" />
-                                          {traduzirSourceMode(aula.source_mode)}
-                                        </span>
-                                      </div>
-
-                                      <h4 className="mt-3 text-[16px] font-semibold text-[#141414]">
-                                        {aula.title}
-                                      </h4>
-
-                                      <p className="mt-2 text-[14px] leading-6 text-[#666b76]">
-                                        {aula.description?.trim() ||
-                                          "Sem descrição cadastrada para esta aula."}
-                                      </p>
-                                    </div>
-
-                                    <div className="grid min-w-[240px] grid-cols-2 gap-2">
-                                      <MiniInfo label="Ordem" value={String(aula.sort_order)} />
-                                      <MiniInfo label="Duração" value={formatarDuracao(aula.duration_sec)} />
-                                      <MiniInfo label="Liberação" value={formatarData(aula.released_at)} />
-                                      <MiniInfo label="Atualizado" value={formatarData(aula.updated_at)} />
+                                      <span className="rounded-full border border-[#e5e5e5] bg-white px-2.5 py-1 text-[11px] font-semibold text-[#52525b]">
+                                        {traduzirTipoConteudo(aula.content_type)}
+                                      </span>
                                     </div>
                                   </div>
 
-                                  <div className="mt-4 flex flex-wrap items-center gap-2">
-                                    {aula.primary_asset_name ? (
-                                      <span className="rounded-full border border-[#e5e5e5] bg-white px-3 py-1.5 text-[12px] font-medium text-[#52525b]">
-                                        Arquivo: {aula.primary_asset_name}
-                                      </span>
-                                    ) : null}
+                                  <div className="hidden items-center gap-2 text-[13px] font-semibold text-[#52525b] lg:flex">
+                                    {iconeConteudo(aula.content_type)}
+                                    {traduzirTipoConteudo(aula.content_type)}
+                                  </div>
 
-                                    {aula.external_url ? (
-                                      <span className="rounded-full border border-[#e5e5e5] bg-white px-3 py-1.5 text-[12px] font-medium text-[#52525b]">
-                                        URL configurada
-                                      </span>
-                                    ) : null}
+                                  <div className="hidden lg:block">
+                                    <span className={cx("inline-flex rounded-full border px-2.5 py-1 text-[12px] font-semibold", statusClasses(aula.status))}>
+                                      {traduzirStatus(aula.status)}
+                                    </span>
+                                  </div>
 
-                                    {aula.zoom_meeting_id ? (
-                                      <span className="rounded-full border border-[#e5e5e5] bg-white px-3 py-1.5 text-[12px] font-medium text-[#52525b]">
-                                        Zoom Meeting ID: {aula.zoom_meeting_id}
-                                      </span>
-                                    ) : null}
-
+                                  <div className="flex flex-nowrap items-center gap-2 lg:justify-end">
                                     <button
                                       type="button"
                                       onClick={() => abrirVisualizacaoAula(aula)}
-                                      className="inline-flex items-center gap-1 rounded-full border border-[#e5e5e5] bg-white px-3 py-1.5 text-[12px] font-semibold text-[#52525b] transition hover:bg-[#f7f7f7]"
+                                      title="Visualizar aula"
+                                      aria-label="Visualizar aula"
+                                      className="inline-flex h-9 w-9 items-center justify-center rounded-[10px] border border-[#e5e5e5] bg-white text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836]"
                                     >
                                       <Eye className="h-3.5 w-3.5" />
-                                      Visualizar
                                     </button>
+
                                     <button
                                       type="button"
                                       onClick={() => abrirEdicaoAula(aula)}
-                                      className="inline-flex items-center gap-1 rounded-full border border-[#e5e5e5] bg-white px-3 py-1.5 text-[12px] font-semibold text-[#52525b] transition hover:bg-[#f7f7f7]"
+                                      title="Editar aula"
+                                      aria-label="Editar aula"
+                                      className="inline-flex h-9 w-9 items-center justify-center rounded-[10px] border border-[#e5e5e5] bg-white text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836]"
                                     >
                                       <PencilLine className="h-3.5 w-3.5" />
-                                      Editar
                                     </button>
+
                                     <button
                                       type="button"
                                       onClick={() => abrirExclusaoAula(aula)}
-                                      className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-[12px] font-semibold text-rose-700 transition hover:bg-rose-100"
+                                      title="Excluir aula"
+                                      aria-label="Excluir aula"
+                                      className="inline-flex h-9 w-9 items-center justify-center rounded-[10px] border border-rose-200 bg-rose-50 text-rose-700 transition hover:bg-rose-100"
                                     >
                                       <Trash2 className="h-3.5 w-3.5" />
-                                      Excluir
                                     </button>
+
                                     <button
                                       type="button"
                                       onClick={() => abrirModalMateriais(aula)}
-                                      className="inline-flex items-center gap-1 rounded-full border border-[#e5e5e5] bg-white px-3 py-1.5 text-[12px] font-semibold text-[#52525b] transition hover:bg-[#f7f7f7]"
+                                      title="Gerenciar materiais"
+                                      aria-label="Gerenciar materiais"
+                                      className="inline-flex h-9 w-9 items-center justify-center rounded-[10px] border border-[#e5e5e5] bg-white text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836]"
                                     >
-                                      Gerenciar materiais
-                                      <ChevronRight className="h-3.5 w-3.5" />
+                                      <Paperclip className="h-3.5 w-3.5" />
                                     </button>
                                   </div>
                                 </div>
                               );
                             })}
                           </div>
-                        )}
-                      </div>
+                        </div>
+                      )}
                     </div>
-                  </article>
+                  </details>
                 );
               })}
             </div>
           )}
         </section>
+        ) : null}
       </div>
 
             {moduloVisualizando ? (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#141414]/40 p-4 backdrop-blur-[2px]">
-          <div className="flex min-h-full items-center justify-center py-6">
-            <div className="w-full max-w-2xl rounded-[18px] border border-[#e5e5e5] bg-white shadow-[0_24px_80px_rgba(31,34,48,0.16)]">
+        <section className="rounded-[18px] border border-[#e5e5e5] bg-white">
+          <div>
+            <div className="w-full">
               <div className="flex items-start justify-between gap-4 border-b border-[#e5e5e5] px-6 py-5">
                 <div>
                   <div className="inline-flex items-center gap-2 rounded-full border border-[#e5e5e5] bg-white px-3 py-1 text-[12px] font-medium uppercase tracking-[0.14em] text-[#52525b]">
@@ -2201,17 +2233,15 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                   <h2 className="mt-4 text-[22px] font-semibold tracking-[-0.03em] text-[#141414]">
                     {moduloVisualizando.title}
                   </h2>
-                  <p className="mt-2 text-[14px] leading-6 text-[#666b76]">
-                    Visualize os dados principais do módulo criado.
-                  </p>
                 </div>
 
                 <button
                   type="button"
                   onClick={() => setModuloVisualizando(null)}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#e5e5e5] bg-white text-[#666b76] transition hover:bg-[#f7f7f7] hover:text-[#141414]"
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-[10px] border border-[#e5e5e5] bg-white px-4 text-[13px] font-semibold text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836]"
                 >
-                  <X className="h-4 w-4" />
+                  <ArrowLeft className="h-4 w-4" />
+                  Voltar
                 </button>
               </div>
 
@@ -2231,13 +2261,13 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
               </div>
             </div>
           </div>
-        </div>
+        </section>
       ) : null}
 
       {moduloEditando ? (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#141414]/40 p-4 backdrop-blur-[2px]">
-          <div className="flex min-h-full items-center justify-center py-6">
-            <div className="w-full max-w-2xl rounded-[18px] border border-[#e5e5e5] bg-white shadow-[0_24px_80px_rgba(31,34,48,0.16)]">
+        <section className="rounded-[18px] border border-[#e5e5e5] bg-white">
+          <div>
+            <div className="w-full">
               <div className="flex items-start justify-between gap-4 border-b border-[#e5e5e5] px-6 py-5">
                 <div>
                   <div className="inline-flex items-center gap-2 rounded-full border border-[#e2d2b6] bg-[#f3eee5] px-3 py-1 text-[12px] font-medium uppercase tracking-[0.14em] text-[#8a6836]">
@@ -2247,17 +2277,15 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                   <h2 className="mt-4 text-[22px] font-semibold tracking-[-0.03em] text-[#141414]">
                     Editar módulo
                   </h2>
-                  <p className="mt-2 text-[14px] leading-6 text-[#666b76]">
-                    Ajuste os dados do módulo selecionado.
-                  </p>
                 </div>
 
                 <button
                   type="button"
                   onClick={fecharEdicaoModulo}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#e5e5e5] bg-white text-[#666b76] transition hover:bg-[#f7f7f7] hover:text-[#141414]"
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-[10px] border border-[#e5e5e5] bg-white px-4 text-[13px] font-semibold text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836]"
                 >
-                  <X className="h-4 w-4" />
+                  <ArrowLeft className="h-4 w-4" />
+                  Voltar
                 </button>
               </div>
 
@@ -2373,13 +2401,13 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
               </form>
             </div>
           </div>
-        </div>
+        </section>
       ) : null}
 
       {moduloExcluindo ? (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#141414]/40 p-4 backdrop-blur-[2px]">
-          <div className="flex min-h-full items-center justify-center py-6">
-            <div className="w-full max-w-xl rounded-[18px] border border-[#e5e5e5] bg-white shadow-[0_24px_80px_rgba(31,34,48,0.16)]">
+        <section className="rounded-[18px] border border-[#e5e5e5] bg-white">
+          <div>
+            <div className="w-full">
               <div className="flex items-start justify-between gap-4 border-b border-[#e5e5e5] px-6 py-5">
                 <div>
                   <div className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-[12px] font-medium uppercase tracking-[0.14em] text-rose-700">
@@ -2397,9 +2425,10 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                 <button
                   type="button"
                   onClick={fecharExclusaoModulo}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#e5e5e5] bg-white text-[#666b76] transition hover:bg-[#f7f7f7] hover:text-[#141414]"
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-[10px] border border-[#e5e5e5] bg-white px-4 text-[13px] font-semibold text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836]"
                 >
-                  <X className="h-4 w-4" />
+                  <ArrowLeft className="h-4 w-4" />
+                  Voltar
                 </button>
               </div>
 
@@ -2447,13 +2476,13 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
               </div>
             </div>
           </div>
-        </div>
+        </section>
       ) : null}
 
       {modalNovoModuloAberto ? (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#141414]/40 p-4 backdrop-blur-[2px]">
-          <div className="flex min-h-full items-center justify-center py-6">
-            <div className="w-full max-w-2xl rounded-[18px] border border-[#e5e5e5] bg-white shadow-[0_24px_80px_rgba(31,34,48,0.16)]">
+        <section className="rounded-[18px] border border-[#e5e5e5] bg-white">
+          <div>
+            <div className="w-full">
               <div className="flex items-start justify-between gap-4 border-b border-[#e5e5e5] px-6 py-5">
                 <div>
                   <div className="inline-flex items-center gap-2 rounded-full border border-[#e2d2b6] bg-[#f3eee5] px-3 py-1 text-[12px] font-medium uppercase tracking-[0.14em] text-[#8a6836]">
@@ -2464,18 +2493,15 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                   <h2 className="mt-4 text-[22px] font-semibold tracking-[-0.03em] text-[#141414]">
                     Cadastrar módulo
                   </h2>
-
-                  <p className="mt-2 text-[14px] leading-6 text-[#666b76]">
-                    Cadastre um novo módulo dentro deste curso.
-                  </p>
                 </div>
 
                 <button
                   type="button"
                   onClick={fecharModalNovoModulo}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#e5e5e5] bg-white text-[#666b76] transition hover:bg-[#f7f7f7] hover:text-[#141414]"
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-[10px] border border-[#e5e5e5] bg-white px-4 text-[13px] font-semibold text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836]"
                 >
-                  <X className="h-4 w-4" />
+                  <ArrowLeft className="h-4 w-4" />
+                  Voltar
                 </button>
               </div>
 
@@ -2594,13 +2620,13 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
               </form>
             </div>
           </div>
-        </div>
+        </section>
       ) : null}
 
       {modalNovaAulaAberto ? (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#141414]/40 p-4 backdrop-blur-[2px]">
-          <div className="flex min-h-full items-center justify-center py-6">
-            <div className="w-full max-w-4xl rounded-[18px] border border-[#e5e5e5] bg-white shadow-[0_24px_80px_rgba(31,34,48,0.16)]">
+        <section className="rounded-[18px] border border-[#e5e5e5] bg-white">
+          <div>
+            <div className="w-full">
               <div className="flex items-start justify-between gap-4 border-b border-[#e5e5e5] px-6 py-5">
                 <div>
                   <div className="inline-flex items-center gap-2 rounded-full border border-[#e2d2b6] bg-[#f3eee5] px-3 py-1 text-[12px] font-medium uppercase tracking-[0.14em] text-[#8a6836]">
@@ -2622,13 +2648,14 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                 <button
                   type="button"
                   onClick={fecharModalNovaAula}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#e5e5e5] bg-white text-[#666b76] transition hover:bg-[#f7f7f7] hover:text-[#141414]"
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-[10px] border border-[#e5e5e5] bg-white px-4 text-[13px] font-semibold text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836]"
                 >
-                  <X className="h-4 w-4" />
+                  <ArrowLeft className="h-4 w-4" />
+                  Voltar
                 </button>
               </div>
 
-              <div className="max-h-[calc(100vh-8rem)] overflow-y-auto">
+              <div className="w-full">
                 <form onSubmit={salvarNovaAula} className="p-6">
                   <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                     {erroNovaAula ? (
@@ -2940,9 +2967,6 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                             <Radio className="h-4 w-4 text-[#8a6836]" />
                             Aula ao vivo via Zoom dentro da plataforma
                           </div>
-                          <p className="mt-2 text-[14px] leading-6 text-[#666b76]">
-                            Esta aula será configurada para uso com Zoom como provedor da transmissão ao vivo.
-                          </p>
                         </div>
 
                         <div>
@@ -3078,9 +3102,6 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                           <div className="text-[14px] font-semibold text-[#141414]">
                             Materiais para download
                           </div>
-                          <p className="mt-1 text-[14px] leading-6 text-[#666b76]">
-                            Os materiais da aula continuam disponíveis pelo botão "Gerenciar materiais" após salvar a aula.
-                          </p>
                         </div>
                       </div>
                     </div>
@@ -3139,13 +3160,13 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
               </div>
             </div>
           </div>
-        </div>
+        </section>
       ) : null}
 
       {modalMateriaisAberto ? (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#141414]/40 p-4 backdrop-blur-[2px]">
-          <div className="flex min-h-full items-center justify-center py-6">
-            <div className="w-full max-w-4xl rounded-[18px] border border-[#e5e5e5] bg-white shadow-[0_24px_80px_rgba(31,34,48,0.16)]">
+        <section className="rounded-[18px] border border-[#e5e5e5] bg-white">
+          <div>
+            <div className="w-full">
               <div className="flex items-start justify-between gap-4 border-b border-[#e5e5e5] px-6 py-5">
                 <div>
                   <div className="inline-flex items-center gap-2 rounded-full border border-[#e5e5e5] bg-white px-3 py-1 text-[12px] font-medium uppercase tracking-[0.14em] text-[#52525b]">
@@ -3160,28 +3181,26 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                   <p className="mt-2 text-[14px] leading-6 text-[#666b76]">
                     {aulaSelecionadaParaMateriais
                       ? `Cadastre e visualize os materiais da aula "${aulaSelecionadaParaMateriais.title}".`
-                      : "Cadastre e visualize os materiais da aula selecionada."}
+                      : ""}
                   </p>
                 </div>
 
                 <button
                   type="button"
                   onClick={fecharModalMateriais}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#e5e5e5] bg-white text-[#666b76] transition hover:bg-[#f7f7f7] hover:text-[#141414]"
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-[10px] border border-[#e5e5e5] bg-white px-4 text-[13px] font-semibold text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836]"
                 >
-                  <X className="h-4 w-4" />
+                  <ArrowLeft className="h-4 w-4" />
+                  Voltar
                 </button>
               </div>
 
-              <div className="max-h-[calc(100vh-8rem)] overflow-y-auto">
+              <div className="w-full">
                 <div className="grid grid-cols-1 gap-0 lg:grid-cols-[1.05fr_0.95fr]">
                   <div className="border-b border-[#e5e5e5] px-6 py-5 lg:border-b-0 lg:border-r">
                     <h3 className="text-[17px] font-semibold text-[#141414]">
                       Materiais cadastrados
                     </h3>
-                    <p className="mt-2 text-[14px] leading-6 text-[#666b76]">
-                      Lista real dos materiais já vinculados à aula selecionada.
-                    </p>
 
                     <div className="mt-5 space-y-3">
                       {materiaisDaAulaSelecionada.length === 0 ? (
@@ -3254,9 +3273,6 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                     <h3 className="text-[17px] font-semibold text-[#141414]">
                       Novo material
                     </h3>
-                    <p className="mt-2 text-[14px] leading-6 text-[#666b76]">
-                      Cadastre um novo material para a aula selecionada.
-                    </p>
 
                     <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
                       {erroMaterial ? (
@@ -3387,13 +3403,13 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
               </div>
             </div>
           </div>
-        </div>
+        </section>
       ) : null}
 
       {aulaVisualizando ? (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#141414]/40 p-4 backdrop-blur-[2px]">
-          <div className="flex min-h-full items-center justify-center py-6">
-            <div className="w-full max-w-3xl rounded-[18px] border border-[#e5e5e5] bg-white shadow-[0_24px_80px_rgba(31,34,48,0.16)]">
+        <section className="rounded-[18px] border border-[#e5e5e5] bg-white">
+          <div>
+            <div className="w-full">
               <div className="flex items-start justify-between gap-4 border-b border-[#e5e5e5] px-6 py-5">
                 <div>
                   <div className="inline-flex items-center gap-2 rounded-full border border-[#e5e5e5] bg-white px-3 py-1 text-[12px] font-medium uppercase tracking-[0.14em] text-[#52525b]">
@@ -3427,13 +3443,13 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
               </div>
             </div>
           </div>
-        </div>
+        </section>
       ) : null}
 
       {aulaEditando ? (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#141414]/40 p-4 backdrop-blur-[2px]">
-          <div className="flex min-h-full items-center justify-center py-6">
-            <div className="w-full max-w-4xl rounded-[18px] border border-[#e5e5e5] bg-white shadow-[0_24px_80px_rgba(31,34,48,0.16)]">
+        <section className="rounded-[18px] border border-[#e5e5e5] bg-white">
+          <div>
+            <div className="w-full">
               <div className="flex items-start justify-between gap-4 border-b border-[#e5e5e5] px-6 py-5">
                 <div>
                   <div className="inline-flex items-center gap-2 rounded-full border border-[#e2d2b6] bg-[#f3eee5] px-3 py-1 text-[12px] font-medium uppercase tracking-[0.14em] text-[#8a6836]">
@@ -3443,9 +3459,6 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                   <h2 className="mt-4 text-[22px] font-semibold tracking-[-0.03em] text-[#141414]">
                     Editar aula
                   </h2>
-                  <p className="mt-2 text-[14px] leading-6 text-[#666b76]">
-                    Ajuste todas as informações da aula e salve para sobrescrever o conteúdo atual.
-                  </p>
                 </div>
                 <button
                   type="button"
@@ -3456,7 +3469,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                 </button>
               </div>
 
-              <div className="max-h-[calc(100vh-8rem)] overflow-y-auto">
+              <div className="w-full">
                 <form onSubmit={salvarEdicaoAula} className="p-6">
                   <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                     {erroEditarAula ? (
@@ -3791,9 +3804,6 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                             <Radio className="h-4 w-4 text-[#8a6836]" />
                             Aula ao vivo via Zoom dentro da plataforma
                           </div>
-                          <p className="mt-2 text-[14px] leading-6 text-[#666b76]">
-                            Edite os dados da transmissão ao vivo e salve para sobrescrever a configuração atual.
-                          </p>
                         </div>
 
                         <div>
@@ -3941,9 +3951,6 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                           <div className="text-[14px] font-semibold text-[#141414]">
                             Materiais para download
                           </div>
-                          <p className="mt-1 text-[14px] leading-6 text-[#666b76]">
-                            Os materiais da aula continuam disponíveis pelo botão "Gerenciar materiais".
-                          </p>
                         </div>
                       </div>
                     </div>
@@ -4001,13 +4008,13 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
               </div>
             </div>
           </div>
-        </div>
+        </section>
       ) : null}
 
       {aulaExcluindo ? (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#141414]/40 p-4 backdrop-blur-[2px]">
-          <div className="flex min-h-full items-center justify-center py-6">
-            <div className="w-full max-w-xl rounded-[18px] border border-[#e5e5e5] bg-white shadow-[0_24px_80px_rgba(31,34,48,0.16)]">
+        <section className="rounded-[18px] border border-[#e5e5e5] bg-white">
+          <div>
+            <div className="w-full">
               <div className="flex items-start justify-between gap-4 border-b border-[#e5e5e5] px-6 py-5">
                 <div>
                   <div className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-[12px] font-medium uppercase tracking-[0.14em] text-rose-700">
@@ -4016,7 +4023,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                   </div>
                   <h2 className="mt-4 text-[22px] font-semibold tracking-[-0.03em] text-[#141414]">Confirmar exclusão</h2>
                 </div>
-                <button type="button" onClick={fecharExclusaoAula} className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#e5e5e5] bg-white text-[#666b76] transition hover:bg-[#f7f7f7] hover:text-[#141414]"><X className="h-4 w-4" /></button>
+                <button type="button" onClick={fecharExclusaoAula} className="inline-flex h-10 items-center justify-center gap-2 rounded-[10px] border border-[#e5e5e5] bg-white px-4 text-[13px] font-semibold text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836]"><ArrowLeft className="h-4 w-4" />Voltar</button>
               </div>
               <div className="p-6">
                 {erroExcluirAula ? <div className="rounded-[18px] border border-rose-200 bg-rose-50 p-4"><p className="text-[14px] leading-6 text-rose-600">{erroExcluirAula}</p></div> : <div className="rounded-[12px] border border-[#e5e5e5] bg-white p-4 text-[14px] leading-6 text-[#666b76]">Você está prestes a excluir a aula <strong>{aulaExcluindo.title}</strong>.</div>}
@@ -4027,16 +4034,16 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
               </div>
             </div>
           </div>
-        </div>
+        </section>
       ) : null}
 
       {materialVisualizando ? (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#141414]/40 p-4 backdrop-blur-[2px]">
-          <div className="flex min-h-full items-center justify-center py-6">
-            <div className="w-full max-w-2xl rounded-[18px] border border-[#e5e5e5] bg-white shadow-[0_24px_80px_rgba(31,34,48,0.16)]">
+        <section className="rounded-[18px] border border-[#e5e5e5] bg-white">
+          <div>
+            <div className="w-full">
               <div className="flex items-start justify-between gap-4 border-b border-[#e5e5e5] px-6 py-5">
                 <div><div className="inline-flex items-center gap-2 rounded-full border border-[#e5e5e5] bg-white px-3 py-1 text-[12px] font-medium uppercase tracking-[0.14em] text-[#52525b]"><Eye className="h-3.5 w-3.5" />Visualização do material</div><h2 className="mt-4 text-[22px] font-semibold tracking-[-0.03em] text-[#141414]">{materialVisualizando.title?.trim() || "Sem título cadastrado"}</h2></div>
-                <button type="button" onClick={() => setMaterialVisualizando(null)} className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#e5e5e5] bg-white text-[#666b76] transition hover:bg-[#f7f7f7] hover:text-[#141414]"><X className="h-4 w-4" /></button>
+                <button type="button" onClick={() => setMaterialVisualizando(null)} className="inline-flex h-10 items-center justify-center gap-2 rounded-[10px] border border-[#e5e5e5] bg-white px-4 text-[13px] font-semibold text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836]"><ArrowLeft className="h-4 w-4" />Voltar</button>
               </div>
               <div className="grid grid-cols-1 gap-4 p-6 md:grid-cols-2">
                 <InfoPill icon={<Paperclip className="h-4 w-4" />} label="Tipo" value={traduzirTipoMaterial(materialVisualizando.asset_type)} />
@@ -4046,16 +4053,16 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
               </div>
             </div>
           </div>
-        </div>
+        </section>
       ) : null}
 
       {materialEditando ? (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#141414]/40 p-4 backdrop-blur-[2px]">
-          <div className="flex min-h-full items-center justify-center py-6">
-            <div className="w-full max-w-2xl rounded-[18px] border border-[#e5e5e5] bg-white shadow-[0_24px_80px_rgba(31,34,48,0.16)]">
+        <section className="rounded-[18px] border border-[#e5e5e5] bg-white">
+          <div>
+            <div className="w-full">
               <div className="flex items-start justify-between gap-4 border-b border-[#e5e5e5] px-6 py-5">
                 <div><div className="inline-flex items-center gap-2 rounded-full border border-[#e2d2b6] bg-[#f3eee5] px-3 py-1 text-[12px] font-medium uppercase tracking-[0.14em] text-[#8a6836]"><PencilLine className="h-3.5 w-3.5" />Editar material</div><h2 className="mt-4 text-[22px] font-semibold tracking-[-0.03em] text-[#141414]">Editar material</h2></div>
-                <button type="button" onClick={fecharEdicaoMaterial} className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#e5e5e5] bg-white text-[#666b76] transition hover:bg-[#f7f7f7] hover:text-[#141414]"><X className="h-4 w-4" /></button>
+                <button type="button" onClick={fecharEdicaoMaterial} className="inline-flex h-10 items-center justify-center gap-2 rounded-[10px] border border-[#e5e5e5] bg-white px-4 text-[13px] font-semibold text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836]"><ArrowLeft className="h-4 w-4" />Voltar</button>
               </div>
               <form onSubmit={salvarEdicaoMaterialMeta} className="p-6">
                 <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
@@ -4072,16 +4079,16 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
               </form>
             </div>
           </div>
-        </div>
+        </section>
       ) : null}
 
       {materialExcluindo ? (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#141414]/40 p-4 backdrop-blur-[2px]">
-          <div className="flex min-h-full items-center justify-center py-6">
-            <div className="w-full max-w-xl rounded-[18px] border border-[#e5e5e5] bg-white shadow-[0_24px_80px_rgba(31,34,48,0.16)]">
+        <section className="rounded-[18px] border border-[#e5e5e5] bg-white">
+          <div>
+            <div className="w-full">
               <div className="flex items-start justify-between gap-4 border-b border-[#e5e5e5] px-6 py-5">
                 <div><div className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-[12px] font-medium uppercase tracking-[0.14em] text-rose-700"><AlertTriangle className="h-3.5 w-3.5" />Excluir material</div><h2 className="mt-4 text-[22px] font-semibold tracking-[-0.03em] text-[#141414]">Confirmar exclusão</h2></div>
-                <button type="button" onClick={fecharExclusaoMaterial} className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#e5e5e5] bg-white text-[#666b76] transition hover:bg-[#f7f7f7] hover:text-[#141414]"><X className="h-4 w-4" /></button>
+                <button type="button" onClick={fecharExclusaoMaterial} className="inline-flex h-10 items-center justify-center gap-2 rounded-[10px] border border-[#e5e5e5] bg-white px-4 text-[13px] font-semibold text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836]"><ArrowLeft className="h-4 w-4" />Voltar</button>
               </div>
               <div className="p-6">
                 {erroExcluirMaterial ? <div className="rounded-[18px] border border-rose-200 bg-rose-50 p-4"><p className="text-[14px] leading-6 text-rose-600">{erroExcluirMaterial}</p></div> : <div className="rounded-[12px] border border-[#e5e5e5] bg-white p-4 text-[14px] leading-6 text-[#666b76]">Você está prestes a excluir o material <strong>{materialExcluindo.title?.trim() || materialExcluindo.file_name || "sem título"}</strong>.</div>}
@@ -4092,7 +4099,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
               </div>
             </div>
           </div>
-        </div>
+        </section>
       ) : null}
 
     </div>

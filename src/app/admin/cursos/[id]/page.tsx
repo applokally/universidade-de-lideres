@@ -156,6 +156,24 @@ function statusClasses(status: StatusGeral) {
   }
 }
 
+function traduzirTipoConteudo(tipo: string | null | undefined) {
+  switch (tipo) {
+    case "video":
+      return "Vídeo";
+    case "text":
+      return "Texto";
+    case "pdf":
+      return "PDF";
+    case "audio":
+      return "Áudio";
+    case "live":
+      return "Ao vivo";
+    default:
+      return tipo || "—";
+  }
+}
+
+
 function traduzirFormato(format: PreferredCardFormat | null | undefined) {
   if (format === "horizontal") return "Horizontal";
   if (format === "featured") return "Vertical grande";
@@ -848,16 +866,16 @@ export default function AdminCursoDetalhePage({ params }: PaginaProps) {
                 </Link>
 
                 <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8a8f9d]">
-                  Gerenciamento do curso
+                  Curso
                 </p>
 
-                <h1 className="text-[38px] font-semibold leading-none tracking-[-0.04em] text-[#141414] sm:text-[46px]">
+                <h1 className="text-[34px] font-semibold leading-tight tracking-[-0.04em] text-[#141414] sm:text-[42px]">
                   {carregando ? "Carregando curso..." : curso?.title ?? "Curso"}
                 </h1>
 
                 <p className="mt-3 max-w-3xl text-[15px] leading-6 text-[#5d6472]">
                   {carregando
-                    ? "Buscando dados reais do curso, módulos e aulas."
+                    ? "Carregando dados do curso."
                     : resumoCurso(curso)}
                 </p>
 
@@ -896,7 +914,7 @@ export default function AdminCursoDetalhePage({ params }: PaginaProps) {
                 <button
                   type="button"
                   onClick={() => void carregarEstrutura(cursoId)}
-                  className="inline-flex h-12 items-center justify-center gap-2 rounded-[12px] border border-[#e5e5e5] bg-white px-5 text-[14px] font-semibold text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836]"
+                  className="inline-flex h-12 items-center justify-center gap-2 rounded-[10px] border border-[#e5e5e5] bg-white px-5 text-[14px] font-semibold text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836]"
                 >
                   <RefreshCcw className="h-4 w-4" />
                   Atualizar
@@ -906,7 +924,7 @@ export default function AdminCursoDetalhePage({ params }: PaginaProps) {
                   type="button"
                   onClick={abrirEdicaoCurso}
                   disabled={!curso || carregando}
-                  className="inline-flex h-12 items-center justify-center gap-2 rounded-[12px] border border-[#e5e5e5] bg-white px-5 text-[14px] font-semibold text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836] disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex h-12 items-center justify-center gap-2 rounded-[10px] border border-[#e5e5e5] bg-white px-5 text-[14px] font-semibold text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <PencilLine className="h-4 w-4" />
                   Editar curso
@@ -914,7 +932,7 @@ export default function AdminCursoDetalhePage({ params }: PaginaProps) {
 
                 <Link
                   href={`/admin/cursos/${cursoId}/modulos`}
-                  className="inline-flex h-12 items-center justify-center gap-2 rounded-[12px] bg-[#DBC094] px-5 text-[14px] font-semibold text-black transition hover:brightness-105"
+                  className="inline-flex h-12 items-center justify-center gap-2 rounded-[10px] bg-[#DBC094] px-5 text-[14px] font-semibold text-black transition hover:brightness-105"
                 >
                   <Layers3 className="h-4 w-4" />
                   Gerenciar módulos
@@ -923,39 +941,14 @@ export default function AdminCursoDetalhePage({ params }: PaginaProps) {
             </div>
 
             {mensagemCurso ? (
-              <div className="rounded-[12px] border border-emerald-200 bg-emerald-50 p-4 text-[14px] font-semibold text-emerald-700">
+              <div className="rounded-[10px] border border-emerald-200 bg-emerald-50 p-4 text-[14px] font-semibold text-emerald-700">
                 {mensagemCurso}
-              </div>
-            ) : null}
-
-            {!carregando && curso ? (
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-                <InfoPill
-                  icon={<GraduationCap className="h-4 w-4" />}
-                  label="Slug"
-                  value={curso.slug}
-                />
-                <InfoPill
-                  icon={<Clock3 className="h-4 w-4" />}
-                  label="Publicado em"
-                  value={formatarData(curso.published_at)}
-                />
-                <InfoPill
-                  icon={<Clock3 className="h-4 w-4" />}
-                  label="Atualizado em"
-                  value={formatarData(curso.updated_at)}
-                />
-                <InfoPill
-                  icon={<BookOpen className="h-4 w-4" />}
-                  label="Identificador"
-                  value={curso.id}
-                />
               </div>
             ) : null}
         </section>
 
         {editandoCurso && curso ? (
-          <section className="rounded-[12px] border border-[#e5e5e5] bg-white ">
+          <section className="overflow-hidden rounded-[18px] border border-[#e5e5e5] bg-white">
             <div className="flex items-start justify-between gap-4 border-b border-[#e5e5e5] p-5">
               <div>
                 <div className="inline-flex items-center gap-2 rounded-full border border-[#e2d2b6] bg-[#f3eee5] px-3 py-1 text-[12px] font-medium uppercase tracking-[0.18em] text-[#8a6836]">
@@ -968,9 +961,7 @@ export default function AdminCursoDetalhePage({ params }: PaginaProps) {
                 </h2>
 
                 <p className="mt-2 max-w-3xl text-[14px] leading-6 text-[#666b76]">
-                  Ajuste todas as informações do curso, vincule uma trilha,
-                  troque o modelo de capa e salve para sobrescrever o cadastro
-                  atual.
+                  
                 </p>
               </div>
 
@@ -987,7 +978,7 @@ export default function AdminCursoDetalhePage({ params }: PaginaProps) {
             <form onSubmit={salvarEdicaoCurso} className="p-5">
               <div className="grid grid-cols-1 gap-6">
                 {erroEditarCurso ? (
-                  <div className="rounded-[12px] border border-rose-200 bg-rose-50 p-4">
+                  <div className="rounded-[10px] border border-rose-200 bg-rose-50 p-4">
                     <h3 className="text-[14px] font-semibold text-rose-700">
                       Não foi possível salvar o curso
                     </h3>
@@ -1008,7 +999,7 @@ export default function AdminCursoDetalhePage({ params }: PaginaProps) {
                       onChange={(event) =>
                         updateCourseField("title", event.target.value)
                       }
-                      className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
+                      className="h-12 w-full rounded-[10px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
                     />
                   </div>
 
@@ -1022,7 +1013,7 @@ export default function AdminCursoDetalhePage({ params }: PaginaProps) {
                       onChange={(event) =>
                         updateCourseField("slug", gerarSlug(event.target.value))
                       }
-                      className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
+                      className="h-12 w-full rounded-[10px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
                     />
                   </div>
 
@@ -1031,13 +1022,13 @@ export default function AdminCursoDetalhePage({ params }: PaginaProps) {
                       Trilha vinculada
                     </label>
 
-                    <div className="rounded-[12px] border border-[#e5e5e5] bg-white p-4">
+                    <div className="rounded-[10px] border border-[#e5e5e5] bg-white p-4">
                       <select
                         value={formCurso.trilhaId}
                         onChange={(event) =>
                           updateCourseField("trilhaId", event.target.value)
                         }
-                        className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
+                        className="h-12 w-full rounded-[10px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
                       >
                         <option value="">Sem trilha</option>
                         {trilhas.map((trilha) => (
@@ -1048,7 +1039,7 @@ export default function AdminCursoDetalhePage({ params }: PaginaProps) {
                       </select>
 
                       <p className="mt-3 text-[14px] leading-6 text-[#666b76]">
-                        Altere a trilha vinculada ao curso ou deixe sem trilha.
+                        
                       </p>
                     </div>
                   </div>
@@ -1058,11 +1049,9 @@ export default function AdminCursoDetalhePage({ params }: PaginaProps) {
                       Modelo de capa do curso
                     </label>
 
-                    <div className="rounded-[12px] border border-[#e5e5e5] bg-white p-4">
+                    <div className="rounded-[10px] border border-[#e5e5e5] bg-white p-4">
                       <p className="mb-4 text-[14px] leading-6 text-[#666b76]">
-                        Selecione apenas um modelo de capa. Ao trocar o modelo,
-                        uma nova imagem selecionada anteriormente será removida
-                        para evitar múltiplas capas ativas no mesmo cadastro.
+                        
                       </p>
 
                       <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
@@ -1072,19 +1061,19 @@ export default function AdminCursoDetalhePage({ params }: PaginaProps) {
                               value: "vertical",
                               title: "Vertical",
                               description:
-                                "Para cards verticais normais, como Trilhas recomendadas.",
+                                "",
                             },
                             {
                               value: "horizontal",
                               title: "Horizontal",
                               description:
-                                "Para cards horizontais, como fileiras largas.",
+                                "",
                             },
                             {
                               value: "featured",
                               title: "Vertical grande",
                               description:
-                                "Somente para seções de Destaque extragrande.",
+                                "",
                             },
                           ] as Array<{
                             value: PreferredCardFormat;
@@ -1101,7 +1090,7 @@ export default function AdminCursoDetalhePage({ params }: PaginaProps) {
                               type="button"
                               onClick={() => handleChangeFormat(option.value)}
                               className={cx(
-                                "rounded-[12px] border p-4 text-left transition",
+                                "rounded-[10px] border p-4 text-left transition",
                                 selected
                                   ? "border-[#DBC094] bg-[#f3eee5] "
                                   : "border-[#e5e5e5] bg-white hover:border-[#DBC094]"
@@ -1132,7 +1121,7 @@ export default function AdminCursoDetalhePage({ params }: PaginaProps) {
                   </div>
 
                   <div className="xl:col-span-12">
-                    <div className="rounded-[12px] border border-[#e5e5e5] bg-white p-4">
+                    <div className="rounded-[10px] border border-[#e5e5e5] bg-white p-4">
                       <div className="mb-4">
                         <label className="block text-[14px] font-semibold text-[#52525b]">
                           {formatConfig.label}
@@ -1149,7 +1138,7 @@ export default function AdminCursoDetalhePage({ params }: PaginaProps) {
                         <div className="flex min-w-0 gap-4">
                           <div
                             className={cx(
-                              "flex shrink-0 items-center justify-center overflow-hidden rounded-[12px] border border-[#e5e5e5] bg-white",
+                              "flex shrink-0 items-center justify-center overflow-hidden rounded-[10px] border border-[#e5e5e5] bg-white",
                               formatConfig.previewClass
                             )}
                           >
@@ -1190,7 +1179,7 @@ export default function AdminCursoDetalhePage({ params }: PaginaProps) {
                         </div>
 
                         <div className="flex flex-wrap gap-2">
-                          <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-[12px] border border-[#e2d2b6] bg-[#DBC094] px-4 py-2.5 text-[14px] font-semibold text-black transition hover:brightness-[1.02]">
+                          <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-[10px] border border-[#e2d2b6] bg-[#DBC094] px-4 py-2.5 text-[14px] font-semibold text-black transition hover:brightness-[1.02]">
                             <Upload className="h-4 w-4" />
                             {currentCoverPath || cover.file
                               ? "Substituir capa"
@@ -1207,7 +1196,7 @@ export default function AdminCursoDetalhePage({ params }: PaginaProps) {
                             <button
                               type="button"
                               onClick={removerCapaSelecionada}
-                              className="inline-flex items-center justify-center gap-2 rounded-[12px] border border-rose-200 bg-rose-50 px-4 py-2.5 text-[14px] font-semibold text-rose-700 transition hover:bg-rose-100"
+                              className="inline-flex items-center justify-center gap-2 rounded-[10px] border border-rose-200 bg-rose-50 px-4 py-2.5 text-[14px] font-semibold text-rose-700 transition hover:bg-rose-100"
                             >
                               <Trash2 className="h-4 w-4" />
                               Remover seleção
@@ -1231,7 +1220,7 @@ export default function AdminCursoDetalhePage({ params }: PaginaProps) {
                           event.target.value
                         )
                       }
-                      className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
+                      className="h-12 w-full rounded-[10px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
                     />
                   </div>
 
@@ -1245,7 +1234,7 @@ export default function AdminCursoDetalhePage({ params }: PaginaProps) {
                       onChange={(event) =>
                         updateCourseField("description", event.target.value)
                       }
-                      className="w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 py-3 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
+                      className="w-full rounded-[10px] border border-[#e5e5e5] bg-white px-4 py-3 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
                     />
                   </div>
 
@@ -1260,7 +1249,7 @@ export default function AdminCursoDetalhePage({ params }: PaginaProps) {
                       onChange={(event) =>
                         updateCourseField("requiredRank", event.target.value)
                       }
-                      className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
+                      className="h-12 w-full rounded-[10px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
                     />
                   </div>
 
@@ -1276,7 +1265,7 @@ export default function AdminCursoDetalhePage({ params }: PaginaProps) {
                           event.target.value as StatusCurso
                         )
                       }
-                      className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
+                      className="h-12 w-full rounded-[10px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
                     >
                       <option value="draft">Rascunho</option>
                       <option value="published">Publicado</option>
@@ -1288,7 +1277,7 @@ export default function AdminCursoDetalhePage({ params }: PaginaProps) {
                     <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                       Exibição
                     </label>
-                    <label className="flex min-h-12 items-start gap-3 rounded-[12px] border border-[#e5e5e5] bg-white p-4">
+                    <label className="flex min-h-12 items-start gap-3 rounded-[10px] border border-[#e5e5e5] bg-white p-4">
                       <input
                         type="checkbox"
                         checked={formCurso.isFeatured}
@@ -1304,8 +1293,7 @@ export default function AdminCursoDetalhePage({ params }: PaginaProps) {
                           Marcar como destaque
                         </span>
                         <span className="mt-1 block text-[14px] leading-6 text-[#666b76]">
-                          Este campo ajuda a organizar a prioridade de exibição
-                          no sistema.
+                          
                         </span>
                       </span>
                     </label>
@@ -1317,7 +1305,7 @@ export default function AdminCursoDetalhePage({ params }: PaginaProps) {
                     type="button"
                     onClick={fecharEdicaoCurso}
                     disabled={salvandoCurso}
-                    className="inline-flex items-center justify-center gap-2 rounded-[12px] border border-[#e5e5e5] bg-white px-5 text-[14px] font-semibold text-[#52525b] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-70"
+                    className="inline-flex items-center justify-center gap-2 rounded-[10px] border border-[#e5e5e5] bg-white px-5 text-[14px] font-semibold text-[#52525b] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-70"
                   >
                     Cancelar
                   </button>
@@ -1325,7 +1313,7 @@ export default function AdminCursoDetalhePage({ params }: PaginaProps) {
                   <button
                     type="submit"
                     disabled={salvandoCurso}
-                    className="inline-flex items-center justify-center gap-2 rounded-[12px] border border-[#e2d2b6] bg-[#DBC094] px-5 text-[14px] font-semibold text-black transition hover:brightness-[1.02] disabled:cursor-not-allowed disabled:opacity-70"
+                    className="inline-flex items-center justify-center gap-2 rounded-[10px] border border-[#e2d2b6] bg-[#DBC094] px-5 text-[14px] font-semibold text-black transition hover:brightness-[1.02] disabled:cursor-not-allowed disabled:opacity-70"
                   >
                     {salvandoCurso ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -1340,46 +1328,53 @@ export default function AdminCursoDetalhePage({ params }: PaginaProps) {
           </section>
         ) : null}
 
-        <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <MetricCard
-            title="Módulos"
-            value={String(totalModulos).padStart(2, "0")}
-            icon={<Layers3 className="h-5 w-5" />}
-            iconTone="gold"
-          />
-          <MetricCard
-            title="Aulas"
-            value={String(totalAulas).padStart(2, "0")}
-            icon={<PlayCircle className="h-5 w-5" />}
-            iconTone="blue"
-          />
-          <MetricCard
-            title="Aulas publicadas"
-            value={String(totalAulasPublicadas).padStart(2, "0")}
-            icon={<BookOpen className="h-5 w-5" />}
-            iconTone="violet"
-          />
-          <MetricCard
-            title="Prévias"
-            value={String(totalAulasPreview).padStart(2, "0")}
-            icon={<PlayCircle className="h-5 w-5" />}
-            iconTone="goldSoft"
-          />
+        <section className="overflow-hidden rounded-[18px] border border-[#e5e5e5] bg-white">
+          <div className="grid grid-cols-2 divide-x divide-y divide-[#ededed] md:grid-cols-4 md:divide-y-0">
+            <MetricCard
+              title="Módulos"
+              value={String(totalModulos).padStart(2, "0")}
+              icon={<Layers3 className="h-4 w-4" />}
+              iconTone="gold"
+            />
+            <MetricCard
+              title="Aulas"
+              value={String(totalAulas).padStart(2, "0")}
+              icon={<PlayCircle className="h-4 w-4" />}
+              iconTone="blue"
+            />
+            <MetricCard
+              title="Publicadas"
+              value={String(totalAulasPublicadas).padStart(2, "0")}
+              icon={<BookOpen className="h-4 w-4" />}
+              iconTone="violet"
+            />
+            <MetricCard
+              title="Prévias"
+              value={String(totalAulasPreview).padStart(2, "0")}
+              icon={<PlayCircle className="h-4 w-4" />}
+              iconTone="goldSoft"
+            />
+          </div>
         </section>
 
-        <section className="rounded-[12px] border border-[#e5e5e5] bg-white ">
-          <div className="border-b border-[#e5e5e5] p-5">
-            <h2 className="text-[22px] font-semibold tracking-[-0.03em] text-[#141414]">
+        <section className="overflow-hidden rounded-[18px] border border-[#e5e5e5] bg-white">
+          <div className="flex items-center justify-between gap-4 border-b border-[#e5e5e5] px-5 py-4">
+            <h2 className="text-[20px] font-semibold tracking-[-0.03em] text-[#141414]">
               Estrutura do curso
             </h2>
-            <p className="mt-2 text-[14px] text-[#666b76]">
-              Visualização real da hierarquia do curso com módulos e aulas.
-            </p>
+
+            <Link
+              href={`/admin/cursos/${cursoId}/modulos`}
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-[10px] bg-[#DBC094] px-4 text-[13px] font-semibold text-black transition hover:brightness-105"
+            >
+              <Layers3 className="h-4 w-4" />
+              Gerenciar módulos
+            </Link>
           </div>
 
           {erro ? (
-            <div className="p-6">
-              <div className="rounded-[12px] border border-rose-200 bg-rose-50 p-5">
+            <div className="p-5">
+              <div className="border border-rose-200 bg-rose-50 p-4">
                 <h3 className="text-[14px] font-semibold text-rose-700">
                   Erro ao carregar estrutura
                 </h3>
@@ -1387,173 +1382,108 @@ export default function AdminCursoDetalhePage({ params }: PaginaProps) {
               </div>
             </div>
           ) : carregando ? (
-            <div className="p-6">
-              <div className="space-y-4">
-                {Array.from({ length: 3 }).map((_, index) => (
-                  <div
-                    key={index}
-                    className="rounded-[12px] border border-[#e5e5e5] bg-white p-5"
-                  >
-                    <div className="animate-pulse space-y-3">
-                      <div className="h-4 w-40 rounded bg-[#E9EDF3]" />
-                      <div className="h-3 w-72 rounded bg-[#EEF2F6]" />
-                      <div className="h-3 w-56 rounded bg-[#EEF2F6]" />
-                    </div>
+            <div className="divide-y divide-[#ededed]">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <div key={index} className="px-5 py-4">
+                  <div className="animate-pulse space-y-3">
+                    <div className="h-4 w-52 rounded bg-[#e5e5e5]" />
+                    <div className="h-3 w-80 rounded bg-[#ededed]" />
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
           ) : modulos.length === 0 ? (
-            <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
-              <div className="mb-4 rounded-full border border-[#e5e5e5] bg-white p-4">
-                <FolderKanban className="h-6 w-6 text-[#8a8f9d]" />
-              </div>
-              <h3 className="text-base font-semibold text-[#141414]">
+            <div className="px-5 py-10 text-center">
+              <h3 className="text-[15px] font-semibold text-[#141414]">
                 Nenhum módulo cadastrado
               </h3>
-              <p className="mt-2 max-w-md text-[14px] text-[#666b76]">
-                Este curso ainda não possui módulos cadastrados no banco.
+              <p className="mt-2 text-[14px] text-[#666b76]">
+                Este curso ainda não possui módulos cadastrados.
               </p>
             </div>
           ) : (
-            <div className="divide-y divide-[#EEF1F5]">
+            <div className="divide-y divide-[#ededed]">
               {modulos.map((modulo, moduloIndex) => {
                 const aulasDoModulo = aulasPorModulo.get(modulo.id) ?? [];
 
                 return (
-                  <article key={modulo.id} className="p-5">
-                    <div className="rounded-[12px] border border-[#e5e5e5] bg-white">
-                      <div className="flex flex-col gap-4 border-b border-[#e5e5e5] p-5 md:flex-row md:items-start md:justify-between">
+                  <details key={modulo.id} className="group">
+                    <summary className="grid cursor-pointer list-none gap-4 px-5 py-4 transition hover:bg-[#fafafa] lg:grid-cols-[minmax(0,1fr)_110px_90px_150px] lg:items-center">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <ChevronRight className="h-4 w-4 shrink-0 text-[#8a8f9d] transition group-open:rotate-90" />
+
                         <div className="min-w-0">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="inline-flex items-center rounded-full border border-[#e2d2b6] bg-[#f3eee5] px-2.5 py-1 text-[11px] font-semibold text-[#8a6836]">
-                              Módulo {moduloIndex + 1}
-                            </span>
-
-                            <span
-                              className={cx(
-                                "inline-flex items-center rounded-full border px-2.5 py-1 text-[12px] font-medium",
-                                statusClasses(modulo.status)
-                              )}
-                            >
-                              {traduzirStatus(modulo.status)}
-                            </span>
-                          </div>
-
-                          <h3 className="mt-3 text-[17px] font-semibold text-[#141414]">
-                            {modulo.title}
+                          <h3 className="truncate text-[15px] font-semibold text-[#141414]">
+                            Módulo {String(moduloIndex + 1).padStart(2, "0")} - {modulo.title}
                           </h3>
-
-                          <p className="mt-2 text-[14px] leading-6 text-[#666b76]">
-                            {modulo.description?.trim() ||
-                              "Sem descrição cadastrada para este módulo."}
+                          <p className="mt-1 line-clamp-1 text-[13px] text-[#666b76]">
+                            {modulo.description?.trim() || "Sem descrição cadastrada."}
                           </p>
                         </div>
+                      </div>
 
-                        <div className="flex flex-wrap items-center gap-2 text-[12px] text-[#666b76]">
-                          <span className="rounded-full border border-[#e5e5e5] bg-white px-3 py-1.5">
-                            Ordem {modulo.sort_order}
-                          </span>
-                          <span className="rounded-full border border-[#e5e5e5] bg-white px-3 py-1.5">
-                            {aulasDoModulo.length} aula(s)
-                          </span>
+                      <div className="hidden lg:block">
+                        <span className={cx("inline-flex border px-2.5 py-1 text-[12px] font-semibold", statusClasses(modulo.status))}>
+                          {traduzirStatus(modulo.status)}
+                        </span>
+                      </div>
+
+                      <div className="hidden text-[13px] font-semibold text-[#52525b] lg:block">
+                        {aulasDoModulo.length} aula(s)
+                      </div>
+
+                      <div className="flex items-center justify-start lg:justify-end">
+                        <Link
+                          href={`/admin/cursos/${cursoId}/modulos`}
+                          onClick={(event) => event.stopPropagation()}
+                          className="inline-flex h-9 items-center justify-center gap-2 rounded-[10px] border border-[#e5e5e5] bg-white px-3 text-[13px] font-semibold text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836]"
+                        >
+                          Abrir
+                          <ChevronRight className="h-3.5 w-3.5" />
+                        </Link>
+                      </div>
+                    </summary>
+
+                    <div className="border-t border-[#ededed] bg-white px-5 py-2">
+                      {aulasDoModulo.length === 0 ? (
+                        <div className="py-4 text-[14px] text-[#666b76]">
+                          Este módulo ainda não possui aulas cadastradas.
                         </div>
-                      </div>
-
-                      <div className="p-5">
-                        {aulasDoModulo.length === 0 ? (
-                          <div className="rounded-[12px] border border-dashed border-[#e5e5e5] bg-white px-4 py-5 text-[14px] text-[#666b76]">
-                            Este módulo ainda não possui aulas cadastradas.
-                          </div>
-                        ) : (
-                          <div className="space-y-3">
-                            {aulasDoModulo.map((aula, aulaIndex) => (
-                              <div
-                                key={aula.id}
-                                className="rounded-[12px] border border-[#e5e5e5] bg-white p-4"
-                              >
-                                <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                                  <div className="min-w-0">
-                                    <div className="flex flex-wrap items-center gap-2">
-                                      <span className="inline-flex items-center rounded-full border border-[#e2d2b6] bg-[#f3eee5] px-2.5 py-1 text-[11px] font-medium text-[#8a6836]">
-                                        Aula {aulaIndex + 1}
-                                      </span>
-
-                                      <span
-                                        className={cx(
-                                          "inline-flex items-center rounded-full border px-2.5 py-1 text-[12px] font-medium",
-                                          statusClasses(aula.status)
-                                        )}
-                                      >
-                                        {traduzirStatus(aula.status)}
-                                      </span>
-
-                                      {aula.is_preview ? (
-                                        <span className="inline-flex items-center gap-1 rounded-full border border-[#e2d2b6] bg-[#f3eee5] px-2.5 py-1 text-[11px] font-semibold text-[#8a6836]">
-                                          <PlayCircle className="h-3 w-3" />
-                                          Prévia
-                                        </span>
-                                      ) : null}
-                                    </div>
-
-                                    <h4 className="mt-3 text-base font-semibold text-[#141414]">
-                                      {aula.title}
-                                    </h4>
-
-                                    <p className="mt-2 text-[14px] leading-6 text-[#666b76]">
-                                      {aula.description?.trim() ||
-                                        "Sem descrição cadastrada para esta aula."}
-                                    </p>
-                                  </div>
-
-                                  <div className="grid min-w-[220px] grid-cols-2 gap-2 text-[12px] text-[#666b76]">
-                                    <MiniInfo
-                                      label="Tipo"
-                                      value={aula.content_type || "—"}
-                                    />
-                                    <MiniInfo
-                                      label="Ordem"
-                                      value={String(aula.sort_order)}
-                                    />
-                                    <MiniInfo
-                                      label="Duração"
-                                      value={formatarDuracao(aula.duration_sec)}
-                                    />
-                                    <MiniInfo
-                                      label="Liberação"
-                                      value={formatarData(aula.released_at)}
-                                    />
-                                  </div>
-                                </div>
-
-                                <div className="mt-4 flex flex-wrap items-center gap-2">
-                                  {aula.video_provider ? (
-                                    <span className="rounded-full border border-[#e5e5e5] bg-white px-3 py-1.5 text-[12px] font-medium text-[#52525b]">
-                                      Provedor: {aula.video_provider}
-                                    </span>
-                                  ) : null}
-
-                                  {aula.video_url ? (
-                                    <span className="rounded-full border border-[#e5e5e5] bg-white px-3 py-1.5 text-[12px] font-medium text-[#52525b]">
-                                      Vídeo configurado
-                                    </span>
-                                  ) : null}
-
-                                  <Link
-                                    href={`/admin/cursos/${cursoId}/modulos`}
-                                    className="inline-flex items-center gap-1 rounded-full border border-[#e5e5e5] bg-white px-3 py-1.5 text-[12px] font-semibold text-[#52525b] transition hover:bg-white"
-                                  >
-                                    Abrir gestão
-                                    <ChevronRight className="h-3.5 w-3.5" />
-                                  </Link>
-                                </div>
+                      ) : (
+                        <div className="divide-y divide-[#ededed]">
+                          {aulasDoModulo.map((aula, aulaIndex) => (
+                            <div
+                              key={aula.id}
+                              className="grid gap-4 py-3 lg:grid-cols-[minmax(0,1fr)_100px_100px_110px] lg:items-center"
+                            >
+                              <div className="min-w-0">
+                                <h4 className="truncate text-[14px] font-semibold text-[#141414]">
+                                  Aula {String(aulaIndex + 1).padStart(2, "0")} - {aula.title}
+                                </h4>
+                                <p className="mt-1 line-clamp-1 text-[13px] text-[#666b76]">
+                                  {aula.description?.trim() || "Sem descrição cadastrada."}
+                                </p>
                               </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
+
+                              <div className="text-[13px] font-medium text-[#52525b]">
+                                {traduzirTipoConteudo(aula.content_type)}
+                              </div>
+
+                              <div>
+                                <span className={cx("inline-flex border px-2.5 py-1 text-[12px] font-semibold", statusClasses(aula.status))}>
+                                  {traduzirStatus(aula.status)}
+                                </span>
+                              </div>
+
+                              <div className="text-[13px] text-[#666b76] lg:text-right">
+                                {aula.is_preview ? "Prévia" : formatarDuracao(aula.duration_sec)}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  </article>
+                  </details>
                 );
               })}
             </div>
@@ -1573,23 +1503,23 @@ type MetricCardProps = {
 
 function MetricCard({ title, value, icon, iconTone }: MetricCardProps) {
   const tones = {
-    gold: "bg-[#f3eee5] text-[#8a6836]",
-    violet: "bg-[#f3eee5] text-[#6F4AA7]",
-    blue: "bg-[#f3eee5] text-[#4C84B8]",
-    goldSoft: "bg-[#f3eee5] text-[#9F7A28]",
+    gold: "text-[#8a6836]",
+    violet: "text-[#8a6836]",
+    blue: "text-[#8a6836]",
+    goldSoft: "text-[#8a6836]",
   };
 
   return (
-    <article className="rounded-[12px] border border-[#e5e5e5] bg-white p-5 ">
-      <div className="flex items-start justify-between gap-4">
+    <article className="bg-white px-5 py-4">
+      <div className="flex items-center justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-[14px] font-medium text-[#666b76]">{title}</p>
-          <p className="mt-4 text-5xl font-semibold tracking-[-0.03em] text-[#141414]">
+          <p className="text-[13px] font-medium text-[#666b76]">{title}</p>
+          <p className="mt-2 text-[32px] font-semibold leading-none tracking-[-0.04em] text-[#141414]">
             {value}
           </p>
         </div>
 
-        <div className={cx("rounded-full p-4", tones[iconTone])}>{icon}</div>
+        <div className={cx("shrink-0", tones[iconTone])}>{icon}</div>
       </div>
     </article>
   );
@@ -1605,17 +1535,17 @@ function InfoPill({
   value: string;
 }) {
   return (
-    <div className="rounded-[12px] border border-[#e5e5e5] bg-white p-4">
+    <div className="bg-white px-1 py-3">
       <div className="flex items-start gap-3">
-        <div className="rounded-full bg-[#f3eee5] p-2 text-[#8a6836]">
+        <div className="mt-0.5 text-[#8a6836]">
           {icon}
         </div>
 
         <div className="min-w-0">
-          <p className="text-[12px] font-medium uppercase tracking-[0.18em] text-[#8a8f9d]">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8a8f9d]">
             {label}
           </p>
-          <p className="mt-2 truncate text-[14px] font-semibold text-[#141414]">
+          <p className="mt-1 truncate text-[14px] font-semibold text-[#141414]">
             {value}
           </p>
         </div>
@@ -1626,8 +1556,8 @@ function InfoPill({
 
 function MiniInfo({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[14px] border border-[#e5e5e5] bg-white px-3 py-2">
-      <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-[#8a8f9d]">
+    <div className="border-l border-[#ededed] px-3 py-1">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8a8f9d]">
         {label}
       </p>
       <p className="mt-1 text-[14px] font-semibold text-[#141414]">{value}</p>
