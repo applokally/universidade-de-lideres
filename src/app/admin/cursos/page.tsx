@@ -6,7 +6,6 @@ import {
   GraduationCap,
   Plus,
   Search,
-  Sparkles,
   ChevronRight,
   Network,
   LibraryBig,
@@ -122,13 +121,13 @@ function traduzirStatus(status: StatusCurso) {
 function statusClasses(status: StatusCurso) {
   switch (status) {
     case "published":
-      return "border-emerald-200 bg-emerald-50 text-emerald-700";
+      return "border-[#e2d2b6] bg-[#f3eee5] text-[#8a6836]";
     case "draft":
-      return "border-amber-200 bg-amber-50 text-amber-700";
+      return "border-orange-200 bg-orange-50 text-orange-700";
     case "archived":
-      return "border-slate-200 bg-slate-100 text-slate-600";
+      return "border-[#e5e5e5] bg-[#f4f4f5] text-[#52525b]";
     default:
-      return "border-slate-200 bg-slate-100 text-slate-600";
+      return "border-[#e5e5e5] bg-[#f4f4f5] text-[#52525b]";
   }
 }
 
@@ -794,51 +793,45 @@ export default function AdminCursosPage() {
   }
 
   return (
-    <div className="min-h-screen bg-transparent text-[#111827]">
-      <div className="flex w-full flex-col gap-6">
-        <section className="rounded-[28px] border border-[#E7EAF0] bg-white shadow-[0_8px_30px_rgba(15,23,42,0.04)]">
-          <div className="flex flex-col gap-6 p-6 md:p-8 xl:flex-row xl:items-end xl:justify-between">
-            <div className="max-w-3xl">
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#EAD7B7] bg-[#FBF6ED] px-3 py-1 text-xs font-medium uppercase tracking-[0.14em] text-[#9B6B22]">
-                <Sparkles className="h-3.5 w-3.5" />
-                Módulo cursos
-              </div>
+    <div className="space-y-7 text-[#141414]">
+      <div className="flex w-full flex-col gap-7">
+        <section className="flex flex-col gap-5 border-b border-[#e5e5e5] pb-7 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-3xl">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8a8f9d]">
+              Módulo cursos
+            </p>
 
-              <p className="text-xs font-medium uppercase tracking-[0.28em] text-[#8A94A6]">
-                Painel administrativo
-              </p>
+            <h1 className="mt-2 text-[38px] font-semibold leading-none tracking-[-0.04em] text-[#141414] sm:text-[46px]">
+              Trilhas e cursos
+            </h1>
 
-              <h1 className="mt-2 text-4xl font-semibold tracking-tight text-[#0F172A] md:text-5xl">
-                Trilhas e cursos
-              </h1>
+            <p className="mt-3 max-w-2xl text-[15px] leading-6 text-[#5d6472]">
+              Gerencie as trilhas e cursos cadastrados na plataforma e organize
+              a estrutura de ensino com clareza.
+            </p>
+          </div>
 
-              <p className="mt-4 max-w-2xl text-sm leading-7 text-[#667085] md:text-base">
-                Gerencie as trilhas e cursos cadastrados na plataforma e organize
-                a estrutura de ensino com clareza.
-              </p>
-            </div>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Link
+              href="/admin/cursos/trilhas/nova"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-[12px] bg-[#DBC094] px-5 text-[14px] font-semibold text-black transition hover:brightness-105"
+            >
+              <Plus className="h-4 w-4" />
+              Nova trilha
+            </Link>
 
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <Link
-                href="/admin/cursos/trilhas/nova"
-                className="inline-flex items-center justify-center gap-2 rounded-[18px] border border-[#EAD7B7] bg-[#D8BC8B] px-5 py-3 text-sm font-semibold text-[#111111] transition hover:brightness-[1.02]"
-              >
-                <Plus className="h-4 w-4" />
-                Nova trilha
-              </Link>
-
-              <Link
-                href="/admin/cursos/cursos/novo"
-                className="inline-flex items-center justify-center gap-2 rounded-[18px] border border-[#E4E7EC] bg-white px-5 py-3 text-sm font-semibold text-[#344054] transition hover:bg-[#F9FAFB]"
-              >
-                <Plus className="h-4 w-4" />
-                Novo curso
-              </Link>
-            </div>
+            <Link
+              href="/admin/cursos/cursos/novo"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-[12px] border border-[#e5e5e5] bg-white px-5 text-[14px] font-semibold text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836]"
+            >
+              <Plus className="h-4 w-4" />
+              Novo curso
+            </Link>
           </div>
         </section>
 
-        <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
+        <section className="overflow-hidden rounded-[18px] border border-[#e5e5e5] bg-white">
+          <div className="grid divide-y divide-[#ededed] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-5">
           <MetricCard
             title="Trilhas cadastradas"
             value={String(totalTrilhas).padStart(2, "0")}
@@ -869,15 +862,16 @@ export default function AdminCursosPage() {
             icon={<FolderTree className="h-5 w-5" />}
             iconTone="goldSoft"
           />
+          </div>
         </section>
 
-        <section className="rounded-[28px] border border-[#E7EAF0] bg-white shadow-[0_8px_30px_rgba(15,23,42,0.04)]">
-          <div className="flex flex-col gap-4 border-b border-[#EEF1F5] p-5 md:p-6 xl:flex-row xl:items-center xl:justify-between">
+        <section className="rounded-[18px] border border-[#e5e5e5] bg-white">
+          <div className="flex flex-col gap-4 border-b border-[#e5e5e5] px-5 py-4 xl:flex-row xl:items-center xl:justify-between">
             <div>
-              <h2 className="text-2xl font-semibold tracking-tight text-[#101828]">
+              <h2 className="text-[22px] font-semibold tracking-[-0.03em] text-[#141414]">
                 Trilhas cadastradas
               </h2>
-              <p className="mt-2 text-sm text-[#667085]">
+              <p className="mt-1 text-[13px] text-[#767b87]">
                 Visualize as trilhas criadas e acompanhe a organização dos cursos.
               </p>
             </div>
@@ -886,19 +880,19 @@ export default function AdminCursosPage() {
               <button
                 type="button"
                 onClick={() => void carregarDados()}
-                className="inline-flex items-center justify-center gap-2 rounded-[16px] border border-[#E4E7EC] bg-white px-4 py-2.5 text-sm font-semibold text-[#344054] transition hover:bg-[#F9FAFB]"
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-[10px] border border-[#e5e5e5] bg-white px-4 text-[13px] font-semibold text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836]"
               >
                 <RefreshCcw className="h-4 w-4" />
                 Atualizar
               </button>
 
               <div className="relative min-w-[280px]">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#98A2B3]" />
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8a8f9d]" />
                 <input
                   value={busca}
                   onChange={(e) => setBusca(e.target.value)}
                   placeholder="Buscar trilha ou curso"
-                  className="h-11 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] pl-10 pr-4 text-sm text-[#101828] outline-none placeholder:text-[#98A2B3] transition focus:border-[#D8BC8B] focus:bg-white"
+                  className="h-11 w-full rounded-[12px] border border-[#e5e5e5] bg-white pl-10 pr-4 text-[14px] font-medium text-[#27272a] outline-none placeholder:text-[#8a8f9d] transition focus:border-[#DBC094]"
                 />
               </div>
             </div>
@@ -906,11 +900,11 @@ export default function AdminCursosPage() {
 
           {erro ? (
             <div className="p-6">
-              <div className="rounded-[20px] border border-rose-200 bg-rose-50 p-5">
-                <h3 className="text-sm font-semibold text-rose-700">
+              <div className="rounded-[18px] border border-rose-200 bg-rose-50 p-5">
+                <h3 className="text-[14px] font-semibold text-rose-700">
                   Erro ao carregar trilhas e cursos
                 </h3>
-                <p className="mt-2 text-sm leading-6 text-rose-600">{erro}</p>
+                <p className="mt-2 text-[14px] leading-6 text-rose-600">{erro}</p>
               </div>
             </div>
           ) : null}
@@ -921,7 +915,7 @@ export default function AdminCursosPage() {
                 {Array.from({ length: 3 }).map((_, index) => (
                   <div
                     key={index}
-                    className="rounded-[24px] border border-[#EEF1F5] bg-[#FCFCFD] p-5"
+                    className="rounded-[12px] border border-[#e5e5e5] bg-white p-5"
                   >
                     <div className="animate-pulse space-y-3">
                       <div className="h-4 w-40 rounded bg-[#E9EDF3]" />
@@ -933,13 +927,13 @@ export default function AdminCursosPage() {
               </div>
             ) : trilhasFiltradas.length === 0 ? (
               <div className="flex flex-col items-center justify-center px-6 py-14 text-center">
-                <div className="mb-4 rounded-full border border-[#E4E7EC] bg-[#F9FAFB] p-4">
-                  <Network className="h-6 w-6 text-[#98A2B3]" />
+                <div className="mb-4 rounded-full border border-[#e5e5e5] bg-white p-4">
+                  <Network className="h-6 w-6 text-[#8a8f9d]" />
                 </div>
-                <h3 className="text-base font-semibold text-[#101828]">
+                <h3 className="text-[16px] font-semibold text-[#141414]">
                   Nenhuma trilha encontrada
                 </h3>
-                <p className="mt-2 max-w-md text-sm text-[#667085]">
+                <p className="mt-2 max-w-md text-[14px] text-[#666b76]">
                   Não há trilhas cadastradas com os filtros atuais.
                 </p>
               </div>
@@ -952,40 +946,40 @@ export default function AdminCursosPage() {
                   return (
                     <article
                       key={trilha.id}
-                      className="rounded-[24px] border border-[#E7EAF0] bg-[#FCFCFD] p-5 transition hover:border-[#D8BC8B]/60 hover:bg-white"
+                      className="rounded-[12px] border border-[#e5e5e5] bg-white p-5 transition hover:border-[#DBC094]/60 hover:bg-[#f7f7f7]"
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div className="min-w-0">
-                          <span className="inline-flex items-center gap-1 rounded-full border border-[#EAD7B7] bg-[#FBF6ED] px-2.5 py-1 text-[11px] font-semibold text-[#9B6B22]">
+                          <span className="inline-flex items-center gap-1 rounded-full border border-[#e2d2b6] bg-[#f3eee5] px-2.5 py-1 text-[11px] font-semibold text-[#8a6836]">
                             <Network className="h-3 w-3" />
                             Trilha
                           </span>
 
-                          <h3 className="mt-3 truncate text-base font-semibold text-[#101828] md:text-[17px]">
+                          <h3 className="mt-3 truncate text-[16px] font-semibold text-[#141414] md:text-[17px]">
                             {trilha.title}
                           </h3>
 
-                          <p className="mt-2 line-clamp-3 text-sm leading-6 text-[#667085]">
+                          <p className="mt-2 line-clamp-3 text-[14px] leading-6 text-[#666b76]">
                             {resumoTrilha(trilha)}
                           </p>
                         </div>
 
-                        <div className="rounded-full bg-[#FBF6ED] p-3 text-[#9B6B22]">
+                        <div className="rounded-full bg-[#f3eee5] p-3 text-[#8a6836]">
                           <Layers3 className="h-5 w-5" />
                         </div>
                       </div>
 
                       <div className="mt-4 flex flex-wrap items-center gap-2">
-                        <span className="rounded-full border border-[#E4E7EC] bg-white px-3 py-1.5 text-xs font-medium text-[#475467]">
+                        <span className="rounded-full border border-[#e5e5e5] bg-white px-3 py-1.5 text-[12px] font-medium text-[#52525b]">
                           {totalCursosNaTrilha} curso(s)
                         </span>
 
-                        <span className="rounded-full border border-[#E4E7EC] bg-white px-3 py-1.5 text-xs font-medium text-[#475467]">
+                        <span className="rounded-full border border-[#e5e5e5] bg-white px-3 py-1.5 text-[12px] font-medium text-[#52525b]">
                           {trilha.slug}
                         </span>
                       </div>
 
-                      <div className="mt-4 text-xs text-[#98A2B3]">
+                      <div className="mt-4 text-[12px] text-[#8a8f9d]">
                         Atualizada em {formatarData(trilha.updated_at)}
                       </div>
 
@@ -993,7 +987,7 @@ export default function AdminCursosPage() {
                         <button
                           type="button"
                           onClick={() => setTrilhaVisualizando(trilha)}
-                          className="inline-flex items-center justify-center gap-2 rounded-[14px] border border-[#E4E7EC] bg-white px-3.5 py-2 text-sm font-semibold text-[#344054] transition hover:bg-[#F9FAFB]"
+                          className="inline-flex items-center justify-center gap-2 rounded-[14px] border border-[#e5e5e5] bg-white px-3.5 py-2 text-[14px] font-semibold text-[#52525b] transition hover:bg-[#f7f7f7]"
                         >
                           <Eye className="h-4 w-4" />
                           Visualizar
@@ -1002,7 +996,7 @@ export default function AdminCursosPage() {
                         <button
                           type="button"
                           onClick={() => abrirEdicaoTrilha(trilha)}
-                          className="inline-flex items-center justify-center gap-2 rounded-[14px] border border-[#E4E7EC] bg-white px-3.5 py-2 text-sm font-semibold text-[#344054] transition hover:bg-[#F9FAFB]"
+                          className="inline-flex items-center justify-center gap-2 rounded-[14px] border border-[#e5e5e5] bg-white px-3.5 py-2 text-[14px] font-semibold text-[#52525b] transition hover:bg-[#f7f7f7]"
                         >
                           <PencilLine className="h-4 w-4" />
                           Editar
@@ -1014,7 +1008,7 @@ export default function AdminCursosPage() {
                             setTrilhaExcluindo(trilha);
                             setErroExclusao(null);
                           }}
-                          className="inline-flex items-center justify-center gap-2 rounded-[14px] border border-rose-200 bg-rose-50 px-3.5 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
+                          className="inline-flex items-center justify-center gap-2 rounded-[14px] border border-rose-200 bg-rose-50 px-3.5 py-2 text-[14px] font-semibold text-rose-700 transition hover:bg-rose-100"
                         >
                           <Trash2 className="h-4 w-4" />
                           Excluir
@@ -1028,18 +1022,18 @@ export default function AdminCursosPage() {
           </div>
         </section>
 
-        <section className="rounded-[28px] border border-[#E7EAF0] bg-white shadow-[0_8px_30px_rgba(15,23,42,0.04)]">
-          <div className="flex flex-col gap-4 border-b border-[#EEF1F5] p-5 md:p-6 xl:flex-row xl:items-center xl:justify-between">
+        <section className="rounded-[18px] border border-[#e5e5e5] bg-white">
+          <div className="flex flex-col gap-4 border-b border-[#e5e5e5] px-5 py-4 xl:flex-row xl:items-center xl:justify-between">
             <div>
-              <h2 className="text-2xl font-semibold tracking-tight text-[#101828]">
+              <h2 className="text-[22px] font-semibold tracking-[-0.03em] text-[#141414]">
                 Cursos cadastrados
               </h2>
-              <p className="mt-2 text-sm text-[#667085]">
+              <p className="mt-1 text-[13px] text-[#767b87]">
                 Visualize os cursos, seus status e a trilha vinculada quando existir.
               </p>
             </div>
 
-            <div className="flex items-center gap-2 rounded-[16px] border border-[#E4E7EC] bg-[#F9FAFB] p-1">
+            <div className="flex items-center gap-2 rounded-[12px] border border-[#e5e5e5] bg-white p-1">
               {filtros.map((filtro) => {
                 const ativo = filtroAtivo === filtro.id;
 
@@ -1049,10 +1043,10 @@ export default function AdminCursosPage() {
                     type="button"
                     onClick={() => setFiltroAtivo(filtro.id)}
                     className={cx(
-                      "rounded-[12px] px-4 py-2 text-sm font-medium transition",
+                      "rounded-[12px] px-4 py-2 text-[14px] font-medium transition",
                       ativo
-                        ? "bg-[#D8BC8B] text-[#111111]"
-                        : "text-[#667085] hover:bg-white hover:text-[#101828]"
+                        ? "bg-[#DBC094] text-black"
+                        : "text-[#666b76] hover:bg-[#f7f7f7] hover:text-[#141414]"
                     )}
                   >
                     {filtro.label}
@@ -1062,7 +1056,7 @@ export default function AdminCursosPage() {
             </div>
           </div>
 
-          <div className="hidden grid-cols-[1.2fr_0.75fr_0.7fr_0.55fr_1fr_0.65fr] gap-4 border-b border-[#EEF1F5] px-6 py-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#98A2B3] lg:grid">
+          <div className="hidden grid-cols-[1.2fr_0.75fr_0.7fr_0.55fr_1fr_0.65fr] gap-4 border-b border-[#e5e5e5] px-6 py-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8a8f9d] lg:grid">
             <div>Curso</div>
             <div>Slug</div>
             <div>Status</div>
@@ -1071,14 +1065,14 @@ export default function AdminCursosPage() {
             <div className="text-right">Ação</div>
           </div>
 
-          <div className="divide-y divide-[#EEF1F5]">
+          <div className="divide-y divide-[#e5e5e5]">
             {carregando ? (
               <div className="p-6">
                 <div className="grid grid-cols-1 gap-4">
                   {Array.from({ length: 4 }).map((_, index) => (
                     <div
                       key={index}
-                      className="rounded-[20px] border border-[#EEF1F5] bg-[#FCFCFD] p-5"
+                      className="rounded-[12px] border border-[#e5e5e5] bg-white p-5"
                     >
                       <div className="animate-pulse space-y-3">
                         <div className="h-4 w-40 rounded bg-[#E9EDF3]" />
@@ -1091,13 +1085,13 @@ export default function AdminCursosPage() {
               </div>
             ) : cursosFiltrados.length === 0 ? (
               <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
-                <div className="mb-4 rounded-full border border-[#E4E7EC] bg-[#F9FAFB] p-4">
-                  <GraduationCap className="h-6 w-6 text-[#98A2B3]" />
+                <div className="mb-4 rounded-full border border-[#e5e5e5] bg-white p-4">
+                  <GraduationCap className="h-6 w-6 text-[#8a8f9d]" />
                 </div>
-                <h3 className="text-base font-semibold text-[#101828]">
+                <h3 className="text-[16px] font-semibold text-[#141414]">
                   Nenhum curso encontrado
                 </h3>
-                <p className="mt-2 max-w-md text-sm text-[#667085]">
+                <p className="mt-2 max-w-md text-[14px] text-[#666b76]">
                   Não há cursos cadastrados com os filtros atuais.
                 </p>
               </div>
@@ -1108,33 +1102,33 @@ export default function AdminCursosPage() {
                 return (
                   <article
                     key={curso.id}
-                    className="px-5 py-5 transition hover:bg-[#FCFCFD] md:px-6"
+                    className="px-5 py-5 transition hover:bg-[#f7f7f7] md:px-6"
                   >
                     <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[1.2fr_0.75fr_0.7fr_0.55fr_1fr_0.65fr] lg:items-center lg:gap-4">
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                           {curso.is_featured ? (
-                            <span className="inline-flex items-center gap-1 rounded-full border border-[#EAD7B7] bg-[#FBF6ED] px-2.5 py-1 text-[11px] font-semibold text-[#9B6B22]">
+                            <span className="inline-flex items-center gap-1 rounded-full border border-[#e2d2b6] bg-[#f3eee5] px-2.5 py-1 text-[11px] font-semibold text-[#8a6836]">
                               <Star className="h-3 w-3" />
                               Destaque
                             </span>
                           ) : null}
 
-                          <span className="inline-flex items-center gap-1 rounded-full border border-[#D9E6F5] bg-[#EEF5FB] px-2.5 py-1 text-[11px] font-medium text-[#476A8E]">
+                          <span className="inline-flex items-center gap-1 rounded-full border border-[#e2d2b6] bg-[#f3eee5] px-2.5 py-1 text-[11px] font-medium text-[#8a6836]">
                             <GraduationCap className="h-3 w-3" />
                             Curso
                           </span>
                         </div>
 
-                        <h3 className="mt-3 truncate text-base font-semibold text-[#101828] md:text-[17px]">
+                        <h3 className="mt-3 truncate text-[16px] font-semibold text-[#141414] md:text-[17px]">
                           {curso.title}
                         </h3>
 
-                        <p className="mt-1 line-clamp-2 text-sm leading-6 text-[#667085]">
+                        <p className="mt-1 line-clamp-2 text-[14px] leading-6 text-[#666b76]">
                           {resumoCurso(curso)}
                         </p>
 
-                        <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-[#98A2B3] lg:hidden">
+                        <div className="mt-3 flex flex-wrap items-center gap-4 text-[12px] text-[#8a8f9d] lg:hidden">
                           <span className="inline-flex items-center gap-1.5">
                             <ShieldCheck className="h-3.5 w-3.5" />
                             Rank {curso.required_rank}
@@ -1150,28 +1144,28 @@ export default function AdminCursosPage() {
                             trilhasDoCurso.map((trilha) => (
                               <span
                                 key={`${curso.id}-${trilha.id}`}
-                                className="inline-flex items-center gap-1 rounded-full border border-[#EAD7B7] bg-[#FBF6ED] px-2.5 py-1 text-[11px] font-medium text-[#9B6B22]"
+                                className="inline-flex items-center gap-1 rounded-full border border-[#e2d2b6] bg-[#f3eee5] px-2.5 py-1 text-[11px] font-medium text-[#8a6836]"
                               >
                                 <Network className="h-3 w-3" />
                                 {trilha.title}
                               </span>
                             ))
                           ) : (
-                            <span className="inline-flex items-center gap-1 rounded-full border border-[#E4E7EC] bg-white px-2.5 py-1 text-[11px] font-medium text-[#667085]">
+                            <span className="inline-flex items-center gap-1 rounded-full border border-[#e5e5e5] bg-white px-2.5 py-1 text-[11px] font-medium text-[#666b76]">
                               Sem trilha
                             </span>
                           )}
                         </div>
                       </div>
 
-                      <div className="truncate text-sm text-[#475467]">
+                      <div className="truncate text-[14px] text-[#52525b]">
                         {curso.slug}
                       </div>
 
                       <div>
                         <span
                           className={cx(
-                            "inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium",
+                            "inline-flex items-center rounded-full border px-2.5 py-1 text-[12px] font-medium",
                             statusClasses(curso.status)
                           )}
                         >
@@ -1179,7 +1173,7 @@ export default function AdminCursosPage() {
                         </span>
                       </div>
 
-                      <div className="text-sm font-medium text-[#344054]">
+                      <div className="text-[14px] font-medium text-[#52525b]">
                         {curso.required_rank}
                       </div>
 
@@ -1188,14 +1182,14 @@ export default function AdminCursosPage() {
                           trilhasDoCurso.map((trilha) => (
                             <span
                               key={`${curso.id}-${trilha.id}`}
-                              className="inline-flex max-w-full items-center gap-1 rounded-full border border-[#EAD7B7] bg-[#FBF6ED] px-2.5 py-1 text-[11px] font-medium text-[#9B6B22]"
+                              className="inline-flex max-w-full items-center gap-1 rounded-full border border-[#e2d2b6] bg-[#f3eee5] px-2.5 py-1 text-[11px] font-medium text-[#8a6836]"
                             >
                               <Network className="h-3 w-3 shrink-0" />
                               <span className="truncate">{trilha.title}</span>
                             </span>
                           ))
                         ) : (
-                          <span className="inline-flex items-center gap-1 rounded-full border border-[#E4E7EC] bg-white px-2.5 py-1 text-[11px] font-medium text-[#667085]">
+                          <span className="inline-flex items-center gap-1 rounded-full border border-[#e5e5e5] bg-white px-2.5 py-1 text-[11px] font-medium text-[#666b76]">
                             Sem trilha
                           </span>
                         )}
@@ -1204,7 +1198,7 @@ export default function AdminCursosPage() {
                       <div className="flex justify-start lg:justify-end">
                         <Link
                           href={`/admin/cursos/${curso.id}`}
-                          className="inline-flex items-center gap-2 rounded-[16px] border border-[#E4E7EC] bg-white px-3.5 py-2 text-sm font-semibold text-[#344054] transition hover:bg-[#F9FAFB]"
+                          className="inline-flex items-center gap-2 rounded-[12px] border border-[#e5e5e5] bg-white px-3.5 py-2 text-[14px] font-semibold text-[#52525b] transition hover:bg-[#f7f7f7]"
                         >
                           Gerenciar
                           <ChevronRight className="h-4 w-4" />
@@ -1221,14 +1215,14 @@ export default function AdminCursosPage() {
 
       {trilhaVisualizando ? (
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-[720px] rounded-[28px] border border-[#E7EAF0] bg-white shadow-[0_24px_70px_rgba(15,23,42,0.18)]">
-            <div className="flex items-start justify-between gap-4 border-b border-[#EEF1F5] p-6">
+          <div className="w-full max-w-[720px] rounded-[18px] border border-[#e5e5e5] bg-white shadow-[0_24px_80px_rgba(31,34,48,0.16)]">
+            <div className="flex items-start justify-between gap-4 border-b border-[#e5e5e5] p-6">
               <div>
-                <div className="inline-flex items-center gap-2 rounded-full border border-[#EAD7B7] bg-[#FBF6ED] px-3 py-1 text-xs font-medium uppercase tracking-[0.14em] text-[#9B6B22]">
+                <div className="inline-flex items-center gap-2 rounded-full border border-[#e2d2b6] bg-[#f3eee5] px-3 py-1 text-[12px] font-medium uppercase tracking-[0.14em] text-[#8a6836]">
                   <Eye className="h-3.5 w-3.5" />
                   Visualização da trilha
                 </div>
-                <h3 className="mt-4 text-2xl font-semibold tracking-tight text-[#101828]">
+                <h3 className="mt-4 text-[22px] font-semibold tracking-[-0.03em] text-[#141414]">
                   {trilhaVisualizando.title}
                 </h3>
               </div>
@@ -1236,7 +1230,7 @@ export default function AdminCursosPage() {
               <button
                 type="button"
                 onClick={() => setTrilhaVisualizando(null)}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#E4E7EC] bg-white text-[#667085] transition hover:bg-[#F9FAFB]"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#e5e5e5] bg-white text-[#666b76] transition hover:bg-[#f7f7f7]"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -1278,17 +1272,17 @@ export default function AdminCursosPage() {
 
       {trilhaEditando ? (
         <div className="fixed inset-0 z-[121] flex items-center justify-center bg-black/40 p-4">
-          <div className="max-h-[92vh] w-full max-w-[980px] overflow-hidden rounded-[28px] border border-[#E7EAF0] bg-white shadow-[0_24px_70px_rgba(15,23,42,0.18)]">
-            <div className="flex items-start justify-between gap-4 border-b border-[#EEF1F5] p-6">
+          <div className="max-h-[92vh] w-full max-w-[980px] overflow-hidden rounded-[18px] border border-[#e5e5e5] bg-white shadow-[0_24px_80px_rgba(31,34,48,0.16)]">
+            <div className="flex items-start justify-between gap-4 border-b border-[#e5e5e5] p-6">
               <div>
-                <div className="inline-flex items-center gap-2 rounded-full border border-[#EAD7B7] bg-[#FBF6ED] px-3 py-1 text-xs font-medium uppercase tracking-[0.14em] text-[#9B6B22]">
+                <div className="inline-flex items-center gap-2 rounded-full border border-[#e2d2b6] bg-[#f3eee5] px-3 py-1 text-[12px] font-medium uppercase tracking-[0.14em] text-[#8a6836]">
                   <PencilLine className="h-3.5 w-3.5" />
                   Edição completa da trilha
                 </div>
-                <h3 className="mt-4 text-2xl font-semibold tracking-tight text-[#101828]">
+                <h3 className="mt-4 text-[22px] font-semibold tracking-[-0.03em] text-[#141414]">
                   Editar trilha
                 </h3>
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-[#667085]">
+                <p className="mt-2 max-w-2xl text-[14px] leading-6 text-[#666b76]">
                   Ajuste os dados da trilha e substitua as capas conforme o modelo escolhido.
                   Em Destaque extragrande, use uma capa vertical grande para o card parado e
                   uma capa horizontal para o hover paisagem.
@@ -1300,7 +1294,7 @@ export default function AdminCursosPage() {
                   type="button"
                   onClick={() => void salvarEdicaoTrilha()}
                   disabled={salvandoEdicao}
-                  className="inline-flex items-center justify-center gap-2 rounded-[16px] border border-[#EAD7B7] bg-[#D8BC8B] px-4 py-2.5 text-sm font-semibold text-[#111111] transition hover:brightness-[1.02] disabled:cursor-not-allowed disabled:opacity-70"
+                  className="inline-flex items-center justify-center gap-2 rounded-[12px] border border-[#e2d2b6] bg-[#DBC094] px-4 py-2.5 text-[14px] font-semibold text-black transition hover:brightness-[1.02] disabled:cursor-not-allowed disabled:opacity-70"
                 >
                   {salvandoEdicao ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -1314,7 +1308,7 @@ export default function AdminCursosPage() {
                   type="button"
                   onClick={fecharEdicaoTrilha}
                   disabled={salvandoEdicao}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#E4E7EC] bg-white text-[#667085] transition hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#e5e5e5] bg-white text-[#666b76] transition hover:bg-[#f7f7f7] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -1324,14 +1318,14 @@ export default function AdminCursosPage() {
             <div className="max-h-[calc(92vh-188px)] overflow-y-auto p-6">
               <div className="grid gap-5">
                 {erroEdicao ? (
-                  <div className="rounded-[18px] border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+                  <div className="rounded-[18px] border border-rose-200 bg-rose-50 p-4 text-[14px] text-rose-700">
                     {erroEdicao}
                   </div>
                 ) : null}
 
                 <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                   <div>
-                    <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                    <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                       Nome da trilha
                     </label>
                     <input
@@ -1340,12 +1334,12 @@ export default function AdminCursosPage() {
                       onChange={(e) =>
                         updateFormEditarTrilha("title", e.target.value)
                       }
-                      className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none transition focus:border-[#D8BC8B] focus:bg-white"
+                      className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
                     />
                   </div>
 
                   <div>
-                    <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                    <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                       Identificador
                     </label>
                     <input
@@ -1354,13 +1348,13 @@ export default function AdminCursosPage() {
                       onChange={(e) =>
                         updateFormEditarTrilha("slug", gerarSlug(e.target.value))
                       }
-                      className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none transition focus:border-[#D8BC8B] focus:bg-white"
+                      className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                  <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                     Descrição
                   </label>
                   <textarea
@@ -1369,13 +1363,13 @@ export default function AdminCursosPage() {
                     onChange={(e) =>
                       updateFormEditarTrilha("description", e.target.value)
                     }
-                    className="w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 py-3 text-sm text-[#101828] outline-none transition focus:border-[#D8BC8B] focus:bg-white"
+                    className="w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 py-3 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
                   <div>
-                    <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                    <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                       Status visual
                     </label>
                     <select
@@ -1386,7 +1380,7 @@ export default function AdminCursosPage() {
                           e.target.value as StatusTrilha
                         )
                       }
-                      className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none transition focus:border-[#D8BC8B] focus:bg-white"
+                      className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
                     >
                       <option value="draft">Rascunho</option>
                       <option value="published">Publicado</option>
@@ -1395,7 +1389,7 @@ export default function AdminCursosPage() {
                   </div>
 
                   <div>
-                    <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                    <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                       Rank mínimo exigido
                     </label>
                     <input
@@ -1405,26 +1399,26 @@ export default function AdminCursosPage() {
                       onChange={(e) =>
                         updateFormEditarTrilha("requiredRank", e.target.value)
                       }
-                      className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none transition focus:border-[#D8BC8B] focus:bg-white"
+                      className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
                     />
                   </div>
 
-                  <label className="flex min-h-12 items-start gap-3 rounded-[18px] border border-[#E7EAF0] bg-[#FCFCFD] p-4">
+                  <label className="flex min-h-12 items-start gap-3 rounded-[12px] border border-[#e5e5e5] bg-white p-4">
                     <input
                       type="checkbox"
                       checked={formEditarTrilha.isFeatured}
                       onChange={(e) =>
                         updateFormEditarTrilha("isFeatured", e.target.checked)
                       }
-                      className="mt-1 h-4 w-4 rounded border-[#D0D5DD] text-[#B07A2A] focus:ring-[#D8BC8B]"
+                      className="mt-1 h-4 w-4 rounded border-[#e5e5e5] text-[#8a6836] focus:ring-[#DBC094]"
                     />
 
                     <span className="block">
-                      <span className="inline-flex items-center gap-2 text-sm font-semibold text-[#101828]">
-                        <Sparkles className="h-4 w-4 text-[#B07A2A]" />
+                      <span className="inline-flex items-center gap-2 text-[14px] font-semibold text-[#141414]">
+                        <Star className="h-4 w-4 text-[#8a6836]" />
                         Marcar como destaque
                       </span>
-                      <span className="mt-1 block text-sm leading-6 text-[#667085]">
+                      <span className="mt-1 block text-[14px] leading-6 text-[#666b76]">
                         O modelo Destaque extragrande força este campo como ativo.
                       </span>
                     </span>
@@ -1432,12 +1426,12 @@ export default function AdminCursosPage() {
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                  <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                     Modelo de capa da trilha
                   </label>
 
-                  <div className="rounded-[20px] border border-[#E7EAF0] bg-[#FCFCFD] p-4">
-                    <p className="mb-4 text-sm leading-6 text-[#667085]">
+                  <div className="rounded-[12px] border border-[#e5e5e5] bg-white p-4">
+                    <p className="mb-4 text-[14px] leading-6 text-[#666b76]">
                       Selecione o modelo visual. Ao trocar o modelo, qualquer nova imagem
                       selecionada nesta edição será removida para evitar capas incorretas.
                     </p>
@@ -1480,25 +1474,25 @@ export default function AdminCursosPage() {
                             className={cx(
                               "rounded-[18px] border p-4 text-left transition",
                               selected
-                                ? "border-[#D8BC8B] bg-[#FBF6ED] shadow-[0_12px_28px_rgba(216,188,139,0.18)]"
-                                : "border-[#E7EAF0] bg-white hover:border-[#D8BC8B]/70"
+                                ? "border-[#DBC094] bg-[#f3eee5] "
+                                : "border-[#e5e5e5] bg-white hover:border-[#DBC094]/70"
                             )}
                           >
                             <span
                               className={cx(
-                                "mb-3 flex h-7 w-7 items-center justify-center rounded-full border text-xs font-black",
+                                "mb-3 flex h-7 w-7 items-center justify-center rounded-full border text-[12px] font-black",
                                 selected
-                                  ? "border-[#D8BC8B] bg-[#D8BC8B] text-black"
-                                  : "border-[#D0D5DD] bg-white text-[#667085]"
+                                  ? "border-[#DBC094] bg-[#DBC094] text-black"
+                                  : "border-[#e5e5e5] bg-white text-[#666b76]"
                               )}
                             >
                               {selected ? "✓" : ""}
                             </span>
 
-                            <strong className="block text-sm font-semibold text-[#101828]">
+                            <strong className="block text-[14px] font-semibold text-[#141414]">
                               {option.title}
                             </strong>
-                            <span className="mt-1 block text-sm leading-6 text-[#667085]">
+                            <span className="mt-1 block text-[14px] leading-6 text-[#666b76]">
                               {option.description}
                             </span>
                           </button>
@@ -1506,11 +1500,11 @@ export default function AdminCursosPage() {
                       })}
                     </div>
 
-                    <div className="mt-4 rounded-[16px] border border-[#EAD7B7] bg-[#FBF6ED] p-4">
-                      <p className="text-sm font-semibold text-[#7A551C]">
+                    <div className="mt-4 rounded-[12px] border border-[#e2d2b6] bg-[#f3eee5] p-4">
+                      <p className="text-[14px] font-semibold text-[#8a6836]">
                         Modelo atual: {traduzirFormato(formEditarTrilha.preferredCardFormat)}
                       </p>
-                      <p className="mt-1 text-sm leading-6 text-[#8A6A3F]">
+                      <p className="mt-1 text-[14px] leading-6 text-[#8a6836]">
                         {formEditarTrilha.preferredCardFormat === "featured"
                           ? "Envie ou substitua a capa vertical grande do card parado e a capa horizontal do hover paisagem."
                           : "O upload abaixo fica ativo somente para o modelo selecionado."}
@@ -1533,16 +1527,16 @@ export default function AdminCursosPage() {
                       return (
                         <div
                           key={kind}
-                          className="rounded-[20px] border border-[#E7EAF0] bg-[#FCFCFD] p-4"
+                          className="rounded-[12px] border border-[#e5e5e5] bg-white p-4"
                         >
                           <div className="mb-4">
-                            <label className="block text-sm font-semibold text-[#344054]">
+                            <label className="block text-[14px] font-semibold text-[#52525b]">
                               {coverConfig.label}
                             </label>
-                            <p className="mt-1 text-sm leading-6 text-[#667085]">
+                            <p className="mt-1 text-[14px] leading-6 text-[#666b76]">
                               {coverConfig.description}
                             </p>
-                            <p className="mt-1 text-xs font-medium text-[#98A2B3]">
+                            <p className="mt-1 text-[12px] font-medium text-[#8a8f9d]">
                               {coverConfig.helper}
                             </p>
                           </div>
@@ -1551,7 +1545,7 @@ export default function AdminCursosPage() {
                             <div className="flex min-w-0 gap-4">
                               <div
                                 className={cx(
-                                  "flex shrink-0 items-center justify-center overflow-hidden rounded-[16px] border border-[#E4E7EC] bg-white",
+                                  "flex shrink-0 items-center justify-center overflow-hidden rounded-[12px] border border-[#e5e5e5] bg-white",
                                   coverConfig.previewClass
                                 )}
                               >
@@ -1568,19 +1562,19 @@ export default function AdminCursosPage() {
                                     className="h-full w-full object-cover"
                                   />
                                 ) : (
-                                  <ImageIcon className="h-6 w-6 text-[#98A2B3]" />
+                                  <ImageIcon className="h-6 w-6 text-[#8a8f9d]" />
                                 )}
                               </div>
 
                               <div className="min-w-0">
-                                <p className="truncate text-sm font-semibold text-[#101828]">
+                                <p className="truncate text-[14px] font-semibold text-[#141414]">
                                   {cover.file
                                     ? cover.file.name
                                     : currentCoverPath
                                     ? "Capa atual cadastrada"
                                     : "Nenhuma capa cadastrada"}
                                 </p>
-                                <p className="mt-1 text-sm leading-6 text-[#667085]">
+                                <p className="mt-1 text-[14px] leading-6 text-[#666b76]">
                                   {cover.file
                                     ? `${cover.file.type || "Tipo não identificado"} • ${formatarTamanho(
                                         cover.file.size
@@ -1592,7 +1586,7 @@ export default function AdminCursosPage() {
                             </div>
 
                             <div className="flex flex-wrap gap-2">
-                              <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-[14px] border border-[#E4E7EC] bg-white px-4 py-2 text-sm font-semibold text-[#344054] transition hover:bg-[#F9FAFB]">
+                              <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-[14px] border border-[#e5e5e5] bg-white px-4 py-2 text-[14px] font-semibold text-[#52525b] transition hover:bg-[#f7f7f7]">
                                 <Upload className="h-4 w-4" />
                                 {currentCoverPath || cover.file
                                   ? "Substituir capa"
@@ -1611,7 +1605,7 @@ export default function AdminCursosPage() {
                                 <button
                                   type="button"
                                   onClick={() => removerCapaSelecionadaTrilha(kind)}
-                                  className="inline-flex items-center justify-center gap-2 rounded-[14px] border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
+                                  className="inline-flex items-center justify-center gap-2 rounded-[14px] border border-rose-200 bg-rose-50 px-4 py-2 text-[14px] font-semibold text-rose-700 transition hover:bg-rose-100"
                                 >
                                   <Trash2 className="h-4 w-4" />
                                   Remover seleção
@@ -1627,12 +1621,12 @@ export default function AdminCursosPage() {
               </div>
             </div>
 
-            <div className="sticky bottom-0 z-10 flex justify-end gap-3 border-t border-[#EEF1F5] bg-white p-6 shadow-[0_-16px_30px_rgba(15,23,42,0.06)]">
+            <div className="sticky bottom-0 z-10 flex justify-end gap-3 border-t border-[#e5e5e5] bg-white p-6 ">
               <button
                 type="button"
                 onClick={fecharEdicaoTrilha}
                 disabled={salvandoEdicao}
-                className="inline-flex items-center justify-center rounded-[16px] border border-[#E4E7EC] bg-white px-4 py-2.5 text-sm font-semibold text-[#344054] transition hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:opacity-70"
+                className="inline-flex items-center justify-center rounded-[12px] border border-[#e5e5e5] bg-white px-4 py-2.5 text-[14px] font-semibold text-[#52525b] transition hover:bg-[#f7f7f7] disabled:cursor-not-allowed disabled:opacity-70"
               >
                 Cancelar
               </button>
@@ -1641,7 +1635,7 @@ export default function AdminCursosPage() {
                 type="button"
                 onClick={() => void salvarEdicaoTrilha()}
                 disabled={salvandoEdicao}
-                className="inline-flex items-center justify-center gap-2 rounded-[16px] border border-[#EAD7B7] bg-[#D8BC8B] px-4 py-2.5 text-sm font-semibold text-[#111111] transition hover:brightness-[1.02] disabled:cursor-not-allowed disabled:opacity-70"
+                className="inline-flex items-center justify-center gap-2 rounded-[12px] border border-[#e2d2b6] bg-[#DBC094] px-4 py-2.5 text-[14px] font-semibold text-black transition hover:brightness-[1.02] disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {salvandoEdicao ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -1657,17 +1651,17 @@ export default function AdminCursosPage() {
 
       {trilhaExcluindo ? (
         <div className="fixed inset-0 z-[122] flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-[620px] rounded-[28px] border border-[#E7EAF0] bg-white shadow-[0_24px_70px_rgba(15,23,42,0.18)]">
-            <div className="flex items-start gap-4 border-b border-[#EEF1F5] p-6">
+          <div className="w-full max-w-[620px] rounded-[18px] border border-[#e5e5e5] bg-white shadow-[0_24px_80px_rgba(31,34,48,0.16)]">
+            <div className="flex items-start gap-4 border-b border-[#e5e5e5] p-6">
               <div className="rounded-full bg-rose-50 p-3 text-rose-700">
                 <AlertTriangle className="h-5 w-5" />
               </div>
 
               <div className="min-w-0 flex-1">
-                <h3 className="text-2xl font-semibold tracking-tight text-[#101828]">
+                <h3 className="text-[22px] font-semibold tracking-[-0.03em] text-[#141414]">
                   Excluir trilha
                 </h3>
-                <p className="mt-2 text-sm leading-6 text-[#667085]">
+                <p className="mt-2 text-[14px] leading-6 text-[#666b76]">
                   A trilha <strong>{trilhaExcluindo.title}</strong> será excluída,
                   mas os cursos não serão removidos. Apenas o vínculo entre eles
                   será desfeito.
@@ -1677,7 +1671,7 @@ export default function AdminCursosPage() {
               <button
                 type="button"
                 onClick={() => setTrilhaExcluindo(null)}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#E4E7EC] bg-white text-[#667085] transition hover:bg-[#F9FAFB]"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#e5e5e5] bg-white text-[#666b76] transition hover:bg-[#f7f7f7]"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -1685,22 +1679,22 @@ export default function AdminCursosPage() {
 
             <div className="p-6">
               {erroExclusao ? (
-                <div className="rounded-[18px] border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+                <div className="rounded-[18px] border border-rose-200 bg-rose-50 p-4 text-[14px] text-rose-700">
                   {erroExclusao}
                 </div>
               ) : (
-                <div className="rounded-[18px] border border-[#E4E7EC] bg-[#FCFCFD] p-4 text-sm leading-6 text-[#667085]">
+                <div className="rounded-[12px] border border-[#e5e5e5] bg-white p-4 text-[14px] leading-6 text-[#666b76]">
                   Cursos atualmente vinculados:{" "}
                   <strong>{quantidadeCursosPorTrilha.get(trilhaExcluindo.id) ?? 0}</strong>
                 </div>
               )}
             </div>
 
-            <div className="flex justify-end gap-3 border-t border-[#EEF1F5] p-6">
+            <div className="flex justify-end gap-3 border-t border-[#e5e5e5] p-6">
               <button
                 type="button"
                 onClick={() => setTrilhaExcluindo(null)}
-                className="inline-flex items-center justify-center rounded-[16px] border border-[#E4E7EC] bg-white px-4 py-2.5 text-sm font-semibold text-[#344054] transition hover:bg-[#F9FAFB]"
+                className="inline-flex items-center justify-center rounded-[12px] border border-[#e5e5e5] bg-white px-4 py-2.5 text-[14px] font-semibold text-[#52525b] transition hover:bg-[#f7f7f7]"
               >
                 Cancelar
               </button>
@@ -1709,7 +1703,7 @@ export default function AdminCursosPage() {
                 type="button"
                 onClick={() => void excluirTrilha()}
                 disabled={excluindoTrilha}
-                className="inline-flex items-center justify-center gap-2 rounded-[16px] border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-70"
+                className="inline-flex items-center justify-center gap-2 rounded-[12px] border border-rose-200 bg-rose-50 px-4 py-2.5 text-[14px] font-semibold text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {excluindoTrilha ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -1735,18 +1729,18 @@ type MetricCardProps = {
 
 function MetricCard({ title, value, icon, iconTone }: MetricCardProps) {
   const tones = {
-    gold: "bg-[#F8EFE0] text-[#B07A2A]",
-    violet: "bg-[#EFE9FB] text-[#6F4AA7]",
-    blue: "bg-[#EAF3FB] text-[#4C84B8]",
-    goldSoft: "bg-[#F5EEDC] text-[#9F7A28]",
+    gold: "bg-[#f3eee5] text-[#8a6836]",
+    violet: "bg-[#f3eee5] text-[#8a6836]",
+    blue: "bg-[#f3eee5] text-[#8a6836]",
+    goldSoft: "bg-[#f3eee5] text-[#8a6836]",
   };
 
   return (
-    <article className="rounded-[24px] border border-[#E7EAF0] bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,0.04)]">
+    <article className="rounded-[12px] border border-[#e5e5e5] bg-white p-5 ">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-sm font-medium text-[#667085]">{title}</p>
-          <p className="mt-4 text-5xl font-semibold tracking-tight text-[#111827]">
+          <p className="text-[14px] font-medium text-[#666b76]">{title}</p>
+          <p className="mt-4 text-[36px] font-semibold tracking-[-0.03em] text-[#141414]">
             {value}
           </p>
         </div>
@@ -1767,13 +1761,13 @@ function DetailBox({
   multiLine?: boolean;
 }) {
   return (
-    <div className="rounded-[18px] border border-[#E7EAF0] bg-[#FCFCFD] p-4">
-      <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[#98A2B3]">
+    <div className="rounded-[12px] border border-[#e5e5e5] bg-white p-4">
+      <div className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#8a8f9d]">
         {label}
       </div>
       <div
         className={cx(
-          "mt-2 text-sm text-[#101828]",
+          "mt-2 text-[14px] text-[#141414]",
           multiLine ? "whitespace-pre-wrap leading-6" : "truncate"
         )}
       >

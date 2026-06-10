@@ -10,7 +10,7 @@ import {
   Loader2,
   Network,
   Save,
-  Sparkles,
+  Star,
   Trash2,
   Upload,
 } from "lucide-react";
@@ -438,32 +438,32 @@ export default function NovoCursoPage() {
   }
 
   return (
-    <div className="min-h-screen bg-transparent text-[#111827]">
-      <div className="flex w-full flex-col gap-6">
-        <section className="rounded-[28px] border border-[#E7EAF0] bg-white shadow-[0_8px_30px_rgba(15,23,42,0.04)]">
-          <div className="flex flex-col gap-6 p-6 md:p-8">
+    <div className="space-y-7 text-[#141414]">
+      <div className="flex w-full flex-col gap-7">
+        <section className="border-b border-[#e5e5e5] pb-7">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
               <div className="min-w-0 max-w-3xl">
                 <Link
                   href="/admin/cursos"
-                  className="inline-flex max-w-full items-center gap-2 text-sm font-medium text-[#667085] transition hover:text-[#101828]"
+                  className="inline-flex max-w-full items-center gap-2 text-[14px] font-medium text-[#666b76] transition hover:text-[#141414]"
                 >
                   <ArrowLeft className="h-4 w-4 shrink-0" />
                   <span className="truncate">Voltar para trilhas e cursos</span>
                 </Link>
 
                 <div className="mt-4">
-                  <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-[#D9E6F5] bg-[#EEF5FB] px-3 py-1 text-xs font-medium uppercase tracking-[0.14em] text-[#476A8E]">
+                  <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-[#e2d2b6] bg-[#f3eee5] px-3 py-1 text-[12px] font-medium uppercase tracking-[0.14em] text-[#8a6836]">
                     <GraduationCap className="h-3.5 w-3.5 shrink-0" />
                     <span className="truncate">Cadastro de curso</span>
                   </div>
                 </div>
 
-                <h1 className="mt-5 text-3xl font-semibold tracking-tight text-[#101828] md:text-4xl">
+                <h1 className="mt-5 text-[38px] font-semibold leading-none tracking-[-0.04em] text-[#141414] sm:text-[46px]">
                   Novo curso
                 </h1>
 
-                <p className="mt-3 max-w-2xl text-sm leading-7 text-[#667085] md:text-base">
+                <p className="mt-3 max-w-2xl text-[14px] leading-7 text-[#666b76] md:text-[16px]">
                   Cadastre um novo curso e escolha apenas um modelo de capa.
                   O formato selecionado define como o curso será exibido nos
                   cards da Home do aluno.
@@ -475,7 +475,7 @@ export default function NovoCursoPage() {
                   type="submit"
                   form="form-novo-curso"
                   disabled={salvando}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-[18px] border border-[#EAD7B7] bg-[#D8BC8B] px-5 py-3 text-sm font-semibold text-[#111111] transition hover:brightness-[1.02] disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-[12px] bg-[#DBC094] px-5 py-3 text-[14px] font-semibold text-black transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
                 >
                   {salvando ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -492,21 +492,21 @@ export default function NovoCursoPage() {
         <form
           id="form-novo-curso"
           onSubmit={handleSubmit}
-          className="rounded-[28px] border border-[#E7EAF0] bg-white shadow-[0_8px_30px_rgba(15,23,42,0.04)]"
+          className="rounded-[18px] border border-[#e5e5e5] bg-white "
         >
           <div className="grid grid-cols-1 gap-6 p-6 md:p-8">
             {erro ? (
               <div className="rounded-[18px] border border-rose-200 bg-rose-50 p-4">
-                <h2 className="text-sm font-semibold text-rose-700">
+                <h2 className="text-[14px] font-semibold text-rose-700">
                   Não foi possível salvar o curso
                 </h2>
-                <p className="mt-2 text-sm leading-6 text-rose-600">{erro}</p>
+                <p className="mt-2 text-[14px] leading-6 text-rose-600">{erro}</p>
               </div>
             ) : null}
 
             <div className="grid grid-cols-1 gap-5 xl:grid-cols-12">
               <div className="xl:col-span-12">
-                <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                   Nome do curso
                 </label>
                 <input
@@ -521,12 +521,12 @@ export default function NovoCursoPage() {
                     }
                   }}
                   placeholder="Digite o nome do curso"
-                  className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none placeholder:text-[#98A2B3] transition focus:border-[#D8BC8B] focus:bg-white"
+                  className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none placeholder:text-[#8a8f9d] transition focus:border-[#DBC094] focus:bg-white"
                 />
               </div>
 
               <div className="xl:col-span-12">
-                <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                   Identificador do curso
                 </label>
                 <input
@@ -537,20 +537,20 @@ export default function NovoCursoPage() {
                     updateField("slug", gerarSlug(e.target.value));
                   }}
                   placeholder="exemplo-de-curso"
-                  className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none placeholder:text-[#98A2B3] transition focus:border-[#D8BC8B] focus:bg-white"
+                  className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none placeholder:text-[#8a8f9d] transition focus:border-[#DBC094] focus:bg-white"
                 />
               </div>
 
               <div className="xl:col-span-12">
-                <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                   Trilha
                 </label>
 
-                <div className="rounded-[18px] border border-[#E7EAF0] bg-[#FCFCFD] p-4">
+                <div className="rounded-[12px] border border-[#e5e5e5] bg-white p-4">
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_auto] md:items-center">
                     <div>
-                      <div className="mb-2 inline-flex items-center gap-2 text-sm font-semibold text-[#101828]">
-                        <Network className="h-4 w-4 text-[#B07A2A]" />
+                      <div className="mb-2 inline-flex items-center gap-2 text-[14px] font-semibold text-[#141414]">
+                        <Network className="h-4 w-4 text-[#8a6836]" />
                         Vincular a uma trilha
                       </div>
 
@@ -560,7 +560,7 @@ export default function NovoCursoPage() {
                           updateField("trilhaId", e.target.value)
                         }
                         disabled={carregandoTrilhas}
-                        className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-white px-4 text-sm text-[#101828] outline-none transition focus:border-[#D8BC8B] focus:bg-white disabled:cursor-not-allowed disabled:bg-[#F2F4F7]"
+                        className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white disabled:cursor-not-allowed disabled:bg-[#F2F4F7]"
                       >
                         <option value="">
                           {carregandoTrilhas
@@ -578,14 +578,14 @@ export default function NovoCursoPage() {
 
                     <Link
                       href="/admin/cursos/trilhas/nova"
-                      className="inline-flex items-center justify-center gap-2 rounded-[16px] border border-[#E4E7EC] bg-white px-4 py-3 text-sm font-semibold text-[#344054] transition hover:bg-[#F9FAFB]"
+                      className="inline-flex items-center justify-center gap-2 rounded-[12px] border border-[#e5e5e5] bg-white px-4 py-3 text-[14px] font-semibold text-[#52525b] transition hover:bg-[#f7f7f7]"
                     >
-                      <Sparkles className="h-4 w-4" />
+                      <Star className="h-4 w-4" />
                       Nova trilha
                     </Link>
                   </div>
 
-                  <p className="mt-3 text-sm leading-6 text-[#667085]">
+                  <p className="mt-3 text-[14px] leading-6 text-[#666b76]">
                     Você pode cadastrar o curso sem trilha ou já vinculá-lo a
                     uma trilha existente.
                   </p>
@@ -593,12 +593,12 @@ export default function NovoCursoPage() {
               </div>
 
               <div className="xl:col-span-12">
-                <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                   Modelo de capa do curso
                 </label>
 
-                <div className="rounded-[20px] border border-[#E7EAF0] bg-[#FCFCFD] p-4">
-                  <p className="mb-4 text-sm leading-6 text-[#667085]">
+                <div className="rounded-[12px] border border-[#e5e5e5] bg-white p-4">
+                  <p className="mb-4 text-[14px] leading-6 text-[#666b76]">
                     Selecione apenas um modelo de capa. Ao trocar o modelo, a
                     imagem selecionada anteriormente será removida para evitar
                     uso de múltiplas capas no mesmo cadastro.
@@ -642,25 +642,25 @@ export default function NovoCursoPage() {
                           className={[
                             "rounded-[18px] border p-4 text-left transition",
                             selected
-                              ? "border-[#D8BC8B] bg-[#FBF6ED] shadow-[0_12px_28px_rgba(216,188,139,0.18)]"
-                              : "border-[#E7EAF0] bg-white hover:border-[#D8BC8B]/70",
+                              ? "border-[#DBC094] bg-[#f3eee5] "
+                              : "border-[#e5e5e5] bg-white hover:border-[#DBC094]/70",
                           ].join(" ")}
                         >
                           <span
                             className={[
-                              "mb-3 flex h-7 w-7 items-center justify-center rounded-full border text-xs font-black",
+                              "mb-3 flex h-7 w-7 items-center justify-center rounded-full border text-[12px] font-black",
                               selected
-                                ? "border-[#D8BC8B] bg-[#D8BC8B] text-black"
-                                : "border-[#D0D5DD] bg-white text-[#667085]",
+                                ? "border-[#DBC094] bg-[#DBC094] text-black"
+                                : "border-[#e5e5e5] bg-white text-[#666b76]",
                             ].join(" ")}
                           >
                             {selected ? "✓" : ""}
                           </span>
 
-                          <strong className="block text-sm font-semibold text-[#101828]">
+                          <strong className="block text-[14px] font-semibold text-[#141414]">
                             {option.title}
                           </strong>
-                          <span className="mt-1 block text-sm leading-6 text-[#667085]">
+                          <span className="mt-1 block text-[14px] leading-6 text-[#666b76]">
                             {option.description}
                           </span>
                         </button>
@@ -671,15 +671,15 @@ export default function NovoCursoPage() {
               </div>
 
               <div className="xl:col-span-12">
-                <div className="rounded-[20px] border border-[#E7EAF0] bg-[#FCFCFD] p-4">
+                <div className="rounded-[12px] border border-[#e5e5e5] bg-white p-4">
                   <div className="mb-4">
-                    <label className="block text-sm font-semibold text-[#344054]">
+                    <label className="block text-[14px] font-semibold text-[#52525b]">
                       {formatConfig.label}
                     </label>
-                    <p className="mt-1 text-sm leading-6 text-[#667085]">
+                    <p className="mt-1 text-[14px] leading-6 text-[#666b76]">
                       {formatConfig.description}
                     </p>
-                    <p className="mt-1 text-xs font-medium text-[#98A2B3]">
+                    <p className="mt-1 text-[12px] font-medium text-[#8a8f9d]">
                       {formatConfig.helper}
                     </p>
                   </div>
@@ -689,7 +689,7 @@ export default function NovoCursoPage() {
                       <div className="flex min-w-0 gap-4">
                         <div
                           className={[
-                            "flex shrink-0 items-center justify-center overflow-hidden rounded-[16px] border border-[#E4E7EC] bg-white",
+                            "flex shrink-0 items-center justify-center overflow-hidden rounded-[12px] border border-[#e5e5e5] bg-white",
                             formatConfig.previewClass,
                           ].join(" ")}
                         >
@@ -700,25 +700,25 @@ export default function NovoCursoPage() {
                               className="h-full w-full object-cover"
                             />
                           ) : (
-                            <ImageIcon className="h-6 w-6 text-[#98A2B3]" />
+                            <ImageIcon className="h-6 w-6 text-[#8a8f9d]" />
                           )}
                         </div>
 
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold text-[#101828]">
+                          <p className="truncate text-[14px] font-semibold text-[#141414]">
                             {cover.file.name}
                           </p>
-                          <p className="mt-1 text-sm text-[#667085]">
+                          <p className="mt-1 text-[14px] text-[#666b76]">
                             {cover.file.type || "Tipo não identificado"}
                           </p>
-                          <p className="mt-1 text-sm text-[#98A2B3]">
+                          <p className="mt-1 text-[14px] text-[#8a8f9d]">
                             {formatarTamanho(cover.file.size)}
                           </p>
                         </div>
                       </div>
 
                       <div className="flex flex-wrap gap-2">
-                        <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-[14px] border border-[#E4E7EC] bg-white px-4 py-2 text-sm font-semibold text-[#344054] transition hover:bg-[#F9FAFB]">
+                        <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-[14px] border border-[#e5e5e5] bg-white px-4 py-2 text-[14px] font-semibold text-[#52525b] transition hover:bg-[#f7f7f7]">
                           <Upload className="h-4 w-4" />
                           Substituir capa
                           <input
@@ -732,7 +732,7 @@ export default function NovoCursoPage() {
                         <button
                           type="button"
                           onClick={removerCapaSelecionada}
-                          className="inline-flex items-center justify-center gap-2 rounded-[14px] border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
+                          className="inline-flex items-center justify-center gap-2 rounded-[14px] border border-rose-200 bg-rose-50 px-4 py-2 text-[14px] font-semibold text-rose-700 transition hover:bg-rose-100"
                         >
                           <Trash2 className="h-4 w-4" />
                           Excluir capa
@@ -742,16 +742,16 @@ export default function NovoCursoPage() {
                   ) : (
                     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                       <div>
-                        <p className="text-sm font-semibold text-[#101828]">
+                        <p className="text-[14px] font-semibold text-[#141414]">
                           Nenhuma imagem selecionada
                         </p>
-                        <p className="mt-1 text-sm leading-6 text-[#667085]">
+                        <p className="mt-1 text-[14px] leading-6 text-[#666b76]">
                           O upload abaixo está ativo apenas para o modelo
                           selecionado: {formatConfig.label}.
                         </p>
                       </div>
 
-                      <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-[16px] border border-[#EAD7B7] bg-[#D8BC8B] px-4 py-2.5 text-sm font-semibold text-[#111111] transition hover:brightness-[1.02]">
+                      <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-[12px] border border-[#e2d2b6] bg-[#DBC094] px-4 py-2.5 text-[14px] font-semibold text-black transition hover:brightness-105">
                         <Upload className="h-4 w-4" />
                         Enviar capa
                         <input
@@ -767,7 +767,7 @@ export default function NovoCursoPage() {
               </div>
 
               <div className="xl:col-span-12">
-                <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                   Descrição curta
                 </label>
                 <input
@@ -777,12 +777,12 @@ export default function NovoCursoPage() {
                     updateField("shortDescription", e.target.value)
                   }
                   placeholder="Resumo curto para listagens e destaque"
-                  className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none placeholder:text-[#98A2B3] transition focus:border-[#D8BC8B] focus:bg-white"
+                  className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none placeholder:text-[#8a8f9d] transition focus:border-[#DBC094] focus:bg-white"
                 />
               </div>
 
               <div className="xl:col-span-12">
-                <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                   Descrição completa
                 </label>
                 <textarea
@@ -790,12 +790,12 @@ export default function NovoCursoPage() {
                   value={form.description}
                   onChange={(e) => updateField("description", e.target.value)}
                   placeholder="Descreva o curso"
-                  className="w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 py-3 text-sm text-[#101828] outline-none placeholder:text-[#98A2B3] transition focus:border-[#D8BC8B] focus:bg-white"
+                  className="w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 py-3 text-[14px] text-[#141414] outline-none placeholder:text-[#8a8f9d] transition focus:border-[#DBC094] focus:bg-white"
                 />
               </div>
 
               <div className="xl:col-span-4">
-                <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                   Rank mínimo exigido
                 </label>
                 <input
@@ -804,12 +804,12 @@ export default function NovoCursoPage() {
                   value={form.requiredRank}
                   onChange={(e) => updateField("requiredRank", e.target.value)}
                   placeholder="0"
-                  className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none placeholder:text-[#98A2B3] transition focus:border-[#D8BC8B] focus:bg-white"
+                  className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none placeholder:text-[#8a8f9d] transition focus:border-[#DBC094] focus:bg-white"
                 />
               </div>
 
               <div className="xl:col-span-4">
-                <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                   Status visual
                 </label>
                 <select
@@ -817,7 +817,7 @@ export default function NovoCursoPage() {
                   onChange={(e) =>
                     updateField("status", e.target.value as StatusCurso)
                   }
-                  className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none transition focus:border-[#D8BC8B] focus:bg-white"
+                  className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
                 >
                   <option value="draft">Rascunho</option>
                   <option value="published">Publicado</option>
@@ -826,25 +826,25 @@ export default function NovoCursoPage() {
               </div>
 
               <div className="xl:col-span-4">
-                <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                   Exibição
                 </label>
-                <label className="flex min-h-12 items-start gap-3 rounded-[18px] border border-[#E7EAF0] bg-[#FCFCFD] p-4">
+                <label className="flex min-h-12 items-start gap-3 rounded-[12px] border border-[#e5e5e5] bg-white p-4">
                   <input
                     type="checkbox"
                     checked={form.isFeatured}
                     onChange={(e) =>
                       updateField("isFeatured", e.target.checked)
                     }
-                    className="mt-1 h-4 w-4 rounded border-[#D0D5DD] text-[#B07A2A] focus:ring-[#D8BC8B]"
+                    className="mt-1 h-4 w-4 rounded border-[#e5e5e5] text-[#8a6836] focus:ring-[#DBC094]"
                   />
 
                   <span className="block">
-                    <span className="inline-flex items-center gap-2 text-sm font-semibold text-[#101828]">
-                      <Sparkles className="h-4 w-4 text-[#B07A2A]" />
+                    <span className="inline-flex items-center gap-2 text-[14px] font-semibold text-[#141414]">
+                      <Star className="h-4 w-4 text-[#8a6836]" />
                       Marcar como destaque
                     </span>
-                    <span className="mt-1 block text-sm leading-6 text-[#667085]">
+                    <span className="mt-1 block text-[14px] leading-6 text-[#666b76]">
                       Este campo ajuda a organizar a prioridade de exibição no
                       sistema.
                     </span>

@@ -22,7 +22,6 @@ import {
   Plus,
   RefreshCcw,
   ShieldCheck,
-  Sparkles,
   Star,
   Video,
   X,
@@ -191,13 +190,13 @@ function traduzirStatus(status: StatusGeral) {
 function statusClasses(status: StatusGeral) {
   switch (status) {
     case "published":
-      return "border-emerald-200 bg-emerald-50 text-emerald-700";
+      return "border-[#e2d2b6] bg-[#f3eee5] text-[#8a6836]";
     case "draft":
-      return "border-amber-200 bg-amber-50 text-amber-700";
+      return "border-orange-200 bg-orange-50 text-orange-700";
     case "archived":
-      return "border-slate-200 bg-slate-100 text-slate-600";
+      return "border-[#e5e5e5] bg-[#f4f4f5] text-[#52525b]";
     default:
-      return "border-slate-200 bg-slate-100 text-slate-600";
+      return "border-[#e5e5e5] bg-[#f4f4f5] text-[#52525b]";
   }
 }
 
@@ -1865,84 +1864,82 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
     : [];
 
   return (
-    <div className="min-h-screen bg-transparent text-[#111827]">
-      <div className="flex w-full flex-col gap-6">
-        <section className="rounded-[28px] border border-[#E7EAF0] bg-white shadow-[0_8px_30px_rgba(15,23,42,0.04)]">
-          <div className="flex flex-col gap-6 p-6 md:p-8">
-            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-              <div className="max-w-4xl">
-                <Link
-                  href={`/admin/cursos/${cursoId}`}
-                  className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-[#667085] transition hover:text-[#101828]"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                  Voltar para o curso
-                </Link>
+    <div className="space-y-7 text-[#141414]">
+      <div className="flex w-full flex-col gap-7">
+        <section className="border-b border-[#e5e5e5] pb-7">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-4xl">
+              <Link
+                href={`/admin/cursos/${cursoId}`}
+                className="mb-4 inline-flex items-center gap-2 text-[14px] font-medium text-[#666b76] transition hover:text-[#141414]"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Voltar para o curso
+              </Link>
 
-                <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#EAD7B7] bg-[#FBF6ED] px-3 py-1 text-xs font-medium uppercase tracking-[0.14em] text-[#9B6B22]">
-                  <Sparkles className="h-3.5 w-3.5" />
-                  Módulos e aulas
-                </div>
+              <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8a8f9d]">
+                Módulos e aulas
+              </p>
 
-                <h1 className="text-3xl font-semibold tracking-tight text-[#0F172A] md:text-4xl">
-                  {carregando ? "Carregando estrutura..." : curso?.title ?? "Estrutura do curso"}
-                </h1>
+              <h1 className="text-[38px] font-semibold leading-none tracking-[-0.04em] text-[#141414] sm:text-[46px]">
+                {carregando ? "Carregando estrutura..." : curso?.title ?? "Estrutura do curso"}
+              </h1>
 
-                <p className="mt-3 max-w-3xl text-sm leading-7 text-[#667085] md:text-base">
-                  {carregando
-                    ? "Buscando módulos, aulas e materiais reais do curso selecionado."
-                    : resumoCurso(curso)}
-                </p>
-              </div>
-
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <button
-                  type="button"
-                  onClick={() => void carregarEstrutura(cursoId)}
-                  className="inline-flex items-center justify-center gap-2 rounded-[18px] border border-[#E4E7EC] bg-white px-5 py-3 text-sm font-semibold text-[#344054] transition hover:bg-[#F9FAFB]"
-                >
-                  <RefreshCcw className="h-4 w-4" />
-                  Atualizar
-                </button>
-
-                <button
-                  type="button"
-                  onClick={abrirModalNovoModulo}
-                  className="inline-flex items-center justify-center gap-2 rounded-[18px] border border-[#EAD7B7] bg-[#D8BC8B] px-5 py-3 text-sm font-semibold text-[#111111] transition hover:brightness-[1.02]"
-                >
-                  <Plus className="h-4 w-4" />
-                  Novo módulo
-                </button>
-              </div>
+              <p className="mt-3 max-w-3xl text-[15px] leading-6 text-[#5d6472]">
+                {carregando
+                  ? "Buscando módulos, aulas e materiais reais do curso selecionado."
+                  : resumoCurso(curso)}
+              </p>
             </div>
 
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <button
+                type="button"
+                onClick={() => void carregarEstrutura(cursoId)}
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-[12px] border border-[#e5e5e5] bg-white px-5 text-[14px] font-semibold text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836]"
+              >
+                <RefreshCcw className="h-4 w-4" />
+                Atualizar
+              </button>
+
+              <button
+                type="button"
+                onClick={abrirModalNovoModulo}
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-[12px] bg-[#DBC094] px-5 text-[14px] font-semibold text-black transition hover:brightness-105"
+              >
+                <Plus className="h-4 w-4" />
+                Novo módulo
+              </button>
+            </div>
           </div>
         </section>
 
-        <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <MetricCard title="Módulos" value={String(totalModulos).padStart(2, "0")} icon={<Layers3 className="h-5 w-5" />} iconTone="gold" />
-          <MetricCard title="Aulas" value={String(totalAulas).padStart(2, "0")} icon={<PlayCircle className="h-5 w-5" />} iconTone="blue" />
-          <MetricCard title="Publicadas" value={String(totalPublicadas).padStart(2, "0")} icon={<BookOpen className="h-5 w-5" />} iconTone="violet" />
-          <MetricCard title="Prévias" value={String(totalPreviews).padStart(2, "0")} icon={<Sparkles className="h-5 w-5" />} iconTone="goldSoft" />
+        <section className="overflow-hidden rounded-[18px] border border-[#e5e5e5] bg-white">
+          <div className="grid divide-y divide-[#ededed] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-4">
+            <MetricCard title="Módulos" value={String(totalModulos).padStart(2, "0")} icon={<Layers3 className="h-5 w-5" />} iconTone="gold" />
+            <MetricCard title="Aulas" value={String(totalAulas).padStart(2, "0")} icon={<PlayCircle className="h-5 w-5" />} iconTone="gold" />
+            <MetricCard title="Publicadas" value={String(totalPublicadas).padStart(2, "0")} icon={<BookOpen className="h-5 w-5" />} iconTone="gold" />
+            <MetricCard title="Prévias" value={String(totalPreviews).padStart(2, "0")} icon={<Star className="h-5 w-5" />} iconTone="gold" />
+          </div>
         </section>
 
-        <section className="rounded-[28px] border border-[#E7EAF0] bg-white shadow-[0_8px_30px_rgba(15,23,42,0.04)]">
-          <div className="border-b border-[#EEF1F5] p-5 md:p-6">
-            <h2 className="text-2xl font-semibold tracking-tight text-[#101828]">
+        <section className="rounded-[18px] border border-[#e5e5e5] bg-white">
+          <div className="border-b border-[#e5e5e5] px-5 py-4">
+            <h2 className="text-[22px] font-semibold tracking-[-0.03em] text-[#141414]">
               Gestão operacional
             </h2>
-            <p className="mt-2 text-sm text-[#667085]">
+            <p className="mt-1 text-[13px] text-[#767b87]">
               Organize o curso em módulos, aulas e materiais sem sair desta tela.
             </p>
           </div>
 
           {erro ? (
             <div className="p-6">
-              <div className="rounded-[20px] border border-rose-200 bg-rose-50 p-5">
-                <h3 className="text-sm font-semibold text-rose-700">
+              <div className="rounded-[18px] border border-rose-200 bg-rose-50 p-5">
+                <h3 className="text-[14px] font-semibold text-rose-700">
                   Erro ao carregar estrutura
                 </h3>
-                <p className="mt-2 text-sm leading-6 text-rose-600">{erro}</p>
+                <p className="mt-2 text-[14px] leading-6 text-rose-600">{erro}</p>
               </div>
             </div>
           ) : carregando ? (
@@ -1951,7 +1948,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                 {Array.from({ length: 3 }).map((_, index) => (
                   <div
                     key={index}
-                    className="rounded-[20px] border border-[#EEF1F5] bg-[#FCFCFD] p-5"
+                    className="rounded-[12px] border border-[#e5e5e5] bg-white p-5"
                   >
                     <div className="animate-pulse space-y-3">
                       <div className="h-4 w-40 rounded bg-[#E9EDF3]" />
@@ -1964,34 +1961,34 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
             </div>
           ) : modulos.length === 0 ? (
             <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
-              <div className="mb-4 rounded-full border border-[#E4E7EC] bg-[#F9FAFB] p-4">
-                <FolderKanban className="h-6 w-6 text-[#98A2B3]" />
+              <div className="mb-4 rounded-full border border-[#e5e5e5] bg-white p-4">
+                <FolderKanban className="h-6 w-6 text-[#8a8f9d]" />
               </div>
-              <h3 className="text-base font-semibold text-[#101828]">
+              <h3 className="text-[16px] font-semibold text-[#141414]">
                 Nenhum módulo cadastrado
               </h3>
-              <p className="mt-2 max-w-md text-sm text-[#667085]">
+              <p className="mt-2 max-w-md text-[14px] text-[#666b76]">
                 Este curso ainda não possui módulos cadastrados no banco.
               </p>
             </div>
           ) : (
-            <div className="divide-y divide-[#EEF1F5]">
+            <div className="divide-y divide-[#ededed]">
               {modulos.map((modulo, moduloIndex) => {
                 const aulasDoModulo = aulasPorModulo.get(modulo.id) ?? [];
 
                 return (
                   <article key={modulo.id} className="p-5 md:p-6">
-                    <div className="rounded-[24px] border border-[#E7EAF0] bg-[#FCFCFD]">
-                      <div className="flex flex-col gap-4 border-b border-[#EEF1F5] p-5 md:flex-row md:items-start md:justify-between">
+                    <div className="rounded-[18px] border border-[#e5e5e5] bg-white">
+                      <div className="flex flex-col gap-4 border-b border-[#e5e5e5] p-5 md:flex-row md:items-start md:justify-between">
                         <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
-                            <span className="inline-flex items-center rounded-full border border-[#EAD7B7] bg-[#FBF6ED] px-2.5 py-1 text-[11px] font-semibold text-[#9B6B22]">
+                            <span className="inline-flex items-center rounded-full border border-[#e2d2b6] bg-[#f3eee5] px-2.5 py-1 text-[11px] font-semibold text-[#8a6836]">
                               Módulo {moduloIndex + 1}
                             </span>
 
                             <span
                               className={cx(
-                                "inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium",
+                                "inline-flex items-center rounded-full border px-2.5 py-1 text-[12px] font-medium",
                                 statusClasses(modulo.status)
                               )}
                             >
@@ -1999,27 +1996,27 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                             </span>
                           </div>
 
-                          <h3 className="mt-3 text-lg font-semibold text-[#101828]">
+                          <h3 className="mt-3 text-[17px] font-semibold text-[#141414]">
                             {modulo.title}
                           </h3>
 
-                          <p className="mt-2 text-sm leading-6 text-[#667085]">
+                          <p className="mt-2 text-[14px] leading-6 text-[#666b76]">
                             {modulo.description?.trim() ||
                               "Sem descrição cadastrada para este módulo."}
                           </p>
                         </div>
 
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="rounded-full border border-[#E4E7EC] bg-white px-3 py-1.5 text-xs font-medium text-[#475467]">
+                          <span className="rounded-full border border-[#e5e5e5] bg-white px-3 py-1.5 text-[12px] font-medium text-[#52525b]">
                             Ordem {modulo.sort_order}
                           </span>
-                          <span className="rounded-full border border-[#E4E7EC] bg-white px-3 py-1.5 text-xs font-medium text-[#475467]">
+                          <span className="rounded-full border border-[#e5e5e5] bg-white px-3 py-1.5 text-[12px] font-medium text-[#52525b]">
                             {aulasDoModulo.length} aula(s)
                           </span>
                           <button
                             type="button"
                             onClick={() => abrirVisualizacaoModulo(modulo)}
-                            className="inline-flex items-center gap-1 rounded-full border border-[#E4E7EC] bg-white px-3 py-1.5 text-xs font-semibold text-[#344054] transition hover:bg-[#F9FAFB]"
+                            className="inline-flex items-center gap-1 rounded-full border border-[#e5e5e5] bg-white px-3 py-1.5 text-[12px] font-semibold text-[#52525b] transition hover:bg-[#f7f7f7]"
                           >
                             <Eye className="h-3.5 w-3.5" />
                             Visualizar
@@ -2027,7 +2024,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                           <button
                             type="button"
                             onClick={() => abrirEdicaoModulo(modulo)}
-                            className="inline-flex items-center gap-1 rounded-full border border-[#E4E7EC] bg-white px-3 py-1.5 text-xs font-semibold text-[#344054] transition hover:bg-[#F9FAFB]"
+                            className="inline-flex items-center gap-1 rounded-full border border-[#e5e5e5] bg-white px-3 py-1.5 text-[12px] font-semibold text-[#52525b] transition hover:bg-[#f7f7f7]"
                           >
                             <PencilLine className="h-3.5 w-3.5" />
                             Editar
@@ -2035,7 +2032,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                           <button
                             type="button"
                             onClick={() => abrirExclusaoModulo(modulo)}
-                            className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-100"
+                            className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-[12px] font-semibold text-rose-700 transition hover:bg-rose-100"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                             Excluir
@@ -2043,7 +2040,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                           <button
                             type="button"
                             onClick={() => abrirModalNovaAula(modulo)}
-                            className="inline-flex items-center gap-1 rounded-full border border-[#E4E7EC] bg-white px-3 py-1.5 text-xs font-semibold text-[#344054] transition hover:bg-[#F9FAFB]"
+                            className="inline-flex items-center gap-1 rounded-full border border-[#e5e5e5] bg-white px-3 py-1.5 text-[12px] font-semibold text-[#52525b] transition hover:bg-[#f7f7f7]"
                           >
                             <Plus className="h-3.5 w-3.5" />
                             Nova aula
@@ -2053,7 +2050,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
 
                       <div className="p-5">
                         {aulasDoModulo.length === 0 ? (
-                          <div className="rounded-[18px] border border-dashed border-[#DDE3EA] bg-white px-4 py-5 text-sm text-[#667085]">
+                          <div className="border border-dashed border-[#e5e5e5] bg-white px-4 py-5 text-[14px] text-[#666b76]">
                             Este módulo ainda não possui aulas cadastradas.
                           </div>
                         ) : (
@@ -2065,18 +2062,18 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                               return (
                                 <div
                                   key={aula.id}
-                                  className="rounded-[18px] border border-[#E7EAF0] bg-white p-4"
+                                  className="rounded-[12px] border border-[#e5e5e5] bg-white p-4"
                                 >
                                   <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                                     <div className="min-w-0">
                                       <div className="flex flex-wrap items-center gap-2">
-                                        <span className="inline-flex items-center rounded-full border border-[#D9E6F5] bg-[#EEF5FB] px-2.5 py-1 text-[11px] font-medium text-[#476A8E]">
+                                        <span className="inline-flex items-center rounded-full border border-[#e2d2b6] bg-[#f3eee5] px-2.5 py-1 text-[11px] font-medium text-[#8a6836]">
                                           Aula {aulaIndex + 1}
                                         </span>
 
                                         <span
                                           className={cx(
-                                            "inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium",
+                                            "inline-flex items-center rounded-full border px-2.5 py-1 text-[12px] font-medium",
                                             statusClasses(aula.status)
                                           )}
                                         >
@@ -2084,33 +2081,33 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                                         </span>
 
                                         {aula.is_preview ? (
-                                          <span className="inline-flex items-center gap-1 rounded-full border border-[#EAD7B7] bg-[#FBF6ED] px-2.5 py-1 text-[11px] font-semibold text-[#9B6B22]">
-                                            <Sparkles className="h-3 w-3" />
+                                          <span className="inline-flex items-center gap-1 rounded-full border border-[#e2d2b6] bg-[#f3eee5] px-2.5 py-1 text-[11px] font-semibold text-[#8a6836]">
+                                            <Star className="h-3 w-3" />
                                             Prévia
                                           </span>
                                         ) : null}
 
-                                        <span className="inline-flex items-center gap-1 rounded-full border border-[#E4E7EC] bg-[#F9FAFB] px-2.5 py-1 text-[11px] font-medium text-[#475467]">
+                                        <span className="inline-flex items-center gap-1 rounded-full border border-[#e5e5e5] bg-white px-2.5 py-1 text-[11px] font-medium text-[#52525b]">
                                           {iconeConteudo(aula.content_type)}
                                           {traduzirTipoConteudo(aula.content_type)}
                                         </span>
 
-                                        <span className="inline-flex items-center gap-1 rounded-full border border-[#E4E7EC] bg-[#F9FAFB] px-2.5 py-1 text-[11px] font-medium text-[#475467]">
+                                        <span className="inline-flex items-center gap-1 rounded-full border border-[#e5e5e5] bg-white px-2.5 py-1 text-[11px] font-medium text-[#52525b]">
                                           <Paperclip className="h-3 w-3" />
                                           {totalMateriaisAula} material(is)
                                         </span>
 
-                                        <span className="inline-flex items-center gap-1 rounded-full border border-[#E4E7EC] bg-white px-2.5 py-1 text-[11px] font-medium text-[#667085]">
+                                        <span className="inline-flex items-center gap-1 rounded-full border border-[#e5e5e5] bg-white px-2.5 py-1 text-[11px] font-medium text-[#666b76]">
                                           <LinkIcon className="h-3 w-3" />
                                           {traduzirSourceMode(aula.source_mode)}
                                         </span>
                                       </div>
 
-                                      <h4 className="mt-3 text-base font-semibold text-[#101828]">
+                                      <h4 className="mt-3 text-[16px] font-semibold text-[#141414]">
                                         {aula.title}
                                       </h4>
 
-                                      <p className="mt-2 text-sm leading-6 text-[#667085]">
+                                      <p className="mt-2 text-[14px] leading-6 text-[#666b76]">
                                         {aula.description?.trim() ||
                                           "Sem descrição cadastrada para esta aula."}
                                       </p>
@@ -2126,19 +2123,19 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
 
                                   <div className="mt-4 flex flex-wrap items-center gap-2">
                                     {aula.primary_asset_name ? (
-                                      <span className="rounded-full border border-[#E4E7EC] bg-[#F9FAFB] px-3 py-1.5 text-xs font-medium text-[#475467]">
+                                      <span className="rounded-full border border-[#e5e5e5] bg-white px-3 py-1.5 text-[12px] font-medium text-[#52525b]">
                                         Arquivo: {aula.primary_asset_name}
                                       </span>
                                     ) : null}
 
                                     {aula.external_url ? (
-                                      <span className="rounded-full border border-[#E4E7EC] bg-[#F9FAFB] px-3 py-1.5 text-xs font-medium text-[#475467]">
+                                      <span className="rounded-full border border-[#e5e5e5] bg-white px-3 py-1.5 text-[12px] font-medium text-[#52525b]">
                                         URL configurada
                                       </span>
                                     ) : null}
 
                                     {aula.zoom_meeting_id ? (
-                                      <span className="rounded-full border border-[#E4E7EC] bg-[#F9FAFB] px-3 py-1.5 text-xs font-medium text-[#475467]">
+                                      <span className="rounded-full border border-[#e5e5e5] bg-white px-3 py-1.5 text-[12px] font-medium text-[#52525b]">
                                         Zoom Meeting ID: {aula.zoom_meeting_id}
                                       </span>
                                     ) : null}
@@ -2146,7 +2143,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                                     <button
                                       type="button"
                                       onClick={() => abrirVisualizacaoAula(aula)}
-                                      className="inline-flex items-center gap-1 rounded-full border border-[#E4E7EC] bg-white px-3 py-1.5 text-xs font-semibold text-[#344054] transition hover:bg-[#F9FAFB]"
+                                      className="inline-flex items-center gap-1 rounded-full border border-[#e5e5e5] bg-white px-3 py-1.5 text-[12px] font-semibold text-[#52525b] transition hover:bg-[#f7f7f7]"
                                     >
                                       <Eye className="h-3.5 w-3.5" />
                                       Visualizar
@@ -2154,7 +2151,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                                     <button
                                       type="button"
                                       onClick={() => abrirEdicaoAula(aula)}
-                                      className="inline-flex items-center gap-1 rounded-full border border-[#E4E7EC] bg-white px-3 py-1.5 text-xs font-semibold text-[#344054] transition hover:bg-[#F9FAFB]"
+                                      className="inline-flex items-center gap-1 rounded-full border border-[#e5e5e5] bg-white px-3 py-1.5 text-[12px] font-semibold text-[#52525b] transition hover:bg-[#f7f7f7]"
                                     >
                                       <PencilLine className="h-3.5 w-3.5" />
                                       Editar
@@ -2162,7 +2159,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                                     <button
                                       type="button"
                                       onClick={() => abrirExclusaoAula(aula)}
-                                      className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-100"
+                                      className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-[12px] font-semibold text-rose-700 transition hover:bg-rose-100"
                                     >
                                       <Trash2 className="h-3.5 w-3.5" />
                                       Excluir
@@ -2170,7 +2167,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                                     <button
                                       type="button"
                                       onClick={() => abrirModalMateriais(aula)}
-                                      className="inline-flex items-center gap-1 rounded-full border border-[#E4E7EC] bg-white px-3 py-1.5 text-xs font-semibold text-[#344054] transition hover:bg-[#F9FAFB]"
+                                      className="inline-flex items-center gap-1 rounded-full border border-[#e5e5e5] bg-white px-3 py-1.5 text-[12px] font-semibold text-[#52525b] transition hover:bg-[#f7f7f7]"
                                     >
                                       Gerenciar materiais
                                       <ChevronRight className="h-3.5 w-3.5" />
@@ -2192,19 +2189,19 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
       </div>
 
             {moduloVisualizando ? (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#101828]/40 p-4 backdrop-blur-[2px]">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#141414]/40 p-4 backdrop-blur-[2px]">
           <div className="flex min-h-full items-center justify-center py-6">
-            <div className="w-full max-w-2xl rounded-[28px] border border-[#E7EAF0] bg-white shadow-[0_20px_80px_rgba(15,23,42,0.18)]">
-              <div className="flex items-start justify-between gap-4 border-b border-[#EEF1F5] p-6">
+            <div className="w-full max-w-2xl rounded-[18px] border border-[#e5e5e5] bg-white shadow-[0_24px_80px_rgba(31,34,48,0.16)]">
+              <div className="flex items-start justify-between gap-4 border-b border-[#e5e5e5] px-6 py-5">
                 <div>
-                  <div className="inline-flex items-center gap-2 rounded-full border border-[#E4E7EC] bg-[#F9FAFB] px-3 py-1 text-xs font-medium uppercase tracking-[0.14em] text-[#475467]">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-[#e5e5e5] bg-white px-3 py-1 text-[12px] font-medium uppercase tracking-[0.14em] text-[#52525b]">
                     <Eye className="h-3.5 w-3.5" />
                     Visualização do módulo
                   </div>
-                  <h2 className="mt-4 text-2xl font-semibold tracking-tight text-[#101828]">
+                  <h2 className="mt-4 text-[22px] font-semibold tracking-[-0.03em] text-[#141414]">
                     {moduloVisualizando.title}
                   </h2>
-                  <p className="mt-2 text-sm leading-6 text-[#667085]">
+                  <p className="mt-2 text-[14px] leading-6 text-[#666b76]">
                     Visualize os dados principais do módulo criado.
                   </p>
                 </div>
@@ -2212,7 +2209,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                 <button
                   type="button"
                   onClick={() => setModuloVisualizando(null)}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#E4E7EC] bg-white text-[#667085] transition hover:bg-[#F9FAFB] hover:text-[#101828]"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#e5e5e5] bg-white text-[#666b76] transition hover:bg-[#f7f7f7] hover:text-[#141414]"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -2223,11 +2220,11 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                 <InfoPill icon={<Clock3 className="h-4 w-4" />} label="Status" value={traduzirStatus(moduloVisualizando.status)} />
                 <InfoPill icon={<BookOpen className="h-4 w-4" />} label="Ordem" value={String(moduloVisualizando.sort_order)} />
                 <InfoPill icon={<PlayCircle className="h-4 w-4" />} label="Aulas vinculadas" value={String((aulasPorModulo.get(moduloVisualizando.id) ?? []).length)} />
-                <div className="md:col-span-2 rounded-[18px] border border-[#E7EAF0] bg-[#FCFCFD] p-4">
-                  <p className="text-xs font-medium uppercase tracking-[0.14em] text-[#98A2B3]">
+                <div className="md:col-span-2 rounded-[12px] border border-[#e5e5e5] bg-white p-4">
+                  <p className="text-[12px] font-medium uppercase tracking-[0.14em] text-[#8a8f9d]">
                     Descrição
                   </p>
-                  <p className="mt-2 text-sm leading-6 text-[#101828]">
+                  <p className="mt-2 text-[14px] leading-6 text-[#141414]">
                     {moduloVisualizando.description?.trim() || "Sem descrição cadastrada para este módulo."}
                   </p>
                 </div>
@@ -2238,19 +2235,19 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
       ) : null}
 
       {moduloEditando ? (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#101828]/40 p-4 backdrop-blur-[2px]">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#141414]/40 p-4 backdrop-blur-[2px]">
           <div className="flex min-h-full items-center justify-center py-6">
-            <div className="w-full max-w-2xl rounded-[28px] border border-[#E7EAF0] bg-white shadow-[0_20px_80px_rgba(15,23,42,0.18)]">
-              <div className="flex items-start justify-between gap-4 border-b border-[#EEF1F5] p-6">
+            <div className="w-full max-w-2xl rounded-[18px] border border-[#e5e5e5] bg-white shadow-[0_24px_80px_rgba(31,34,48,0.16)]">
+              <div className="flex items-start justify-between gap-4 border-b border-[#e5e5e5] px-6 py-5">
                 <div>
-                  <div className="inline-flex items-center gap-2 rounded-full border border-[#EAD7B7] bg-[#FBF6ED] px-3 py-1 text-xs font-medium uppercase tracking-[0.14em] text-[#9B6B22]">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-[#e2d2b6] bg-[#f3eee5] px-3 py-1 text-[12px] font-medium uppercase tracking-[0.14em] text-[#8a6836]">
                     <PencilLine className="h-3.5 w-3.5" />
                     Editar módulo
                   </div>
-                  <h2 className="mt-4 text-2xl font-semibold tracking-tight text-[#101828]">
+                  <h2 className="mt-4 text-[22px] font-semibold tracking-[-0.03em] text-[#141414]">
                     Editar módulo
                   </h2>
-                  <p className="mt-2 text-sm leading-6 text-[#667085]">
+                  <p className="mt-2 text-[14px] leading-6 text-[#666b76]">
                     Ajuste os dados do módulo selecionado.
                   </p>
                 </div>
@@ -2258,7 +2255,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                 <button
                   type="button"
                   onClick={fecharEdicaoModulo}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#E4E7EC] bg-white text-[#667085] transition hover:bg-[#F9FAFB] hover:text-[#101828]"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#e5e5e5] bg-white text-[#666b76] transition hover:bg-[#f7f7f7] hover:text-[#141414]"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -2268,17 +2265,17 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                 <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                   {erroEditarModulo ? (
                     <div className="md:col-span-2 rounded-[18px] border border-rose-200 bg-rose-50 p-4">
-                      <h3 className="text-sm font-semibold text-rose-700">
+                      <h3 className="text-[14px] font-semibold text-rose-700">
                         Não foi possível salvar o módulo
                       </h3>
-                      <p className="mt-2 text-sm leading-6 text-rose-600">
+                      <p className="mt-2 text-[14px] leading-6 text-rose-600">
                         {erroEditarModulo}
                       </p>
                     </div>
                   ) : null}
 
                   <div className="md:col-span-2">
-                    <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                    <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                       Título do módulo
                     </label>
                     <input
@@ -2290,12 +2287,12 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                           title: e.target.value,
                         }))
                       }
-                      className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none transition focus:border-[#D8BC8B] focus:bg-white"
+                      className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
                     />
                   </div>
 
                   <div>
-                    <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                    <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                       Ordem
                     </label>
                     <input
@@ -2308,12 +2305,12 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                           sortOrder: e.target.value,
                         }))
                       }
-                      className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none transition focus:border-[#D8BC8B] focus:bg-white"
+                      className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
                     />
                   </div>
 
                   <div>
-                    <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                    <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                       Status
                     </label>
                     <select
@@ -2324,7 +2321,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                           status: e.target.value as StatusModulo,
                         }))
                       }
-                      className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none transition focus:border-[#D8BC8B] focus:bg-white"
+                      className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
                     >
                       <option value="draft">Rascunho</option>
                       <option value="published">Publicado</option>
@@ -2333,7 +2330,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                   </div>
 
                   <div className="md:col-span-2">
-                    <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                    <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                       Descrição
                     </label>
                     <textarea
@@ -2345,7 +2342,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                           description: e.target.value,
                         }))
                       }
-                      className="w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 py-3 text-sm text-[#101828] outline-none transition focus:border-[#D8BC8B] focus:bg-white"
+                      className="w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 py-3 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
                     />
                   </div>
                 </div>
@@ -2355,7 +2352,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                     type="button"
                     onClick={fecharEdicaoModulo}
                     disabled={salvandoEdicaoModulo}
-                    className="inline-flex items-center justify-center gap-2 rounded-[18px] border border-[#E4E7EC] bg-white px-5 py-3 text-sm font-semibold text-[#344054] transition hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:opacity-70"
+                    className="inline-flex items-center justify-center gap-2 rounded-[12px] border border-[#e5e5e5] bg-white px-5 py-3 text-[14px] font-semibold text-[#52525b] transition hover:bg-[#f7f7f7] disabled:cursor-not-allowed disabled:opacity-70"
                   >
                     Cancelar
                   </button>
@@ -2363,7 +2360,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                   <button
                     type="submit"
                     disabled={salvandoEdicaoModulo}
-                    className="inline-flex items-center justify-center gap-2 rounded-[18px] border border-[#EAD7B7] bg-[#D8BC8B] px-5 py-3 text-sm font-semibold text-[#111111] transition hover:brightness-[1.02] disabled:cursor-not-allowed disabled:opacity-70"
+                    className="inline-flex items-center justify-center gap-2 rounded-[12px] bg-[#DBC094] px-5 py-3 text-[14px] font-semibold text-black transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-70"
                   >
                     {salvandoEdicaoModulo ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -2380,19 +2377,19 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
       ) : null}
 
       {moduloExcluindo ? (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#101828]/40 p-4 backdrop-blur-[2px]">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#141414]/40 p-4 backdrop-blur-[2px]">
           <div className="flex min-h-full items-center justify-center py-6">
-            <div className="w-full max-w-xl rounded-[28px] border border-[#E7EAF0] bg-white shadow-[0_20px_80px_rgba(15,23,42,0.18)]">
-              <div className="flex items-start justify-between gap-4 border-b border-[#EEF1F5] p-6">
+            <div className="w-full max-w-xl rounded-[18px] border border-[#e5e5e5] bg-white shadow-[0_24px_80px_rgba(31,34,48,0.16)]">
+              <div className="flex items-start justify-between gap-4 border-b border-[#e5e5e5] px-6 py-5">
                 <div>
-                  <div className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-medium uppercase tracking-[0.14em] text-rose-700">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-[12px] font-medium uppercase tracking-[0.14em] text-rose-700">
                     <AlertTriangle className="h-3.5 w-3.5" />
                     Excluir módulo
                   </div>
-                  <h2 className="mt-4 text-2xl font-semibold tracking-tight text-[#101828]">
+                  <h2 className="mt-4 text-[22px] font-semibold tracking-[-0.03em] text-[#141414]">
                     Confirmar exclusão
                   </h2>
-                  <p className="mt-2 text-sm leading-6 text-[#667085]">
+                  <p className="mt-2 text-[14px] leading-6 text-[#666b76]">
                     O módulo será removido com todas as aulas e materiais vinculados a ele.
                   </p>
                 </div>
@@ -2400,7 +2397,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                 <button
                   type="button"
                   onClick={fecharExclusaoModulo}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#E4E7EC] bg-white text-[#667085] transition hover:bg-[#F9FAFB] hover:text-[#101828]"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#e5e5e5] bg-white text-[#666b76] transition hover:bg-[#f7f7f7] hover:text-[#141414]"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -2409,15 +2406,15 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
               <div className="p-6">
                 {erroExcluirModulo ? (
                   <div className="rounded-[18px] border border-rose-200 bg-rose-50 p-4">
-                    <h3 className="text-sm font-semibold text-rose-700">
+                    <h3 className="text-[14px] font-semibold text-rose-700">
                       Não foi possível excluir o módulo
                     </h3>
-                    <p className="mt-2 text-sm leading-6 text-rose-600">
+                    <p className="mt-2 text-[14px] leading-6 text-rose-600">
                       {erroExcluirModulo}
                     </p>
                   </div>
                 ) : (
-                  <div className="rounded-[18px] border border-[#E7EAF0] bg-[#FCFCFD] p-4 text-sm leading-6 text-[#667085]">
+                  <div className="rounded-[12px] border border-[#e5e5e5] bg-white p-4 text-[14px] leading-6 text-[#666b76]">
                     Você está prestes a excluir o módulo <strong>{moduloExcluindo.title}</strong>.
                     Esta ação também removerá as aulas e os materiais ligados a ele.
                   </div>
@@ -2428,7 +2425,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                     type="button"
                     onClick={fecharExclusaoModulo}
                     disabled={excluindoModulo}
-                    className="inline-flex items-center justify-center gap-2 rounded-[18px] border border-[#E4E7EC] bg-white px-5 py-3 text-sm font-semibold text-[#344054] transition hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:opacity-70"
+                    className="inline-flex items-center justify-center gap-2 rounded-[12px] border border-[#e5e5e5] bg-white px-5 py-3 text-[14px] font-semibold text-[#52525b] transition hover:bg-[#f7f7f7] disabled:cursor-not-allowed disabled:opacity-70"
                   >
                     Cancelar
                   </button>
@@ -2437,7 +2434,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                     type="button"
                     onClick={() => void excluirModuloSelecionado()}
                     disabled={excluindoModulo}
-                    className="inline-flex items-center justify-center gap-2 rounded-[18px] border border-rose-200 bg-rose-50 px-5 py-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-70"
+                    className="inline-flex items-center justify-center gap-2 rounded-[18px] border border-rose-200 bg-rose-50 px-5 py-3 text-[14px] font-semibold text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-70"
                   >
                     {excluindoModulo ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -2454,21 +2451,21 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
       ) : null}
 
       {modalNovoModuloAberto ? (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#101828]/40 p-4 backdrop-blur-[2px]">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#141414]/40 p-4 backdrop-blur-[2px]">
           <div className="flex min-h-full items-center justify-center py-6">
-            <div className="w-full max-w-2xl rounded-[28px] border border-[#E7EAF0] bg-white shadow-[0_20px_80px_rgba(15,23,42,0.18)]">
-              <div className="flex items-start justify-between gap-4 border-b border-[#EEF1F5] p-6">
+            <div className="w-full max-w-2xl rounded-[18px] border border-[#e5e5e5] bg-white shadow-[0_24px_80px_rgba(31,34,48,0.16)]">
+              <div className="flex items-start justify-between gap-4 border-b border-[#e5e5e5] px-6 py-5">
                 <div>
-                  <div className="inline-flex items-center gap-2 rounded-full border border-[#EAD7B7] bg-[#FBF6ED] px-3 py-1 text-xs font-medium uppercase tracking-[0.14em] text-[#9B6B22]">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-[#e2d2b6] bg-[#f3eee5] px-3 py-1 text-[12px] font-medium uppercase tracking-[0.14em] text-[#8a6836]">
                     <Layers3 className="h-3.5 w-3.5" />
                     Novo módulo
                   </div>
 
-                  <h2 className="mt-4 text-2xl font-semibold tracking-tight text-[#101828]">
+                  <h2 className="mt-4 text-[22px] font-semibold tracking-[-0.03em] text-[#141414]">
                     Cadastrar módulo
                   </h2>
 
-                  <p className="mt-2 text-sm leading-6 text-[#667085]">
+                  <p className="mt-2 text-[14px] leading-6 text-[#666b76]">
                     Cadastre um novo módulo dentro deste curso.
                   </p>
                 </div>
@@ -2476,7 +2473,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                 <button
                   type="button"
                   onClick={fecharModalNovoModulo}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#E4E7EC] bg-white text-[#667085] transition hover:bg-[#F9FAFB] hover:text-[#101828]"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#e5e5e5] bg-white text-[#666b76] transition hover:bg-[#f7f7f7] hover:text-[#141414]"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -2486,17 +2483,17 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                 <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                   {erroNovoModulo ? (
                     <div className="md:col-span-2 rounded-[18px] border border-rose-200 bg-rose-50 p-4">
-                      <h3 className="text-sm font-semibold text-rose-700">
+                      <h3 className="text-[14px] font-semibold text-rose-700">
                         Não foi possível salvar o módulo
                       </h3>
-                      <p className="mt-2 text-sm leading-6 text-rose-600">
+                      <p className="mt-2 text-[14px] leading-6 text-rose-600">
                         {erroNovoModulo}
                       </p>
                     </div>
                   ) : null}
 
                   <div className="md:col-span-2">
-                    <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                    <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                       Título do módulo
                     </label>
                     <input
@@ -2509,12 +2506,12 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                         }))
                       }
                       placeholder="Digite o nome do módulo"
-                      className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none placeholder:text-[#98A2B3] transition focus:border-[#D8BC8B] focus:bg-white"
+                      className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none placeholder:text-[#8a8f9d] transition focus:border-[#DBC094] focus:bg-white"
                     />
                   </div>
 
                   <div>
-                    <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                    <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                       Ordem
                     </label>
                     <input
@@ -2528,12 +2525,12 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                         }))
                       }
                       placeholder="0"
-                      className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none placeholder:text-[#98A2B3] transition focus:border-[#D8BC8B] focus:bg-white"
+                      className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none placeholder:text-[#8a8f9d] transition focus:border-[#DBC094] focus:bg-white"
                     />
                   </div>
 
                   <div>
-                    <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                    <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                       Status
                     </label>
                     <select
@@ -2544,7 +2541,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                           status: e.target.value as StatusModulo,
                         }))
                       }
-                      className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none transition focus:border-[#D8BC8B] focus:bg-white"
+                      className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
                     >
                       <option value="draft">Rascunho</option>
                       <option value="published">Publicado</option>
@@ -2553,7 +2550,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                   </div>
 
                   <div className="md:col-span-2">
-                    <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                    <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                       Descrição
                     </label>
                     <textarea
@@ -2566,7 +2563,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                         }))
                       }
                       placeholder="Descreva o módulo"
-                      className="w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 py-3 text-sm text-[#101828] outline-none placeholder:text-[#98A2B3] transition focus:border-[#D8BC8B] focus:bg-white"
+                      className="w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 py-3 text-[14px] text-[#141414] outline-none placeholder:text-[#8a8f9d] transition focus:border-[#DBC094] focus:bg-white"
                     />
                   </div>
                 </div>
@@ -2576,7 +2573,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                     type="button"
                     onClick={fecharModalNovoModulo}
                     disabled={salvandoModulo}
-                    className="inline-flex items-center justify-center gap-2 rounded-[18px] border border-[#E4E7EC] bg-white px-5 py-3 text-sm font-semibold text-[#344054] transition hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:opacity-70"
+                    className="inline-flex items-center justify-center gap-2 rounded-[12px] border border-[#e5e5e5] bg-white px-5 py-3 text-[14px] font-semibold text-[#52525b] transition hover:bg-[#f7f7f7] disabled:cursor-not-allowed disabled:opacity-70"
                   >
                     Cancelar
                   </button>
@@ -2584,7 +2581,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                   <button
                     type="submit"
                     disabled={salvandoModulo}
-                    className="inline-flex items-center justify-center gap-2 rounded-[18px] border border-[#EAD7B7] bg-[#D8BC8B] px-5 py-3 text-sm font-semibold text-[#111111] transition hover:brightness-[1.02] disabled:cursor-not-allowed disabled:opacity-70"
+                    className="inline-flex items-center justify-center gap-2 rounded-[12px] bg-[#DBC094] px-5 py-3 text-[14px] font-semibold text-black transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-70"
                   >
                     {salvandoModulo ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -2601,21 +2598,21 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
       ) : null}
 
       {modalNovaAulaAberto ? (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#101828]/40 p-4 backdrop-blur-[2px]">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#141414]/40 p-4 backdrop-blur-[2px]">
           <div className="flex min-h-full items-center justify-center py-6">
-            <div className="w-full max-w-4xl rounded-[28px] border border-[#E7EAF0] bg-white shadow-[0_20px_80px_rgba(15,23,42,0.18)]">
-              <div className="flex items-start justify-between gap-4 border-b border-[#EEF1F5] p-6">
+            <div className="w-full max-w-4xl rounded-[18px] border border-[#e5e5e5] bg-white shadow-[0_24px_80px_rgba(31,34,48,0.16)]">
+              <div className="flex items-start justify-between gap-4 border-b border-[#e5e5e5] px-6 py-5">
                 <div>
-                  <div className="inline-flex items-center gap-2 rounded-full border border-[#D9E6F5] bg-[#EEF5FB] px-3 py-1 text-xs font-medium uppercase tracking-[0.14em] text-[#476A8E]">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-[#e2d2b6] bg-[#f3eee5] px-3 py-1 text-[12px] font-medium uppercase tracking-[0.14em] text-[#8a6836]">
                     <PlayCircle className="h-3.5 w-3.5" />
                     Nova aula
                   </div>
 
-                  <h2 className="mt-4 text-2xl font-semibold tracking-tight text-[#101828]">
+                  <h2 className="mt-4 text-[22px] font-semibold tracking-[-0.03em] text-[#141414]">
                     Cadastrar aula
                   </h2>
 
-                  <p className="mt-2 text-sm leading-6 text-[#667085]">
+                  <p className="mt-2 text-[14px] leading-6 text-[#666b76]">
                     {moduloSelecionadoParaAula
                       ? `Cadastre a aula no módulo "${moduloSelecionadoParaAula.title}".`
                       : "Cadastre uma nova aula no módulo selecionado."}
@@ -2625,7 +2622,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                 <button
                   type="button"
                   onClick={fecharModalNovaAula}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#E4E7EC] bg-white text-[#667085] transition hover:bg-[#F9FAFB] hover:text-[#101828]"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#e5e5e5] bg-white text-[#666b76] transition hover:bg-[#f7f7f7] hover:text-[#141414]"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -2636,17 +2633,17 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                   <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                     {erroNovaAula ? (
                       <div className="md:col-span-2 rounded-[18px] border border-rose-200 bg-rose-50 p-4">
-                        <h3 className="text-sm font-semibold text-rose-700">
+                        <h3 className="text-[14px] font-semibold text-rose-700">
                           Não foi possível salvar a aula
                         </h3>
-                        <p className="mt-2 text-sm leading-6 text-rose-600">
+                        <p className="mt-2 text-[14px] leading-6 text-rose-600">
                           {erroNovaAula}
                         </p>
                       </div>
                     ) : null}
 
                     <div className="md:col-span-2">
-                      <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                      <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                         Título da aula
                       </label>
                       <input
@@ -2659,18 +2656,18 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                           }))
                         }
                         placeholder="Digite o nome da aula"
-                        className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none placeholder:text-[#98A2B3] transition focus:border-[#D8BC8B] focus:bg-white"
+                        className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none placeholder:text-[#8a8f9d] transition focus:border-[#DBC094] focus:bg-white"
                       />
                     </div>
 
                     <div>
-                      <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                      <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                         Tipo de conteúdo
                       </label>
                       <select
                         value={formAula.contentType}
                         onChange={(e) => onChangeTipoConteudo(e.target.value as TipoConteudo)}
-                        className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none transition focus:border-[#D8BC8B] focus:bg-white"
+                        className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
                       >
                         <option value="video">Vídeo</option>
                         <option value="pdf">PDF</option>
@@ -2681,7 +2678,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                     </div>
 
                     <div>
-                      <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                      <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                         Status
                       </label>
                       <select
@@ -2692,7 +2689,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                             status: e.target.value as StatusAula,
                           }))
                         }
-                        className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none transition focus:border-[#D8BC8B] focus:bg-white"
+                        className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
                       >
                         <option value="draft">Rascunho</option>
                         <option value="published">Publicado</option>
@@ -2701,7 +2698,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                     </div>
 
                     <div>
-                      <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                      <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                         Ordem
                       </label>
                       <input
@@ -2715,12 +2712,12 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                           }))
                         }
                         placeholder="0"
-                        className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none placeholder:text-[#98A2B3] transition focus:border-[#D8BC8B] focus:bg-white"
+                        className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none placeholder:text-[#8a8f9d] transition focus:border-[#DBC094] focus:bg-white"
                       />
                     </div>
 
                     <div>
-                      <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                      <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                         Duração em segundos
                       </label>
                       <input
@@ -2734,15 +2731,15 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                           }))
                         }
                         placeholder="Ex.: 600"
-                        className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none placeholder:text-[#98A2B3] transition focus:border-[#D8BC8B] focus:bg-white"
+                        className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none placeholder:text-[#8a8f9d] transition focus:border-[#DBC094] focus:bg-white"
                       />
                     </div>
 
                     {formAula.contentType === "video" ? (
                       <>
-                        <div className="md:col-span-2 rounded-[18px] border border-[#E7EAF0] bg-[#FCFCFD] p-4">
-                          <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-[#101828]">
-                            <Video className="h-4 w-4 text-[#476A8E]" />
+                        <div className="md:col-span-2 rounded-[12px] border border-[#e5e5e5] bg-white p-4">
+                          <div className="mb-3 flex items-center gap-2 text-[14px] font-semibold text-[#141414]">
+                            <Video className="h-4 w-4 text-[#8a6836]" />
                             Origem do vídeo
                           </div>
 
@@ -2757,7 +2754,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                                 zoomRecordingUrl: "",
                               }))
                             }
-                            className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-white px-4 text-sm text-[#101828] outline-none transition focus:border-[#D8BC8B] focus:bg-white"
+                            className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
                           >
                             <option value="upload">Upload de vídeo</option>
                             <option value="url">Vídeo por URL</option>
@@ -2766,18 +2763,18 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                         </div>
 
                         {formAula.sourceMode === "upload" ? (
-                          <div className="md:col-span-2 rounded-[18px] border border-[#E7EAF0] bg-[#FCFCFD] p-4">
-                            <label className="mb-3 block text-sm font-semibold text-[#344054]">
+                          <div className="md:col-span-2 rounded-[12px] border border-[#e5e5e5] bg-white p-4">
+                            <label className="mb-3 block text-[14px] font-semibold text-[#52525b]">
                               Arquivo de vídeo
                             </label>
                             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                              <div className="text-sm text-[#667085]">
+                              <div className="text-[14px] text-[#666b76]">
                                 {arquivoConteudoPrincipal
                                   ? `${arquivoConteudoPrincipal.name} • ${formatarTamanho(arquivoConteudoPrincipal.size)}`
                                   : "Nenhum vídeo selecionado."}
                               </div>
 
-                              <label className="inline-flex cursor-pointer items-center gap-2 rounded-[16px] border border-[#EAD7B7] bg-[#D8BC8B] px-4 py-2.5 text-sm font-semibold text-[#111111] transition hover:brightness-[1.02]">
+                              <label className="inline-flex cursor-pointer items-center gap-2 rounded-[12px] border border-[#e2d2b6] bg-[#DBC094] px-4 py-2.5 text-[14px] font-semibold text-black transition hover:brightness-105">
                                 <Upload className="h-4 w-4" />
                                 Enviar vídeo
                                 <input
@@ -2795,7 +2792,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
 
                         {formAula.sourceMode === "url" ? (
                           <div className="md:col-span-2">
-                            <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                            <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                               URL do vídeo
                             </label>
                             <input
@@ -2808,7 +2805,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                                 }))
                               }
                               placeholder="Cole a URL do vídeo"
-                              className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none placeholder:text-[#98A2B3] transition focus:border-[#D8BC8B] focus:bg-white"
+                              className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none placeholder:text-[#8a8f9d] transition focus:border-[#DBC094] focus:bg-white"
                             />
                           </div>
                         ) : null}
@@ -2816,7 +2813,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                         {formAula.sourceMode === "zoom_recording" ? (
                           <>
                             <div>
-                              <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                              <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                                 ID da gravação Zoom
                               </label>
                               <input
@@ -2829,12 +2826,12 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                                   }))
                                 }
                                 placeholder="Ex.: gravação ou uuid"
-                                className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none placeholder:text-[#98A2B3] transition focus:border-[#D8BC8B] focus:bg-white"
+                                className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none placeholder:text-[#8a8f9d] transition focus:border-[#DBC094] focus:bg-white"
                               />
                             </div>
 
                             <div>
-                              <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                              <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                                 Link compartilhável da gravação Zoom
                               </label>
                               <input
@@ -2847,11 +2844,11 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                                   }))
                                 }
                                 placeholder="Cole o link /rec/share/ com pwd="
-                                className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none placeholder:text-[#98A2B3] transition focus:border-[#D8BC8B] focus:bg-white"
+                                className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none placeholder:text-[#8a8f9d] transition focus:border-[#DBC094] focus:bg-white"
                               />
                             </div>
 
-                            <div className="md:col-span-2 rounded-[18px] border border-[#EAD7B7] bg-[#FBF6ED] p-4 text-sm leading-6 text-[#8B6831]">
+                            <div className="md:col-span-2 rounded-[18px] border border-[#e2d2b6] bg-[#f3eee5] p-4 text-[14px] leading-6 text-[#8a6836]">
                               Cole somente o link compartilhável da gravação do Zoom. O link precisa conter
                               <strong> pwd=</strong>. Não cole texto separado como “Senha: ...”.
                             </div>
@@ -2861,18 +2858,18 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                     ) : null}
 
                     {formAula.contentType === "pdf" ? (
-                      <div className="md:col-span-2 rounded-[18px] border border-[#E7EAF0] bg-[#FCFCFD] p-4">
-                        <label className="mb-3 block text-sm font-semibold text-[#344054]">
+                      <div className="md:col-span-2 rounded-[12px] border border-[#e5e5e5] bg-white p-4">
+                        <label className="mb-3 block text-[14px] font-semibold text-[#52525b]">
                           Arquivo PDF da aula
                         </label>
                         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                          <div className="text-sm text-[#667085]">
+                          <div className="text-[14px] text-[#666b76]">
                             {arquivoConteudoPrincipal
                               ? `${arquivoConteudoPrincipal.name} • ${formatarTamanho(arquivoConteudoPrincipal.size)}`
                               : "Nenhum PDF selecionado."}
                           </div>
 
-                          <label className="inline-flex cursor-pointer items-center gap-2 rounded-[16px] border border-[#EAD7B7] bg-[#D8BC8B] px-4 py-2.5 text-sm font-semibold text-[#111111] transition hover:brightness-[1.02]">
+                          <label className="inline-flex cursor-pointer items-center gap-2 rounded-[12px] border border-[#e2d2b6] bg-[#DBC094] px-4 py-2.5 text-[14px] font-semibold text-black transition hover:brightness-105">
                             <Upload className="h-4 w-4" />
                             Enviar PDF
                             <input
@@ -2889,18 +2886,18 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                     ) : null}
 
                     {formAula.contentType === "audio" ? (
-                      <div className="md:col-span-2 rounded-[18px] border border-[#E7EAF0] bg-[#FCFCFD] p-4">
-                        <label className="mb-3 block text-sm font-semibold text-[#344054]">
+                      <div className="md:col-span-2 rounded-[12px] border border-[#e5e5e5] bg-white p-4">
+                        <label className="mb-3 block text-[14px] font-semibold text-[#52525b]">
                           Arquivo de áudio da aula
                         </label>
                         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                          <div className="text-sm text-[#667085]">
+                          <div className="text-[14px] text-[#666b76]">
                             {arquivoConteudoPrincipal
                               ? `${arquivoConteudoPrincipal.name} • ${formatarTamanho(arquivoConteudoPrincipal.size)}`
                               : "Nenhum áudio selecionado."}
                           </div>
 
-                          <label className="inline-flex cursor-pointer items-center gap-2 rounded-[16px] border border-[#EAD7B7] bg-[#D8BC8B] px-4 py-2.5 text-sm font-semibold text-[#111111] transition hover:brightness-[1.02]">
+                          <label className="inline-flex cursor-pointer items-center gap-2 rounded-[12px] border border-[#e2d2b6] bg-[#DBC094] px-4 py-2.5 text-[14px] font-semibold text-black transition hover:brightness-105">
                             <Upload className="h-4 w-4" />
                             Enviar áudio
                             <input
@@ -2918,7 +2915,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
 
                     {formAula.contentType === "text" ? (
                       <div className="md:col-span-2">
-                        <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                        <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                           Conteúdo textual da aula
                         </label>
                         <textarea
@@ -2931,25 +2928,25 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                             }))
                           }
                           placeholder="Digite aqui o conteúdo da aula em texto"
-                          className="w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 py-3 text-sm text-[#101828] outline-none placeholder:text-[#98A2B3] transition focus:border-[#D8BC8B] focus:bg-white"
+                          className="w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 py-3 text-[14px] text-[#141414] outline-none placeholder:text-[#8a8f9d] transition focus:border-[#DBC094] focus:bg-white"
                         />
                       </div>
                     ) : null}
 
                     {formAula.contentType === "live" ? (
                       <>
-                        <div className="md:col-span-2 rounded-[18px] border border-[#E7EAF0] bg-[#FCFCFD] p-4">
-                          <div className="flex items-center gap-2 text-sm font-semibold text-[#101828]">
-                            <Radio className="h-4 w-4 text-[#476A8E]" />
+                        <div className="md:col-span-2 rounded-[12px] border border-[#e5e5e5] bg-white p-4">
+                          <div className="flex items-center gap-2 text-[14px] font-semibold text-[#141414]">
+                            <Radio className="h-4 w-4 text-[#8a6836]" />
                             Aula ao vivo via Zoom dentro da plataforma
                           </div>
-                          <p className="mt-2 text-sm leading-6 text-[#667085]">
+                          <p className="mt-2 text-[14px] leading-6 text-[#666b76]">
                             Esta aula será configurada para uso com Zoom como provedor da transmissão ao vivo.
                           </p>
                         </div>
 
                         <div>
-                          <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                          <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                             ID da reunião do Zoom
                           </label>
                           <input
@@ -2962,12 +2959,12 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                               }))
                             }
                             placeholder="Ex.: 123456789"
-                            className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none placeholder:text-[#98A2B3] transition focus:border-[#D8BC8B] focus:bg-white"
+                            className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none placeholder:text-[#8a8f9d] transition focus:border-[#DBC094] focus:bg-white"
                           />
                         </div>
 
                         <div>
-                          <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                          <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                             Senha / código
                           </label>
                           <input
@@ -2980,12 +2977,12 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                               }))
                             }
                             placeholder="Ex.: ABC123"
-                            className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none placeholder:text-[#98A2B3] transition focus:border-[#D8BC8B] focus:bg-white"
+                            className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none placeholder:text-[#8a8f9d] transition focus:border-[#DBC094] focus:bg-white"
                           />
                         </div>
 
                         <div>
-                          <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                          <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                             Link de entrada
                           </label>
                           <input
@@ -2998,12 +2995,12 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                               }))
                             }
                             placeholder="Cole o join_url do Zoom"
-                            className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none placeholder:text-[#98A2B3] transition focus:border-[#D8BC8B] focus:bg-white"
+                            className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none placeholder:text-[#8a8f9d] transition focus:border-[#DBC094] focus:bg-white"
                           />
                         </div>
 
                         <div>
-                          <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                          <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                             Link do host
                           </label>
                           <input
@@ -3016,12 +3013,12 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                               }))
                             }
                             placeholder="Cole o start_url do Zoom"
-                            className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none placeholder:text-[#98A2B3] transition focus:border-[#D8BC8B] focus:bg-white"
+                            className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none placeholder:text-[#8a8f9d] transition focus:border-[#DBC094] focus:bg-white"
                           />
                         </div>
 
                         <div>
-                          <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                          <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                             Início programado
                           </label>
                           <input
@@ -3033,12 +3030,12 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                                 scheduledStartAt: e.target.value,
                               }))
                             }
-                            className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none transition focus:border-[#D8BC8B] focus:bg-white"
+                            className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
                           />
                         </div>
 
                         <div>
-                          <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                          <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                             Fim programado
                           </label>
                           <input
@@ -3050,14 +3047,14 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                                 scheduledEndAt: e.target.value,
                               }))
                             }
-                            className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none transition focus:border-[#D8BC8B] focus:bg-white"
+                            className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
                           />
                         </div>
                       </>
                     ) : null}
 
                     <div className="md:col-span-2">
-                      <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                      <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                         Descrição
                       </label>
                       <textarea
@@ -3070,18 +3067,18 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                           }))
                         }
                         placeholder="Descreva a aula"
-                        className="w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 py-3 text-sm text-[#101828] outline-none placeholder:text-[#98A2B3] transition focus:border-[#D8BC8B] focus:bg-white"
+                        className="w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 py-3 text-[14px] text-[#141414] outline-none placeholder:text-[#8a8f9d] transition focus:border-[#DBC094] focus:bg-white"
                       />
                     </div>
 
-                    <div className="md:col-span-2 rounded-[18px] border border-[#E7EAF0] bg-[#FCFCFD] p-4">
+                    <div className="md:col-span-2 rounded-[12px] border border-[#e5e5e5] bg-white p-4">
                       <div className="flex items-start gap-3">
-                        <Paperclip className="mt-0.5 h-4 w-4 text-[#B07A2A]" />
+                        <Paperclip className="mt-0.5 h-4 w-4 text-[#8a6836]" />
                         <div>
-                          <div className="text-sm font-semibold text-[#101828]">
+                          <div className="text-[14px] font-semibold text-[#141414]">
                             Materiais para download
                           </div>
-                          <p className="mt-1 text-sm leading-6 text-[#667085]">
+                          <p className="mt-1 text-[14px] leading-6 text-[#666b76]">
                             Os materiais da aula continuam disponíveis pelo botão "Gerenciar materiais" após salvar a aula.
                           </p>
                         </div>
@@ -3089,7 +3086,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                     </div>
 
                     <div className="md:col-span-2">
-                      <label className="flex items-start gap-3 rounded-[18px] border border-[#E7EAF0] bg-[#FCFCFD] p-4">
+                      <label className="flex items-start gap-3 rounded-[12px] border border-[#e5e5e5] bg-white p-4">
                         <input
                           type="checkbox"
                           checked={formAula.isPreview}
@@ -3099,15 +3096,15 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                               isPreview: e.target.checked,
                             }))
                           }
-                          className="mt-1 h-4 w-4 rounded border-[#D0D5DD] text-[#B07A2A] focus:ring-[#D8BC8B]"
+                          className="mt-1 h-4 w-4 rounded border-[#e5e5e5] text-[#8a6836] focus:ring-[#DBC094]"
                         />
 
                         <span className="block">
-                          <span className="inline-flex items-center gap-2 text-sm font-semibold text-[#101828]">
-                            <Sparkles className="h-4 w-4 text-[#B07A2A]" />
+                          <span className="inline-flex items-center gap-2 text-[14px] font-semibold text-[#141414]">
+                            <Star className="h-4 w-4 text-[#8a6836]" />
                             Marcar como prévia
                           </span>
-                          <span className="mt-1 block text-sm leading-6 text-[#667085]">
+                          <span className="mt-1 block text-[14px] leading-6 text-[#666b76]">
                             A aula poderá ser tratada como conteúdo de pré-visualização.
                           </span>
                         </span>
@@ -3120,7 +3117,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                       type="button"
                       onClick={fecharModalNovaAula}
                       disabled={salvandoAula}
-                      className="inline-flex items-center justify-center gap-2 rounded-[18px] border border-[#E4E7EC] bg-white px-5 py-3 text-sm font-semibold text-[#344054] transition hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:opacity-70"
+                      className="inline-flex items-center justify-center gap-2 rounded-[12px] border border-[#e5e5e5] bg-white px-5 py-3 text-[14px] font-semibold text-[#52525b] transition hover:bg-[#f7f7f7] disabled:cursor-not-allowed disabled:opacity-70"
                     >
                       Cancelar
                     </button>
@@ -3128,7 +3125,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                     <button
                       type="submit"
                       disabled={salvandoAula}
-                      className="inline-flex items-center justify-center gap-2 rounded-[18px] border border-[#EAD7B7] bg-[#D8BC8B] px-5 py-3 text-sm font-semibold text-[#111111] transition hover:brightness-[1.02] disabled:cursor-not-allowed disabled:opacity-70"
+                      className="inline-flex items-center justify-center gap-2 rounded-[12px] bg-[#DBC094] px-5 py-3 text-[14px] font-semibold text-black transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-70"
                     >
                       {salvandoAula ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -3146,21 +3143,21 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
       ) : null}
 
       {modalMateriaisAberto ? (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#101828]/40 p-4 backdrop-blur-[2px]">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#141414]/40 p-4 backdrop-blur-[2px]">
           <div className="flex min-h-full items-center justify-center py-6">
-            <div className="w-full max-w-4xl rounded-[28px] border border-[#E7EAF0] bg-white shadow-[0_20px_80px_rgba(15,23,42,0.18)]">
-              <div className="flex items-start justify-between gap-4 border-b border-[#EEF1F5] p-6">
+            <div className="w-full max-w-4xl rounded-[18px] border border-[#e5e5e5] bg-white shadow-[0_24px_80px_rgba(31,34,48,0.16)]">
+              <div className="flex items-start justify-between gap-4 border-b border-[#e5e5e5] px-6 py-5">
                 <div>
-                  <div className="inline-flex items-center gap-2 rounded-full border border-[#E4E7EC] bg-[#F9FAFB] px-3 py-1 text-xs font-medium uppercase tracking-[0.14em] text-[#475467]">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-[#e5e5e5] bg-white px-3 py-1 text-[12px] font-medium uppercase tracking-[0.14em] text-[#52525b]">
                     <Paperclip className="h-3.5 w-3.5" />
                     Materiais da aula
                   </div>
 
-                  <h2 className="mt-4 text-2xl font-semibold tracking-tight text-[#101828]">
+                  <h2 className="mt-4 text-[22px] font-semibold tracking-[-0.03em] text-[#141414]">
                     Gerenciar materiais
                   </h2>
 
-                  <p className="mt-2 text-sm leading-6 text-[#667085]">
+                  <p className="mt-2 text-[14px] leading-6 text-[#666b76]">
                     {aulaSelecionadaParaMateriais
                       ? `Cadastre e visualize os materiais da aula "${aulaSelecionadaParaMateriais.title}".`
                       : "Cadastre e visualize os materiais da aula selecionada."}
@@ -3170,7 +3167,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                 <button
                   type="button"
                   onClick={fecharModalMateriais}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#E4E7EC] bg-white text-[#667085] transition hover:bg-[#F9FAFB] hover:text-[#101828]"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#e5e5e5] bg-white text-[#666b76] transition hover:bg-[#f7f7f7] hover:text-[#141414]"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -3178,39 +3175,39 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
 
               <div className="max-h-[calc(100vh-8rem)] overflow-y-auto">
                 <div className="grid grid-cols-1 gap-0 lg:grid-cols-[1.05fr_0.95fr]">
-                  <div className="border-b border-[#EEF1F5] p-6 lg:border-b-0 lg:border-r">
-                    <h3 className="text-lg font-semibold text-[#101828]">
+                  <div className="border-b border-[#e5e5e5] px-6 py-5 lg:border-b-0 lg:border-r">
+                    <h3 className="text-[17px] font-semibold text-[#141414]">
                       Materiais cadastrados
                     </h3>
-                    <p className="mt-2 text-sm leading-6 text-[#667085]">
+                    <p className="mt-2 text-[14px] leading-6 text-[#666b76]">
                       Lista real dos materiais já vinculados à aula selecionada.
                     </p>
 
                     <div className="mt-5 space-y-3">
                       {materiaisDaAulaSelecionada.length === 0 ? (
-                        <div className="rounded-[18px] border border-dashed border-[#DDE3EA] bg-[#FCFCFD] px-4 py-5 text-sm text-[#667085]">
+                        <div className="border border-dashed border-[#e5e5e5] bg-white px-4 py-5 text-[14px] text-[#666b76]">
                           Esta aula ainda não possui materiais cadastrados.
                         </div>
                       ) : (
                         materiaisDaAulaSelecionada.map((material, index) => (
                           <div
                             key={material.id}
-                            className="rounded-[18px] border border-[#E7EAF0] bg-[#FCFCFD] p-4"
+                            className="rounded-[12px] border border-[#e5e5e5] bg-white p-4"
                           >
                             <div className="flex flex-wrap items-center gap-2">
-                              <span className="inline-flex items-center rounded-full border border-[#E4E7EC] bg-white px-2.5 py-1 text-[11px] font-medium text-[#475467]">
+                              <span className="inline-flex items-center rounded-full border border-[#e5e5e5] bg-white px-2.5 py-1 text-[11px] font-medium text-[#52525b]">
                                 Material {index + 1}
                               </span>
-                              <span className="inline-flex items-center rounded-full border border-[#D9E6F5] bg-[#EEF5FB] px-2.5 py-1 text-[11px] font-medium text-[#476A8E]">
+                              <span className="inline-flex items-center rounded-full border border-[#e2d2b6] bg-[#f3eee5] px-2.5 py-1 text-[11px] font-medium text-[#8a6836]">
                                 {traduzirTipoMaterial(material.asset_type)}
                               </span>
                             </div>
 
-                            <h4 className="mt-3 text-sm font-semibold text-[#101828]">
+                            <h4 className="mt-3 text-[14px] font-semibold text-[#141414]">
                               {material.title?.trim() || "Sem título cadastrado"}
                             </h4>
 
-                            <p className="mt-2 break-all text-xs leading-6 text-[#667085]">
+                            <p className="mt-2 break-all text-[12px] leading-6 text-[#666b76]">
                               {material.storage_path}
                             </p>
 
@@ -3225,7 +3222,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                               <button
                                 type="button"
                                 onClick={() => abrirVisualizacaoMaterial(material)}
-                                className="inline-flex items-center gap-1 rounded-full border border-[#E4E7EC] bg-white px-3 py-1.5 text-xs font-semibold text-[#344054] transition hover:bg-[#F9FAFB]"
+                                className="inline-flex items-center gap-1 rounded-full border border-[#e5e5e5] bg-white px-3 py-1.5 text-[12px] font-semibold text-[#52525b] transition hover:bg-[#f7f7f7]"
                               >
                                 <Eye className="h-3.5 w-3.5" />
                                 Visualizar
@@ -3233,7 +3230,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                               <button
                                 type="button"
                                 onClick={() => abrirEdicaoMaterial(material)}
-                                className="inline-flex items-center gap-1 rounded-full border border-[#E4E7EC] bg-white px-3 py-1.5 text-xs font-semibold text-[#344054] transition hover:bg-[#F9FAFB]"
+                                className="inline-flex items-center gap-1 rounded-full border border-[#e5e5e5] bg-white px-3 py-1.5 text-[12px] font-semibold text-[#52525b] transition hover:bg-[#f7f7f7]"
                               >
                                 <PencilLine className="h-3.5 w-3.5" />
                                 Editar
@@ -3241,7 +3238,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                               <button
                                 type="button"
                                 onClick={() => abrirExclusaoMaterial(material)}
-                                className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-100"
+                                className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-[12px] font-semibold text-rose-700 transition hover:bg-rose-100"
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
                                 Excluir
@@ -3254,27 +3251,27 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                   </div>
 
                   <form onSubmit={salvarNovoMaterial} className="p-6">
-                    <h3 className="text-lg font-semibold text-[#101828]">
+                    <h3 className="text-[17px] font-semibold text-[#141414]">
                       Novo material
                     </h3>
-                    <p className="mt-2 text-sm leading-6 text-[#667085]">
+                    <p className="mt-2 text-[14px] leading-6 text-[#666b76]">
                       Cadastre um novo material para a aula selecionada.
                     </p>
 
                     <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
                       {erroMaterial ? (
                         <div className="md:col-span-2 rounded-[18px] border border-rose-200 bg-rose-50 p-4">
-                          <h3 className="text-sm font-semibold text-rose-700">
+                          <h3 className="text-[14px] font-semibold text-rose-700">
                             Não foi possível salvar o material
                           </h3>
-                          <p className="mt-2 text-sm leading-6 text-rose-600">
+                          <p className="mt-2 text-[14px] leading-6 text-rose-600">
                             {erroMaterial}
                           </p>
                         </div>
                       ) : null}
 
                       <div>
-                        <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                        <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                           Tipo
                         </label>
                         <select
@@ -3285,7 +3282,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                               assetType: e.target.value,
                             }))
                           }
-                          className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none transition focus:border-[#D8BC8B] focus:bg-white"
+                          className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
                         >
                           <option value="pdf">PDF</option>
                           <option value="document">Documento</option>
@@ -3299,7 +3296,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                       </div>
 
                       <div>
-                        <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                        <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                           Ordem
                         </label>
                         <input
@@ -3313,12 +3310,12 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                             }))
                           }
                           placeholder="0"
-                          className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none placeholder:text-[#98A2B3] transition focus:border-[#D8BC8B] focus:bg-white"
+                          className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none placeholder:text-[#8a8f9d] transition focus:border-[#DBC094] focus:bg-white"
                         />
                       </div>
 
                       <div className="md:col-span-2">
-                        <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                        <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                           Título
                         </label>
                         <input
@@ -3331,23 +3328,23 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                             }))
                           }
                           placeholder="Ex.: Apostila da aula"
-                          className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none placeholder:text-[#98A2B3] transition focus:border-[#D8BC8B] focus:bg-white"
+                          className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none placeholder:text-[#8a8f9d] transition focus:border-[#DBC094] focus:bg-white"
                         />
                       </div>
 
-                      <div className="md:col-span-2 rounded-[18px] border border-[#E7EAF0] bg-[#FCFCFD] p-4">
-                        <label className="mb-3 block text-sm font-semibold text-[#344054]">
+                      <div className="md:col-span-2 rounded-[12px] border border-[#e5e5e5] bg-white p-4">
+                        <label className="mb-3 block text-[14px] font-semibold text-[#52525b]">
                           Arquivo do material
                         </label>
 
                         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                          <div className="text-sm text-[#667085]">
+                          <div className="text-[14px] text-[#666b76]">
                             {arquivoMaterial
                               ? `${arquivoMaterial.name} • ${formatarTamanho(arquivoMaterial.size)}`
                               : "Nenhum arquivo selecionado."}
                           </div>
 
-                          <label className="inline-flex cursor-pointer items-center gap-2 rounded-[16px] border border-[#EAD7B7] bg-[#D8BC8B] px-4 py-2.5 text-sm font-semibold text-[#111111] transition hover:brightness-[1.02]">
+                          <label className="inline-flex cursor-pointer items-center gap-2 rounded-[12px] border border-[#e2d2b6] bg-[#DBC094] px-4 py-2.5 text-[14px] font-semibold text-black transition hover:brightness-105">
                             <Upload className="h-4 w-4" />
                             Enviar arquivo
                             <input
@@ -3367,7 +3364,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                         type="button"
                         onClick={fecharModalMateriais}
                         disabled={salvandoMaterial}
-                        className="inline-flex items-center justify-center gap-2 rounded-[18px] border border-[#E4E7EC] bg-white px-5 py-3 text-sm font-semibold text-[#344054] transition hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:opacity-70"
+                        className="inline-flex items-center justify-center gap-2 rounded-[12px] border border-[#e5e5e5] bg-white px-5 py-3 text-[14px] font-semibold text-[#52525b] transition hover:bg-[#f7f7f7] disabled:cursor-not-allowed disabled:opacity-70"
                       >
                         Fechar
                       </button>
@@ -3375,7 +3372,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                       <button
                         type="submit"
                         disabled={salvandoMaterial}
-                        className="inline-flex items-center justify-center gap-2 rounded-[18px] border border-[#EAD7B7] bg-[#D8BC8B] px-5 py-3 text-sm font-semibold text-[#111111] transition hover:brightness-[1.02] disabled:cursor-not-allowed disabled:opacity-70"
+                        className="inline-flex items-center justify-center gap-2 rounded-[12px] bg-[#DBC094] px-5 py-3 text-[14px] font-semibold text-black transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-70"
                       >
                         {salvandoMaterial ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
@@ -3394,23 +3391,23 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
       ) : null}
 
       {aulaVisualizando ? (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#101828]/40 p-4 backdrop-blur-[2px]">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#141414]/40 p-4 backdrop-blur-[2px]">
           <div className="flex min-h-full items-center justify-center py-6">
-            <div className="w-full max-w-3xl rounded-[28px] border border-[#E7EAF0] bg-white shadow-[0_20px_80px_rgba(15,23,42,0.18)]">
-              <div className="flex items-start justify-between gap-4 border-b border-[#EEF1F5] p-6">
+            <div className="w-full max-w-3xl rounded-[18px] border border-[#e5e5e5] bg-white shadow-[0_24px_80px_rgba(31,34,48,0.16)]">
+              <div className="flex items-start justify-between gap-4 border-b border-[#e5e5e5] px-6 py-5">
                 <div>
-                  <div className="inline-flex items-center gap-2 rounded-full border border-[#E4E7EC] bg-[#F9FAFB] px-3 py-1 text-xs font-medium uppercase tracking-[0.14em] text-[#475467]">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-[#e5e5e5] bg-white px-3 py-1 text-[12px] font-medium uppercase tracking-[0.14em] text-[#52525b]">
                     <Eye className="h-3.5 w-3.5" />
                     Visualização da aula
                   </div>
-                  <h2 className="mt-4 text-2xl font-semibold tracking-tight text-[#101828]">
+                  <h2 className="mt-4 text-[22px] font-semibold tracking-[-0.03em] text-[#141414]">
                     {aulaVisualizando.title}
                   </h2>
                 </div>
                 <button
                   type="button"
                   onClick={() => setAulaVisualizando(null)}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#E4E7EC] bg-white text-[#667085] transition hover:bg-[#F9FAFB] hover:text-[#101828]"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#e5e5e5] bg-white text-[#666b76] transition hover:bg-[#f7f7f7] hover:text-[#141414]"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -3421,9 +3418,9 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                 <InfoPill icon={<FileText className="h-4 w-4" />} label="Tipo" value={traduzirTipoConteudo(aulaVisualizando.content_type)} />
                 <InfoPill icon={<Clock3 className="h-4 w-4" />} label="Status" value={traduzirStatus(aulaVisualizando.status)} />
                 <InfoPill icon={<LinkIcon className="h-4 w-4" />} label="Origem" value={traduzirSourceMode(aulaVisualizando.source_mode)} />
-                <div className="md:col-span-2 rounded-[18px] border border-[#E7EAF0] bg-[#FCFCFD] p-4">
-                  <p className="text-xs font-medium uppercase tracking-[0.14em] text-[#98A2B3]">Descrição</p>
-                  <p className="mt-2 text-sm leading-6 text-[#101828]">
+                <div className="md:col-span-2 rounded-[12px] border border-[#e5e5e5] bg-white p-4">
+                  <p className="text-[12px] font-medium uppercase tracking-[0.14em] text-[#8a8f9d]">Descrição</p>
+                  <p className="mt-2 text-[14px] leading-6 text-[#141414]">
                     {aulaVisualizando.description?.trim() || "Sem descrição cadastrada para esta aula."}
                   </p>
                 </div>
@@ -3434,26 +3431,26 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
       ) : null}
 
       {aulaEditando ? (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#101828]/40 p-4 backdrop-blur-[2px]">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#141414]/40 p-4 backdrop-blur-[2px]">
           <div className="flex min-h-full items-center justify-center py-6">
-            <div className="w-full max-w-4xl rounded-[28px] border border-[#E7EAF0] bg-white shadow-[0_20px_80px_rgba(15,23,42,0.18)]">
-              <div className="flex items-start justify-between gap-4 border-b border-[#EEF1F5] p-6">
+            <div className="w-full max-w-4xl rounded-[18px] border border-[#e5e5e5] bg-white shadow-[0_24px_80px_rgba(31,34,48,0.16)]">
+              <div className="flex items-start justify-between gap-4 border-b border-[#e5e5e5] px-6 py-5">
                 <div>
-                  <div className="inline-flex items-center gap-2 rounded-full border border-[#EAD7B7] bg-[#FBF6ED] px-3 py-1 text-xs font-medium uppercase tracking-[0.14em] text-[#9B6B22]">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-[#e2d2b6] bg-[#f3eee5] px-3 py-1 text-[12px] font-medium uppercase tracking-[0.14em] text-[#8a6836]">
                     <PencilLine className="h-3.5 w-3.5" />
                     Editar aula
                   </div>
-                  <h2 className="mt-4 text-2xl font-semibold tracking-tight text-[#101828]">
+                  <h2 className="mt-4 text-[22px] font-semibold tracking-[-0.03em] text-[#141414]">
                     Editar aula
                   </h2>
-                  <p className="mt-2 text-sm leading-6 text-[#667085]">
+                  <p className="mt-2 text-[14px] leading-6 text-[#666b76]">
                     Ajuste todas as informações da aula e salve para sobrescrever o conteúdo atual.
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={fecharEdicaoAula}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#E4E7EC] bg-white text-[#667085] transition hover:bg-[#F9FAFB] hover:text-[#101828]"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#e5e5e5] bg-white text-[#666b76] transition hover:bg-[#f7f7f7] hover:text-[#141414]"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -3464,17 +3461,17 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                   <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                     {erroEditarAula ? (
                       <div className="md:col-span-2 rounded-[18px] border border-rose-200 bg-rose-50 p-4">
-                        <h3 className="text-sm font-semibold text-rose-700">
+                        <h3 className="text-[14px] font-semibold text-rose-700">
                           Não foi possível salvar a aula
                         </h3>
-                        <p className="mt-2 text-sm leading-6 text-rose-600">
+                        <p className="mt-2 text-[14px] leading-6 text-rose-600">
                           {erroEditarAula}
                         </p>
                       </div>
                     ) : null}
 
                     <div>
-                      <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                      <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                         Módulo
                       </label>
                       <select
@@ -3485,7 +3482,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                             moduleId: e.target.value,
                           }))
                         }
-                        className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none transition focus:border-[#D8BC8B] focus:bg-white"
+                        className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
                       >
                         {modulos.map((modulo) => (
                           <option key={modulo.id} value={modulo.id}>
@@ -3496,7 +3493,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                     </div>
 
                     <div>
-                      <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                      <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                         Status
                       </label>
                       <select
@@ -3507,7 +3504,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                             status: e.target.value as StatusAula,
                           }))
                         }
-                        className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none transition focus:border-[#D8BC8B] focus:bg-white"
+                        className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
                       >
                         <option value="draft">Rascunho</option>
                         <option value="published">Publicado</option>
@@ -3516,7 +3513,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                     </div>
 
                     <div className="md:col-span-2">
-                      <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                      <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                         Título da aula
                       </label>
                       <input
@@ -3528,18 +3525,18 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                             title: e.target.value,
                           }))
                         }
-                        className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none transition focus:border-[#D8BC8B] focus:bg-white"
+                        className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
                       />
                     </div>
 
                     <div>
-                      <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                      <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                         Tipo de conteúdo
                       </label>
                       <select
                         value={formEditarAula.contentType}
                         onChange={(e) => onChangeEditarTipoConteudo(e.target.value as TipoConteudo)}
-                        className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none transition focus:border-[#D8BC8B] focus:bg-white"
+                        className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
                       >
                         <option value="video">Vídeo</option>
                         <option value="pdf">PDF</option>
@@ -3550,7 +3547,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                     </div>
 
                     <div>
-                      <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                      <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                         Ordem
                       </label>
                       <input
@@ -3563,12 +3560,12 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                             sortOrder: e.target.value,
                           }))
                         }
-                        className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none transition focus:border-[#D8BC8B] focus:bg-white"
+                        className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
                       />
                     </div>
 
                     <div>
-                      <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                      <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                         Duração em segundos
                       </label>
                       <input
@@ -3582,15 +3579,15 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                           }))
                         }
                         placeholder="Ex.: 600"
-                        className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none transition focus:border-[#D8BC8B] focus:bg-white"
+                        className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
                       />
                     </div>
 
                     {formEditarAula.contentType === "video" ? (
                       <>
-                        <div className="md:col-span-2 rounded-[18px] border border-[#E7EAF0] bg-[#FCFCFD] p-4">
-                          <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-[#101828]">
-                            <Video className="h-4 w-4 text-[#476A8E]" />
+                        <div className="md:col-span-2 rounded-[12px] border border-[#e5e5e5] bg-white p-4">
+                          <div className="mb-3 flex items-center gap-2 text-[14px] font-semibold text-[#141414]">
+                            <Video className="h-4 w-4 text-[#8a6836]" />
                             Origem do vídeo
                           </div>
 
@@ -3605,7 +3602,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                                 zoomRecordingUrl: "",
                               }))
                             }
-                            className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-white px-4 text-sm text-[#101828] outline-none transition focus:border-[#D8BC8B] focus:bg-white"
+                            className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
                           >
                             <option value="upload">Upload de vídeo</option>
                             <option value="url">Vídeo por URL</option>
@@ -3614,12 +3611,12 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                         </div>
 
                         {formEditarAula.sourceMode === "upload" ? (
-                          <div className="md:col-span-2 rounded-[18px] border border-[#E7EAF0] bg-[#FCFCFD] p-4">
-                            <label className="mb-3 block text-sm font-semibold text-[#344054]">
+                          <div className="md:col-span-2 rounded-[12px] border border-[#e5e5e5] bg-white p-4">
+                            <label className="mb-3 block text-[14px] font-semibold text-[#52525b]">
                               Arquivo de vídeo
                             </label>
                             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                              <div className="text-sm text-[#667085]">
+                              <div className="text-[14px] text-[#666b76]">
                                 {arquivoEditarConteudoPrincipal
                                   ? `${arquivoEditarConteudoPrincipal.name} • ${formatarTamanho(arquivoEditarConteudoPrincipal.size)}`
                                   : aulaEditando.primary_asset_name
@@ -3627,7 +3624,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                                   : "Nenhum vídeo selecionado."}
                               </div>
 
-                              <label className="inline-flex cursor-pointer items-center gap-2 rounded-[16px] border border-[#EAD7B7] bg-[#D8BC8B] px-4 py-2.5 text-sm font-semibold text-[#111111] transition hover:brightness-[1.02]">
+                              <label className="inline-flex cursor-pointer items-center gap-2 rounded-[12px] border border-[#e2d2b6] bg-[#DBC094] px-4 py-2.5 text-[14px] font-semibold text-black transition hover:brightness-105">
                                 <Upload className="h-4 w-4" />
                                 Substituir vídeo
                                 <input
@@ -3645,7 +3642,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
 
                         {formEditarAula.sourceMode === "url" ? (
                           <div className="md:col-span-2">
-                            <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                            <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                               URL do vídeo
                             </label>
                             <input
@@ -3657,7 +3654,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                                   externalUrl: e.target.value,
                                 }))
                               }
-                              className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none transition focus:border-[#D8BC8B] focus:bg-white"
+                              className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
                             />
                           </div>
                         ) : null}
@@ -3665,7 +3662,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                         {formEditarAula.sourceMode === "zoom_recording" ? (
                           <>
                             <div>
-                              <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                              <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                                 ID da gravação Zoom
                               </label>
                               <input
@@ -3677,12 +3674,12 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                                     zoomRecordingId: e.target.value,
                                   }))
                                 }
-                                className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none transition focus:border-[#D8BC8B] focus:bg-white"
+                                className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
                               />
                             </div>
 
                             <div>
-                              <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                              <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                                 Link compartilhável da gravação Zoom
                               </label>
                               <input
@@ -3695,11 +3692,11 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                                   }))
                                 }
                                 placeholder="Cole o link /rec/share/ com pwd="
-                                className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none placeholder:text-[#98A2B3] transition focus:border-[#D8BC8B] focus:bg-white"
+                                className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none placeholder:text-[#8a8f9d] transition focus:border-[#DBC094] focus:bg-white"
                               />
                             </div>
 
-                            <div className="md:col-span-2 rounded-[18px] border border-[#EAD7B7] bg-[#FBF6ED] p-4 text-sm leading-6 text-[#8B6831]">
+                            <div className="md:col-span-2 rounded-[18px] border border-[#e2d2b6] bg-[#f3eee5] p-4 text-[14px] leading-6 text-[#8a6836]">
                               Cole somente o link compartilhável da gravação do Zoom. O link precisa conter
                               <strong> pwd=</strong>. Não cole texto separado como “Senha: ...”.
                             </div>
@@ -3709,12 +3706,12 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                     ) : null}
 
                     {formEditarAula.contentType === "pdf" ? (
-                      <div className="md:col-span-2 rounded-[18px] border border-[#E7EAF0] bg-[#FCFCFD] p-4">
-                        <label className="mb-3 block text-sm font-semibold text-[#344054]">
+                      <div className="md:col-span-2 rounded-[12px] border border-[#e5e5e5] bg-white p-4">
+                        <label className="mb-3 block text-[14px] font-semibold text-[#52525b]">
                           Arquivo PDF da aula
                         </label>
                         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                          <div className="text-sm text-[#667085]">
+                          <div className="text-[14px] text-[#666b76]">
                             {arquivoEditarConteudoPrincipal
                               ? `${arquivoEditarConteudoPrincipal.name} • ${formatarTamanho(arquivoEditarConteudoPrincipal.size)}`
                               : aulaEditando.primary_asset_name
@@ -3722,7 +3719,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                               : "Nenhum PDF selecionado."}
                           </div>
 
-                          <label className="inline-flex cursor-pointer items-center gap-2 rounded-[16px] border border-[#EAD7B7] bg-[#D8BC8B] px-4 py-2.5 text-sm font-semibold text-[#111111] transition hover:brightness-[1.02]">
+                          <label className="inline-flex cursor-pointer items-center gap-2 rounded-[12px] border border-[#e2d2b6] bg-[#DBC094] px-4 py-2.5 text-[14px] font-semibold text-black transition hover:brightness-105">
                             <Upload className="h-4 w-4" />
                             Substituir PDF
                             <input
@@ -3739,12 +3736,12 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                     ) : null}
 
                     {formEditarAula.contentType === "audio" ? (
-                      <div className="md:col-span-2 rounded-[18px] border border-[#E7EAF0] bg-[#FCFCFD] p-4">
-                        <label className="mb-3 block text-sm font-semibold text-[#344054]">
+                      <div className="md:col-span-2 rounded-[12px] border border-[#e5e5e5] bg-white p-4">
+                        <label className="mb-3 block text-[14px] font-semibold text-[#52525b]">
                           Arquivo de áudio da aula
                         </label>
                         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                          <div className="text-sm text-[#667085]">
+                          <div className="text-[14px] text-[#666b76]">
                             {arquivoEditarConteudoPrincipal
                               ? `${arquivoEditarConteudoPrincipal.name} • ${formatarTamanho(arquivoEditarConteudoPrincipal.size)}`
                               : aulaEditando.primary_asset_name
@@ -3752,7 +3749,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                               : "Nenhum áudio selecionado."}
                           </div>
 
-                          <label className="inline-flex cursor-pointer items-center gap-2 rounded-[16px] border border-[#EAD7B7] bg-[#D8BC8B] px-4 py-2.5 text-sm font-semibold text-[#111111] transition hover:brightness-[1.02]">
+                          <label className="inline-flex cursor-pointer items-center gap-2 rounded-[12px] border border-[#e2d2b6] bg-[#DBC094] px-4 py-2.5 text-[14px] font-semibold text-black transition hover:brightness-105">
                             <Upload className="h-4 w-4" />
                             Substituir áudio
                             <input
@@ -3770,7 +3767,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
 
                     {formEditarAula.contentType === "text" ? (
                       <div className="md:col-span-2">
-                        <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                        <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                           Conteúdo textual da aula
                         </label>
                         <textarea
@@ -3782,25 +3779,25 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                               contentBody: e.target.value,
                             }))
                           }
-                          className="w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 py-3 text-sm text-[#101828] outline-none transition focus:border-[#D8BC8B] focus:bg-white"
+                          className="w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 py-3 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
                         />
                       </div>
                     ) : null}
 
                     {formEditarAula.contentType === "live" ? (
                       <>
-                        <div className="md:col-span-2 rounded-[18px] border border-[#E7EAF0] bg-[#FCFCFD] p-4">
-                          <div className="flex items-center gap-2 text-sm font-semibold text-[#101828]">
-                            <Radio className="h-4 w-4 text-[#476A8E]" />
+                        <div className="md:col-span-2 rounded-[12px] border border-[#e5e5e5] bg-white p-4">
+                          <div className="flex items-center gap-2 text-[14px] font-semibold text-[#141414]">
+                            <Radio className="h-4 w-4 text-[#8a6836]" />
                             Aula ao vivo via Zoom dentro da plataforma
                           </div>
-                          <p className="mt-2 text-sm leading-6 text-[#667085]">
+                          <p className="mt-2 text-[14px] leading-6 text-[#666b76]">
                             Edite os dados da transmissão ao vivo e salve para sobrescrever a configuração atual.
                           </p>
                         </div>
 
                         <div>
-                          <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                          <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                             ID da reunião do Zoom
                           </label>
                           <input
@@ -3812,12 +3809,12 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                                 zoomMeetingId: e.target.value,
                               }))
                             }
-                            className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none transition focus:border-[#D8BC8B] focus:bg-white"
+                            className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
                           />
                         </div>
 
                         <div>
-                          <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                          <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                             Senha / código
                           </label>
                           <input
@@ -3829,12 +3826,12 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                                 zoomPasscode: e.target.value,
                               }))
                             }
-                            className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none transition focus:border-[#D8BC8B] focus:bg-white"
+                            className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
                           />
                         </div>
 
                         <div>
-                          <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                          <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                             Link de entrada
                           </label>
                           <input
@@ -3846,12 +3843,12 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                                 zoomJoinUrl: e.target.value,
                               }))
                             }
-                            className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none transition focus:border-[#D8BC8B] focus:bg-white"
+                            className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
                           />
                         </div>
 
                         <div>
-                          <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                          <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                             Link do host
                           </label>
                           <input
@@ -3863,12 +3860,12 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                                 zoomStartUrl: e.target.value,
                               }))
                             }
-                            className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none transition focus:border-[#D8BC8B] focus:bg-white"
+                            className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
                           />
                         </div>
 
                         <div>
-                          <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                          <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                             Início programado
                           </label>
                           <input
@@ -3880,12 +3877,12 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                                 scheduledStartAt: e.target.value,
                               }))
                             }
-                            className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none transition focus:border-[#D8BC8B] focus:bg-white"
+                            className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
                           />
                         </div>
 
                         <div>
-                          <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                          <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                             Fim programado
                           </label>
                           <input
@@ -3897,14 +3894,14 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                                 scheduledEndAt: e.target.value,
                               }))
                             }
-                            className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none transition focus:border-[#D8BC8B] focus:bg-white"
+                            className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
                           />
                         </div>
                       </>
                     ) : null}
 
                     <div>
-                      <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                      <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                         Liberação
                       </label>
                       <input
@@ -3916,12 +3913,12 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                             releasedAt: e.target.value,
                           }))
                         }
-                        className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none transition focus:border-[#D8BC8B] focus:bg-white"
+                        className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
                       />
                     </div>
 
                     <div className="md:col-span-2">
-                      <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                      <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                         Descrição
                       </label>
                       <textarea
@@ -3933,18 +3930,18 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                             description: e.target.value,
                           }))
                         }
-                        className="w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 py-3 text-sm text-[#101828] outline-none transition focus:border-[#D8BC8B] focus:bg-white"
+                        className="w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 py-3 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
                       />
                     </div>
 
-                    <div className="md:col-span-2 rounded-[18px] border border-[#E7EAF0] bg-[#FCFCFD] p-4">
+                    <div className="md:col-span-2 rounded-[12px] border border-[#e5e5e5] bg-white p-4">
                       <div className="flex items-start gap-3">
-                        <Paperclip className="mt-0.5 h-4 w-4 text-[#B07A2A]" />
+                        <Paperclip className="mt-0.5 h-4 w-4 text-[#8a6836]" />
                         <div>
-                          <div className="text-sm font-semibold text-[#101828]">
+                          <div className="text-[14px] font-semibold text-[#141414]">
                             Materiais para download
                           </div>
-                          <p className="mt-1 text-sm leading-6 text-[#667085]">
+                          <p className="mt-1 text-[14px] leading-6 text-[#666b76]">
                             Os materiais da aula continuam disponíveis pelo botão "Gerenciar materiais".
                           </p>
                         </div>
@@ -3952,7 +3949,7 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                     </div>
 
                     <div className="md:col-span-2">
-                      <label className="flex items-start gap-3 rounded-[18px] border border-[#E7EAF0] bg-[#FCFCFD] p-4">
+                      <label className="flex items-start gap-3 rounded-[12px] border border-[#e5e5e5] bg-white p-4">
                         <input
                           type="checkbox"
                           checked={formEditarAula.isPreview}
@@ -3962,15 +3959,15 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                               isPreview: e.target.checked,
                             }))
                           }
-                          className="mt-1 h-4 w-4 rounded border-[#D0D5DD] text-[#B07A2A] focus:ring-[#D8BC8B]"
+                          className="mt-1 h-4 w-4 rounded border-[#e5e5e5] text-[#8a6836] focus:ring-[#DBC094]"
                         />
 
                         <span className="block">
-                          <span className="inline-flex items-center gap-2 text-sm font-semibold text-[#101828]">
-                            <Sparkles className="h-4 w-4 text-[#B07A2A]" />
+                          <span className="inline-flex items-center gap-2 text-[14px] font-semibold text-[#141414]">
+                            <Star className="h-4 w-4 text-[#8a6836]" />
                             Marcar como prévia
                           </span>
-                          <span className="mt-1 block text-sm leading-6 text-[#667085]">
+                          <span className="mt-1 block text-[14px] leading-6 text-[#666b76]">
                             A aula poderá ser tratada como conteúdo de pré-visualização.
                           </span>
                         </span>
@@ -3983,14 +3980,14 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                       type="button"
                       onClick={fecharEdicaoAula}
                       disabled={salvandoEdicaoAula}
-                      className="inline-flex items-center justify-center gap-2 rounded-[18px] border border-[#E4E7EC] bg-white px-5 py-3 text-sm font-semibold text-[#344054] transition hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:opacity-70"
+                      className="inline-flex items-center justify-center gap-2 rounded-[12px] border border-[#e5e5e5] bg-white px-5 py-3 text-[14px] font-semibold text-[#52525b] transition hover:bg-[#f7f7f7] disabled:cursor-not-allowed disabled:opacity-70"
                     >
                       Cancelar
                     </button>
                     <button
                       type="submit"
                       disabled={salvandoEdicaoAula}
-                      className="inline-flex items-center justify-center gap-2 rounded-[18px] border border-[#EAD7B7] bg-[#D8BC8B] px-5 py-3 text-sm font-semibold text-[#111111] transition hover:brightness-[1.02] disabled:cursor-not-allowed disabled:opacity-70"
+                      className="inline-flex items-center justify-center gap-2 rounded-[12px] bg-[#DBC094] px-5 py-3 text-[14px] font-semibold text-black transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-70"
                     >
                       {salvandoEdicaoAula ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -4008,24 +4005,24 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
       ) : null}
 
       {aulaExcluindo ? (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#101828]/40 p-4 backdrop-blur-[2px]">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#141414]/40 p-4 backdrop-blur-[2px]">
           <div className="flex min-h-full items-center justify-center py-6">
-            <div className="w-full max-w-xl rounded-[28px] border border-[#E7EAF0] bg-white shadow-[0_20px_80px_rgba(15,23,42,0.18)]">
-              <div className="flex items-start justify-between gap-4 border-b border-[#EEF1F5] p-6">
+            <div className="w-full max-w-xl rounded-[18px] border border-[#e5e5e5] bg-white shadow-[0_24px_80px_rgba(31,34,48,0.16)]">
+              <div className="flex items-start justify-between gap-4 border-b border-[#e5e5e5] px-6 py-5">
                 <div>
-                  <div className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-medium uppercase tracking-[0.14em] text-rose-700">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-[12px] font-medium uppercase tracking-[0.14em] text-rose-700">
                     <AlertTriangle className="h-3.5 w-3.5" />
                     Excluir aula
                   </div>
-                  <h2 className="mt-4 text-2xl font-semibold tracking-tight text-[#101828]">Confirmar exclusão</h2>
+                  <h2 className="mt-4 text-[22px] font-semibold tracking-[-0.03em] text-[#141414]">Confirmar exclusão</h2>
                 </div>
-                <button type="button" onClick={fecharExclusaoAula} className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#E4E7EC] bg-white text-[#667085] transition hover:bg-[#F9FAFB] hover:text-[#101828]"><X className="h-4 w-4" /></button>
+                <button type="button" onClick={fecharExclusaoAula} className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#e5e5e5] bg-white text-[#666b76] transition hover:bg-[#f7f7f7] hover:text-[#141414]"><X className="h-4 w-4" /></button>
               </div>
               <div className="p-6">
-                {erroExcluirAula ? <div className="rounded-[18px] border border-rose-200 bg-rose-50 p-4"><p className="text-sm leading-6 text-rose-600">{erroExcluirAula}</p></div> : <div className="rounded-[18px] border border-[#E7EAF0] bg-[#FCFCFD] p-4 text-sm leading-6 text-[#667085]">Você está prestes a excluir a aula <strong>{aulaExcluindo.title}</strong>.</div>}
+                {erroExcluirAula ? <div className="rounded-[18px] border border-rose-200 bg-rose-50 p-4"><p className="text-[14px] leading-6 text-rose-600">{erroExcluirAula}</p></div> : <div className="rounded-[12px] border border-[#e5e5e5] bg-white p-4 text-[14px] leading-6 text-[#666b76]">Você está prestes a excluir a aula <strong>{aulaExcluindo.title}</strong>.</div>}
                 <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-                  <button type="button" onClick={fecharExclusaoAula} disabled={excluindoAula} className="inline-flex items-center justify-center gap-2 rounded-[18px] border border-[#E4E7EC] bg-white px-5 py-3 text-sm font-semibold text-[#344054] transition hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:opacity-70">Cancelar</button>
-                  <button type="button" onClick={() => void excluirAulaSelecionada()} disabled={excluindoAula} className="inline-flex items-center justify-center gap-2 rounded-[18px] border border-rose-200 bg-rose-50 px-5 py-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-70">{excluindoAula ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}{excluindoAula ? "Excluindo..." : "Confirmar exclusão"}</button>
+                  <button type="button" onClick={fecharExclusaoAula} disabled={excluindoAula} className="inline-flex items-center justify-center gap-2 rounded-[12px] border border-[#e5e5e5] bg-white px-5 py-3 text-[14px] font-semibold text-[#52525b] transition hover:bg-[#f7f7f7] disabled:cursor-not-allowed disabled:opacity-70">Cancelar</button>
+                  <button type="button" onClick={() => void excluirAulaSelecionada()} disabled={excluindoAula} className="inline-flex items-center justify-center gap-2 rounded-[18px] border border-rose-200 bg-rose-50 px-5 py-3 text-[14px] font-semibold text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-70">{excluindoAula ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}{excluindoAula ? "Excluindo..." : "Confirmar exclusão"}</button>
                 </div>
               </div>
             </div>
@@ -4034,12 +4031,12 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
       ) : null}
 
       {materialVisualizando ? (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#101828]/40 p-4 backdrop-blur-[2px]">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#141414]/40 p-4 backdrop-blur-[2px]">
           <div className="flex min-h-full items-center justify-center py-6">
-            <div className="w-full max-w-2xl rounded-[28px] border border-[#E7EAF0] bg-white shadow-[0_20px_80px_rgba(15,23,42,0.18)]">
-              <div className="flex items-start justify-between gap-4 border-b border-[#EEF1F5] p-6">
-                <div><div className="inline-flex items-center gap-2 rounded-full border border-[#E4E7EC] bg-[#F9FAFB] px-3 py-1 text-xs font-medium uppercase tracking-[0.14em] text-[#475467]"><Eye className="h-3.5 w-3.5" />Visualização do material</div><h2 className="mt-4 text-2xl font-semibold tracking-tight text-[#101828]">{materialVisualizando.title?.trim() || "Sem título cadastrado"}</h2></div>
-                <button type="button" onClick={() => setMaterialVisualizando(null)} className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#E4E7EC] bg-white text-[#667085] transition hover:bg-[#F9FAFB] hover:text-[#101828]"><X className="h-4 w-4" /></button>
+            <div className="w-full max-w-2xl rounded-[18px] border border-[#e5e5e5] bg-white shadow-[0_24px_80px_rgba(31,34,48,0.16)]">
+              <div className="flex items-start justify-between gap-4 border-b border-[#e5e5e5] px-6 py-5">
+                <div><div className="inline-flex items-center gap-2 rounded-full border border-[#e5e5e5] bg-white px-3 py-1 text-[12px] font-medium uppercase tracking-[0.14em] text-[#52525b]"><Eye className="h-3.5 w-3.5" />Visualização do material</div><h2 className="mt-4 text-[22px] font-semibold tracking-[-0.03em] text-[#141414]">{materialVisualizando.title?.trim() || "Sem título cadastrado"}</h2></div>
+                <button type="button" onClick={() => setMaterialVisualizando(null)} className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#e5e5e5] bg-white text-[#666b76] transition hover:bg-[#f7f7f7] hover:text-[#141414]"><X className="h-4 w-4" /></button>
               </div>
               <div className="grid grid-cols-1 gap-4 p-6 md:grid-cols-2">
                 <InfoPill icon={<Paperclip className="h-4 w-4" />} label="Tipo" value={traduzirTipoMaterial(materialVisualizando.asset_type)} />
@@ -4053,24 +4050,24 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
       ) : null}
 
       {materialEditando ? (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#101828]/40 p-4 backdrop-blur-[2px]">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#141414]/40 p-4 backdrop-blur-[2px]">
           <div className="flex min-h-full items-center justify-center py-6">
-            <div className="w-full max-w-2xl rounded-[28px] border border-[#E7EAF0] bg-white shadow-[0_20px_80px_rgba(15,23,42,0.18)]">
-              <div className="flex items-start justify-between gap-4 border-b border-[#EEF1F5] p-6">
-                <div><div className="inline-flex items-center gap-2 rounded-full border border-[#EAD7B7] bg-[#FBF6ED] px-3 py-1 text-xs font-medium uppercase tracking-[0.14em] text-[#9B6B22]"><PencilLine className="h-3.5 w-3.5" />Editar material</div><h2 className="mt-4 text-2xl font-semibold tracking-tight text-[#101828]">Editar material</h2></div>
-                <button type="button" onClick={fecharEdicaoMaterial} className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#E4E7EC] bg-white text-[#667085] transition hover:bg-[#F9FAFB] hover:text-[#101828]"><X className="h-4 w-4" /></button>
+            <div className="w-full max-w-2xl rounded-[18px] border border-[#e5e5e5] bg-white shadow-[0_24px_80px_rgba(31,34,48,0.16)]">
+              <div className="flex items-start justify-between gap-4 border-b border-[#e5e5e5] px-6 py-5">
+                <div><div className="inline-flex items-center gap-2 rounded-full border border-[#e2d2b6] bg-[#f3eee5] px-3 py-1 text-[12px] font-medium uppercase tracking-[0.14em] text-[#8a6836]"><PencilLine className="h-3.5 w-3.5" />Editar material</div><h2 className="mt-4 text-[22px] font-semibold tracking-[-0.03em] text-[#141414]">Editar material</h2></div>
+                <button type="button" onClick={fecharEdicaoMaterial} className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#e5e5e5] bg-white text-[#666b76] transition hover:bg-[#f7f7f7] hover:text-[#141414]"><X className="h-4 w-4" /></button>
               </div>
               <form onSubmit={salvarEdicaoMaterialMeta} className="p-6">
                 <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                  {erroEditarMaterial ? <div className="md:col-span-2 rounded-[18px] border border-rose-200 bg-rose-50 p-4"><p className="text-sm leading-6 text-rose-600">{erroEditarMaterial}</p></div> : null}
-                  <div><label className="mb-2 block text-sm font-semibold text-[#344054]">Tipo</label><select value={formEditarMaterialMeta.assetType} onChange={(e) => setFormEditarMaterialMeta((current) => ({ ...current, assetType: e.target.value }))} className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none transition focus:border-[#D8BC8B] focus:bg-white"><option value="pdf">PDF</option><option value="document">Documento</option><option value="link">Link</option><option value="image">Imagem</option><option value="audio">Áudio</option><option value="spreadsheet">Planilha</option><option value="presentation">Apresentação</option><option value="download">Download</option></select></div>
-                  <div><label className="mb-2 block text-sm font-semibold text-[#344054]">Ordem</label><input type="number" min={0} value={formEditarMaterialMeta.sortOrder} onChange={(e) => setFormEditarMaterialMeta((current) => ({ ...current, sortOrder: e.target.value }))} className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none transition focus:border-[#D8BC8B] focus:bg-white" /></div>
-                  <div className="md:col-span-2"><label className="mb-2 block text-sm font-semibold text-[#344054]">Título</label><input type="text" value={formEditarMaterialMeta.title} onChange={(e) => setFormEditarMaterialMeta((current) => ({ ...current, title: e.target.value }))} className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none transition focus:border-[#D8BC8B] focus:bg-white" /></div>
-                  <div className="md:col-span-2 rounded-[18px] border border-[#E7EAF0] bg-[#FCFCFD] p-4"><label className="mb-3 block text-sm font-semibold text-[#344054]">Substituir arquivo do material</label><div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"><div className="text-sm text-[#667085]">{arquivoEditarMaterial ? `${arquivoEditarMaterial.name} • ${formatarTamanho(arquivoEditarMaterial.size)}` : materialEditando.file_name ? `Atual: ${materialEditando.file_name}` : "Nenhum novo arquivo selecionado."}</div><label className="inline-flex cursor-pointer items-center gap-2 rounded-[16px] border border-[#EAD7B7] bg-[#D8BC8B] px-4 py-2.5 text-sm font-semibold text-[#111111] transition hover:brightness-[1.02]"><Upload className="h-4 w-4" />Enviar arquivo<input type="file" className="hidden" onChange={(e) => setArquivoEditarMaterial(e.target.files?.[0] ?? null)} /></label></div></div>
+                  {erroEditarMaterial ? <div className="md:col-span-2 rounded-[18px] border border-rose-200 bg-rose-50 p-4"><p className="text-[14px] leading-6 text-rose-600">{erroEditarMaterial}</p></div> : null}
+                  <div><label className="mb-2 block text-[14px] font-semibold text-[#52525b]">Tipo</label><select value={formEditarMaterialMeta.assetType} onChange={(e) => setFormEditarMaterialMeta((current) => ({ ...current, assetType: e.target.value }))} className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"><option value="pdf">PDF</option><option value="document">Documento</option><option value="link">Link</option><option value="image">Imagem</option><option value="audio">Áudio</option><option value="spreadsheet">Planilha</option><option value="presentation">Apresentação</option><option value="download">Download</option></select></div>
+                  <div><label className="mb-2 block text-[14px] font-semibold text-[#52525b]">Ordem</label><input type="number" min={0} value={formEditarMaterialMeta.sortOrder} onChange={(e) => setFormEditarMaterialMeta((current) => ({ ...current, sortOrder: e.target.value }))} className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white" /></div>
+                  <div className="md:col-span-2"><label className="mb-2 block text-[14px] font-semibold text-[#52525b]">Título</label><input type="text" value={formEditarMaterialMeta.title} onChange={(e) => setFormEditarMaterialMeta((current) => ({ ...current, title: e.target.value }))} className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white" /></div>
+                  <div className="md:col-span-2 rounded-[12px] border border-[#e5e5e5] bg-white p-4"><label className="mb-3 block text-[14px] font-semibold text-[#52525b]">Substituir arquivo do material</label><div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"><div className="text-[14px] text-[#666b76]">{arquivoEditarMaterial ? `${arquivoEditarMaterial.name} • ${formatarTamanho(arquivoEditarMaterial.size)}` : materialEditando.file_name ? `Atual: ${materialEditando.file_name}` : "Nenhum novo arquivo selecionado."}</div><label className="inline-flex cursor-pointer items-center gap-2 rounded-[12px] border border-[#e2d2b6] bg-[#DBC094] px-4 py-2.5 text-[14px] font-semibold text-black transition hover:brightness-105"><Upload className="h-4 w-4" />Enviar arquivo<input type="file" className="hidden" onChange={(e) => setArquivoEditarMaterial(e.target.files?.[0] ?? null)} /></label></div></div>
                 </div>
                 <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-                  <button type="button" onClick={fecharEdicaoMaterial} disabled={salvandoEdicaoMaterial} className="inline-flex items-center justify-center gap-2 rounded-[18px] border border-[#E4E7EC] bg-white px-5 py-3 text-sm font-semibold text-[#344054] transition hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:opacity-70">Cancelar</button>
-                  <button type="submit" disabled={salvandoEdicaoMaterial} className="inline-flex items-center justify-center gap-2 rounded-[18px] border border-[#EAD7B7] bg-[#D8BC8B] px-5 py-3 text-sm font-semibold text-[#111111] transition hover:brightness-[1.02] disabled:cursor-not-allowed disabled:opacity-70">{salvandoEdicaoMaterial ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}{salvandoEdicaoMaterial ? "Salvando..." : "Salvar alterações"}</button>
+                  <button type="button" onClick={fecharEdicaoMaterial} disabled={salvandoEdicaoMaterial} className="inline-flex items-center justify-center gap-2 rounded-[12px] border border-[#e5e5e5] bg-white px-5 py-3 text-[14px] font-semibold text-[#52525b] transition hover:bg-[#f7f7f7] disabled:cursor-not-allowed disabled:opacity-70">Cancelar</button>
+                  <button type="submit" disabled={salvandoEdicaoMaterial} className="inline-flex items-center justify-center gap-2 rounded-[12px] bg-[#DBC094] px-5 py-3 text-[14px] font-semibold text-black transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-70">{salvandoEdicaoMaterial ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}{salvandoEdicaoMaterial ? "Salvando..." : "Salvar alterações"}</button>
                 </div>
               </form>
             </div>
@@ -4079,18 +4076,18 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
       ) : null}
 
       {materialExcluindo ? (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#101828]/40 p-4 backdrop-blur-[2px]">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#141414]/40 p-4 backdrop-blur-[2px]">
           <div className="flex min-h-full items-center justify-center py-6">
-            <div className="w-full max-w-xl rounded-[28px] border border-[#E7EAF0] bg-white shadow-[0_20px_80px_rgba(15,23,42,0.18)]">
-              <div className="flex items-start justify-between gap-4 border-b border-[#EEF1F5] p-6">
-                <div><div className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-medium uppercase tracking-[0.14em] text-rose-700"><AlertTriangle className="h-3.5 w-3.5" />Excluir material</div><h2 className="mt-4 text-2xl font-semibold tracking-tight text-[#101828]">Confirmar exclusão</h2></div>
-                <button type="button" onClick={fecharExclusaoMaterial} className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#E4E7EC] bg-white text-[#667085] transition hover:bg-[#F9FAFB] hover:text-[#101828]"><X className="h-4 w-4" /></button>
+            <div className="w-full max-w-xl rounded-[18px] border border-[#e5e5e5] bg-white shadow-[0_24px_80px_rgba(31,34,48,0.16)]">
+              <div className="flex items-start justify-between gap-4 border-b border-[#e5e5e5] px-6 py-5">
+                <div><div className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-[12px] font-medium uppercase tracking-[0.14em] text-rose-700"><AlertTriangle className="h-3.5 w-3.5" />Excluir material</div><h2 className="mt-4 text-[22px] font-semibold tracking-[-0.03em] text-[#141414]">Confirmar exclusão</h2></div>
+                <button type="button" onClick={fecharExclusaoMaterial} className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#e5e5e5] bg-white text-[#666b76] transition hover:bg-[#f7f7f7] hover:text-[#141414]"><X className="h-4 w-4" /></button>
               </div>
               <div className="p-6">
-                {erroExcluirMaterial ? <div className="rounded-[18px] border border-rose-200 bg-rose-50 p-4"><p className="text-sm leading-6 text-rose-600">{erroExcluirMaterial}</p></div> : <div className="rounded-[18px] border border-[#E7EAF0] bg-[#FCFCFD] p-4 text-sm leading-6 text-[#667085]">Você está prestes a excluir o material <strong>{materialExcluindo.title?.trim() || materialExcluindo.file_name || "sem título"}</strong>.</div>}
+                {erroExcluirMaterial ? <div className="rounded-[18px] border border-rose-200 bg-rose-50 p-4"><p className="text-[14px] leading-6 text-rose-600">{erroExcluirMaterial}</p></div> : <div className="rounded-[12px] border border-[#e5e5e5] bg-white p-4 text-[14px] leading-6 text-[#666b76]">Você está prestes a excluir o material <strong>{materialExcluindo.title?.trim() || materialExcluindo.file_name || "sem título"}</strong>.</div>}
                 <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-                  <button type="button" onClick={fecharExclusaoMaterial} disabled={excluindoMaterial} className="inline-flex items-center justify-center gap-2 rounded-[18px] border border-[#E4E7EC] bg-white px-5 py-3 text-sm font-semibold text-[#344054] transition hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:opacity-70">Cancelar</button>
-                  <button type="button" onClick={() => void excluirMaterialSelecionado()} disabled={excluindoMaterial} className="inline-flex items-center justify-center gap-2 rounded-[18px] border border-rose-200 bg-rose-50 px-5 py-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-70">{excluindoMaterial ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}{excluindoMaterial ? "Excluindo..." : "Confirmar exclusão"}</button>
+                  <button type="button" onClick={fecharExclusaoMaterial} disabled={excluindoMaterial} className="inline-flex items-center justify-center gap-2 rounded-[12px] border border-[#e5e5e5] bg-white px-5 py-3 text-[14px] font-semibold text-[#52525b] transition hover:bg-[#f7f7f7] disabled:cursor-not-allowed disabled:opacity-70">Cancelar</button>
+                  <button type="button" onClick={() => void excluirMaterialSelecionado()} disabled={excluindoMaterial} className="inline-flex items-center justify-center gap-2 rounded-[18px] border border-rose-200 bg-rose-50 px-5 py-3 text-[14px] font-semibold text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-70">{excluindoMaterial ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}{excluindoMaterial ? "Excluindo..." : "Confirmar exclusão"}</button>
                 </div>
               </div>
             </div>
@@ -4111,18 +4108,18 @@ type MetricCardProps = {
 
 function MetricCard({ title, value, icon, iconTone }: MetricCardProps) {
   const tones = {
-    gold: "bg-[#F8EFE0] text-[#B07A2A]",
-    violet: "bg-[#EFE9FB] text-[#6F4AA7]",
-    blue: "bg-[#EAF3FB] text-[#4C84B8]",
-    goldSoft: "bg-[#F5EEDC] text-[#9F7A28]",
+    gold: "bg-[#f3eee5] text-[#8a6836]",
+    violet: "bg-[#f3eee5] text-[#8a6836]",
+    blue: "bg-[#f3eee5] text-[#8a6836]",
+    goldSoft: "bg-[#f3eee5] text-[#8a6836]",
   };
 
   return (
-    <article className="rounded-[24px] border border-[#E7EAF0] bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,0.04)]">
+    <article className="rounded-[12px] border border-[#e5e5e5] bg-white p-5 ">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-sm font-medium text-[#667085]">{title}</p>
-          <p className="mt-4 text-5xl font-semibold tracking-tight text-[#111827]">
+          <p className="text-[14px] font-medium text-[#666b76]">{title}</p>
+          <p className="mt-3 text-[36px] font-semibold leading-none tracking-[-0.05em] text-[#141414]">
             {value}
           </p>
         </div>
@@ -4143,17 +4140,17 @@ function InfoPill({
   value: string;
 }) {
   return (
-    <div className="rounded-[18px] border border-[#E7EAF0] bg-[#FCFCFD] p-4">
+    <div className="rounded-[12px] border border-[#e5e5e5] bg-white p-4">
       <div className="flex items-start gap-3">
-        <div className="rounded-full bg-[#EEF5FB] p-2 text-[#476A8E]">
+        <div className="rounded-full bg-[#f3eee5] p-2 text-[#8a6836]">
           {icon}
         </div>
 
         <div className="min-w-0">
-          <p className="text-xs font-medium uppercase tracking-[0.14em] text-[#98A2B3]">
+          <p className="text-[12px] font-medium uppercase tracking-[0.14em] text-[#8a8f9d]">
             {label}
           </p>
-          <p className="mt-2 truncate text-sm font-semibold text-[#101828]">
+          <p className="mt-2 truncate text-[14px] font-semibold text-[#141414]">
             {value}
           </p>
         </div>
@@ -4170,11 +4167,11 @@ function MiniInfo({
   value: string;
 }) {
   return (
-    <div className="rounded-[14px] border border-[#E7EAF0] bg-[#FCFCFD] px-3 py-2">
-      <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-[#98A2B3]">
+    <div className="rounded-[10px] border border-[#e5e5e5] bg-white px-3 py-2">
+      <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-[#8a8f9d]">
         {label}
       </p>
-      <p className="mt-1 text-sm font-semibold text-[#101828]">{value}</p>
+      <p className="mt-1 text-[14px] font-semibold text-[#141414]">{value}</p>
     </div>
   );
 }

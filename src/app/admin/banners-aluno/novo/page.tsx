@@ -273,46 +273,46 @@ export default function NewStudentBannerPage() {
   }
 
   return (
-    <div className="mx-auto max-w-[980px]">
-      <div className="mb-8">
+    <div className="mx-auto max-w-[980px] space-y-7">
+      <section className="border-b border-[#e5e5e5] pb-7">
         <Link
           href="/admin/banners-aluno"
-          className="mb-5 inline-flex items-center gap-2 text-sm font-semibold text-[#667085] transition hover:text-[#202431]"
+          className="mb-4 inline-flex items-center gap-2 text-[14px] font-medium text-[#666b76] transition hover:text-[#141414]"
         >
           <ArrowLeft size={18} />
           Voltar para Banner Principal
         </Link>
 
-        <span className="mb-3 inline-flex items-center rounded-full border border-[#DBC094]/35 bg-[#DBC094]/12 px-4 py-2 text-sm font-semibold text-[#8b6b35]">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8a8f9d]">
           Área do aluno
-        </span>
+        </p>
 
-        <h1 className="text-[34px] font-semibold tracking-[-0.04em] text-[#202431] sm:text-[42px]">
+        <h1 className="mt-2 text-[38px] font-semibold leading-none tracking-[-0.04em] text-[#141414] sm:text-[46px]">
           {isEditing ? "Editar banner" : "Cadastrar novo banner"}
         </h1>
 
-        <p className="mt-3 max-w-[760px] text-[16px] leading-7 text-[#667085]">
+        <p className="mt-3 max-w-[760px] text-[15px] leading-6 text-[#5d6472]">
           Preencha as informações do banner principal exibido na home da área do
           aluno.
         </p>
-      </div>
+      </section>
 
       {message ? (
-        <div className="mb-5 flex items-center gap-3 rounded-[18px] border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm font-semibold text-emerald-700">
+        <div className="mb-5 flex items-center gap-3 rounded-[12px] border border-emerald-200 bg-emerald-50 px-5 py-4 text-[14px] font-semibold text-emerald-700">
           <CheckCircle2 size={20} />
           {message}
         </div>
       ) : null}
 
       {errorMessage ? (
-        <div className="mb-5 rounded-[18px] border border-red-200 bg-red-50 px-5 py-4 text-sm font-semibold text-red-700">
+        <div className="mb-5 rounded-[12px] border border-red-200 bg-red-50 px-5 py-4 text-[14px] font-semibold text-red-700">
           {errorMessage}
         </div>
       ) : null}
 
       {loadingBanner ? (
-        <div className="flex min-h-[460px] items-center justify-center rounded-[26px] border border-[#e7e9f0] bg-white">
-          <div className="flex items-center gap-3 text-sm font-semibold text-[#667085]">
+        <div className="flex min-h-[420px] items-center justify-center rounded-[18px] border border-[#e5e5e5] bg-white">
+          <div className="flex items-center gap-3 text-[14px] font-semibold text-[#666b76]">
             <Loader2 size={18} className="animate-spin" />
             Carregando banner...
           </div>
@@ -320,11 +320,11 @@ export default function NewStudentBannerPage() {
       ) : (
         <form
           onSubmit={handleSubmit}
-          className="rounded-[26px] border border-[#e7e9f0] bg-white p-5 shadow-[0_20px_60px_rgba(31,34,48,0.06)] sm:p-6"
+          className="rounded-[18px] border border-[#e5e5e5] bg-white p-5 sm:p-6"
         >
           <div className="grid gap-5">
             <label className="block">
-              <span className="mb-2 block text-sm font-semibold text-[#3b4151]">
+              <span className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                 Título *
               </span>
               <input
@@ -332,12 +332,12 @@ export default function NewStudentBannerPage() {
                 value={form.title}
                 onChange={(event) => updateFormField("title", event.target.value)}
                 placeholder="Ex: Liderança Essencial"
-                className="h-12 w-full rounded-[14px] border border-[#dfe3ec] bg-white px-4 text-[15px] text-[#202431] outline-none transition placeholder:text-[#9aa1b2] focus:border-[#DBC094]"
+                className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#27272a] outline-none transition placeholder:text-[#8a8f9d] focus:border-[#DBC094]"
               />
             </label>
 
             <label className="block">
-              <span className="mb-2 block text-sm font-semibold text-[#3b4151]">
+              <span className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                 Subtítulo
               </span>
               <textarea
@@ -347,13 +347,13 @@ export default function NewStudentBannerPage() {
                 }
                 placeholder="Descrição curta que aparece no banner"
                 rows={4}
-                className="w-full resize-none rounded-[14px] border border-[#dfe3ec] bg-white px-4 py-3 text-[15px] leading-6 text-[#202431] outline-none transition placeholder:text-[#9aa1b2] focus:border-[#DBC094]"
+                className="w-full resize-none rounded-[12px] border border-[#e5e5e5] bg-white px-4 py-3 text-[14px] leading-6 text-[#27272a] outline-none transition placeholder:text-[#8a8f9d] focus:border-[#DBC094]"
               />
             </label>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block">
-                <span className="mb-2 block text-sm font-semibold text-[#3b4151]">
+                <span className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                   Selo
                 </span>
                 <input
@@ -363,12 +363,12 @@ export default function NewStudentBannerPage() {
                     updateFormField("badge", event.target.value)
                   }
                   placeholder="Novo conteúdo"
-                  className="h-12 w-full rounded-[14px] border border-[#dfe3ec] bg-white px-4 text-[15px] text-[#202431] outline-none transition placeholder:text-[#9aa1b2] focus:border-[#DBC094]"
+                  className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#27272a] outline-none transition placeholder:text-[#8a8f9d] focus:border-[#DBC094]"
                 />
               </label>
 
               <label className="block">
-                <span className="mb-2 block text-sm font-semibold text-[#3b4151]">
+                <span className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                   Categoria
                 </span>
                 <input
@@ -378,14 +378,14 @@ export default function NewStudentBannerPage() {
                     updateFormField("category", event.target.value)
                   }
                   placeholder="Trilha"
-                  className="h-12 w-full rounded-[14px] border border-[#dfe3ec] bg-white px-4 text-[15px] text-[#202431] outline-none transition placeholder:text-[#9aa1b2] focus:border-[#DBC094]"
+                  className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#27272a] outline-none transition placeholder:text-[#8a8f9d] focus:border-[#DBC094]"
                 />
               </label>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block">
-                <span className="mb-2 block text-sm font-semibold text-[#3b4151]">
+                <span className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                   Duração
                 </span>
                 <input
@@ -395,12 +395,12 @@ export default function NewStudentBannerPage() {
                     updateFormField("duration", event.target.value)
                   }
                   placeholder="8 aulas"
-                  className="h-12 w-full rounded-[14px] border border-[#dfe3ec] bg-white px-4 text-[15px] text-[#202431] outline-none transition placeholder:text-[#9aa1b2] focus:border-[#DBC094]"
+                  className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#27272a] outline-none transition placeholder:text-[#8a8f9d] focus:border-[#DBC094]"
                 />
               </label>
 
               <label className="block">
-                <span className="mb-2 block text-sm font-semibold text-[#3b4151]">
+                <span className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                   Nível
                 </span>
                 <input
@@ -410,14 +410,14 @@ export default function NewStudentBannerPage() {
                     updateFormField("level_name", event.target.value)
                   }
                   placeholder="Executivo"
-                  className="h-12 w-full rounded-[14px] border border-[#dfe3ec] bg-white px-4 text-[15px] text-[#202431] outline-none transition placeholder:text-[#9aa1b2] focus:border-[#DBC094]"
+                  className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#27272a] outline-none transition placeholder:text-[#8a8f9d] focus:border-[#DBC094]"
                 />
               </label>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block">
-                <span className="mb-2 block text-sm font-semibold text-[#3b4151]">
+                <span className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                   Texto do botão
                 </span>
                 <input
@@ -427,12 +427,12 @@ export default function NewStudentBannerPage() {
                     updateFormField("button_label", event.target.value)
                   }
                   placeholder="Assistir agora"
-                  className="h-12 w-full rounded-[14px] border border-[#dfe3ec] bg-white px-4 text-[15px] text-[#202431] outline-none transition placeholder:text-[#9aa1b2] focus:border-[#DBC094]"
+                  className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#27272a] outline-none transition placeholder:text-[#8a8f9d] focus:border-[#DBC094]"
                 />
               </label>
 
               <label className="block">
-                <span className="mb-2 block text-sm font-semibold text-[#3b4151]">
+                <span className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                   Ordem
                 </span>
                 <input
@@ -441,13 +441,13 @@ export default function NewStudentBannerPage() {
                   onChange={(event) =>
                     updateFormField("sort_order", event.target.value)
                   }
-                  className="h-12 w-full rounded-[14px] border border-[#dfe3ec] bg-white px-4 text-[15px] text-[#202431] outline-none transition placeholder:text-[#9aa1b2] focus:border-[#DBC094]"
+                  className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#27272a] outline-none transition placeholder:text-[#8a8f9d] focus:border-[#DBC094]"
                 />
               </label>
             </div>
 
             <label className="block">
-              <span className="mb-2 block text-sm font-semibold text-[#3b4151]">
+              <span className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                 Link de destino
               </span>
               <input
@@ -457,7 +457,7 @@ export default function NewStudentBannerPage() {
                   updateFormField("target_url", event.target.value)
                 }
                 placeholder="/aluno/trilhas/lideranca-essencial"
-                className="h-12 w-full rounded-[14px] border border-[#dfe3ec] bg-white px-4 text-[15px] text-[#202431] outline-none transition placeholder:text-[#9aa1b2] focus:border-[#DBC094]"
+                className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#27272a] outline-none transition placeholder:text-[#8a8f9d] focus:border-[#DBC094]"
               />
             </label>
 
@@ -479,12 +479,12 @@ export default function NewStudentBannerPage() {
               />
             </div>
 
-            <label className="flex cursor-pointer items-center justify-between rounded-[16px] border border-[#e4e7ef] bg-[#fafbfe] px-4 py-3">
+            <label className="flex cursor-pointer items-center justify-between rounded-[16px] border border-[#e5e5e5] bg-white px-4 py-3">
               <div>
-                <span className="block text-sm font-semibold text-[#3b4151]">
+                <span className="block text-[14px] font-semibold text-[#52525b]">
                   Banner ativo
                 </span>
-                <span className="mt-1 block text-xs text-[#8a91a3]">
+                <span className="mt-1 block text-[12px] text-[#8a8f9d]">
                   Apenas banners ativos aparecem na área do aluno.
                 </span>
               </div>
@@ -502,7 +502,7 @@ export default function NewStudentBannerPage() {
             <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
               <Link
                 href="/admin/banners-aluno"
-                className="inline-flex h-[52px] items-center justify-center rounded-[15px] border border-[#e4e7ef] bg-white px-5 text-[15px] font-bold text-[#343a49] transition hover:bg-[#f6f7fb]"
+                className="inline-flex h-12 items-center justify-center rounded-[12px] border border-[#e5e5e5] bg-white px-5 text-[14px] font-semibold text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836]"
               >
                 Cancelar
               </Link>
@@ -510,7 +510,7 @@ export default function NewStudentBannerPage() {
               <button
                 type="submit"
                 disabled={saving || uploadingDesktop || uploadingMobile}
-                className="inline-flex h-[52px] items-center justify-center gap-2 rounded-[15px] bg-[#DBC094] px-5 text-[15px] font-bold text-black transition hover:bg-[#cfb27a] disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-[12px] bg-[#DBC094] px-5 text-[14px] font-semibold text-black transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {saving ? (
                   <Loader2 size={18} className="animate-spin" />
@@ -543,14 +543,14 @@ function ImageUploadBox({
   onUpload: (event: ChangeEvent<HTMLInputElement>) => void;
 }) {
   return (
-    <div className="rounded-[18px] border border-dashed border-[#d6dbe6] bg-[#fafbfe] p-4">
+    <div className="rounded-[12px] border border-dashed border-[#e5e5e5] bg-white p-4">
       <div className="mb-3 flex items-center justify-between gap-3">
         <div>
-          <p className="text-sm font-semibold text-[#3b4151]">{title}</p>
-          <p className="mt-1 text-xs text-[#8a91a3]">{description}</p>
+          <p className="text-[14px] font-semibold text-[#52525b]">{title}</p>
+          <p className="mt-1 text-[12px] text-[#8a8f9d]">{description}</p>
         </div>
 
-        <label className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-[12px] bg-[#202431] px-4 text-sm font-semibold text-white transition hover:bg-black">
+        <label className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-[10px] bg-[#DBC094] px-4 text-[14px] font-semibold text-black transition hover:brightness-105">
           {uploading ? (
             <Loader2 size={16} className="animate-spin" />
           ) : (
@@ -567,7 +567,7 @@ function ImageUploadBox({
       </div>
 
       {value ? (
-        <div className="overflow-hidden rounded-[14px] border border-[#e5e7ee] bg-white">
+        <div className="overflow-hidden rounded-[12px] border border-[#e5e5e5] bg-white">
           <img
             src={value}
             alt={title}
@@ -575,7 +575,7 @@ function ImageUploadBox({
           />
         </div>
       ) : (
-        <div className="flex h-[190px] items-center justify-center rounded-[14px] border border-[#e5e7ee] bg-white text-sm font-medium text-[#9aa1b2]">
+        <div className="flex h-[190px] items-center justify-center rounded-[12px] border border-[#e5e5e5] bg-white text-[14px] font-medium text-[#8a8f9d]">
           Nenhuma imagem enviada
         </div>
       )}

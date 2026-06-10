@@ -9,7 +9,7 @@ import {
   Loader2,
   Network,
   Save,
-  Sparkles,
+  Star,
   Trash2,
   Upload,
 } from "lucide-react";
@@ -447,32 +447,32 @@ export default function NovaTrilhaPage() {
   }
 
   return (
-    <div className="min-h-screen bg-transparent text-[#111827]">
-      <div className="flex w-full flex-col gap-6">
-        <section className="rounded-[28px] border border-[#E7EAF0] bg-white shadow-[0_8px_30px_rgba(15,23,42,0.04)]">
+    <div className="space-y-7 text-[#141414]">
+      <div className="flex w-full flex-col gap-7">
+        <section className="border-b border-[#e5e5e5] pb-7">
           <div className="flex flex-col gap-6 p-6 md:p-8">
             <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
               <div className="min-w-0 max-w-3xl">
                 <Link
                   href="/admin/cursos"
-                  className="inline-flex max-w-full items-center gap-2 text-sm font-medium text-[#667085] transition hover:text-[#101828]"
+                  className="inline-flex max-w-full items-center gap-2 text-[14px] font-medium text-[#666b76] transition hover:text-[#141414]"
                 >
                   <ArrowLeft className="h-4 w-4 shrink-0" />
                   <span className="truncate">Voltar para trilhas e cursos</span>
                 </Link>
 
                 <div className="mt-4">
-                  <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-[#EAD7B7] bg-[#FBF6ED] px-3 py-1 text-xs font-medium uppercase tracking-[0.14em] text-[#9B6B22]">
+                  <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-[#e2d2b6] bg-[#f3eee5] px-3 py-1 text-[12px] font-medium uppercase tracking-[0.14em] text-[#8a6836]">
                     <Network className="h-3.5 w-3.5 shrink-0" />
                     <span className="truncate">Cadastro de trilha</span>
                   </div>
                 </div>
 
-                <h1 className="mt-5 text-3xl font-semibold tracking-tight text-[#101828] md:text-4xl">
+                <h1 className="mt-5 text-[38px] font-semibold leading-none tracking-[-0.04em] text-[#141414] sm:text-[46px]">
                   Nova trilha
                 </h1>
 
-                <p className="mt-3 max-w-2xl text-sm leading-7 text-[#667085] md:text-base">
+                <p className="mt-3 max-w-2xl text-[14px] leading-7 text-[#666b76] md:text-[16px]">
                   Cadastre uma nova trilha e escolha o modelo de capa. Para
                   Destaque extragrande, envie uma capa vertical grande para o
                   card parado e uma capa horizontal para o hover paisagem.
@@ -484,7 +484,7 @@ export default function NovaTrilhaPage() {
                   type="submit"
                   form="form-nova-trilha"
                   disabled={salvando}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-[18px] border border-[#EAD7B7] bg-[#D8BC8B] px-5 py-3 text-sm font-semibold text-[#111111] transition hover:brightness-[1.02] disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-[12px] bg-[#DBC094] px-5 py-3 text-[14px] font-semibold text-black transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
                 >
                   {salvando ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -501,21 +501,21 @@ export default function NovaTrilhaPage() {
         <form
           id="form-nova-trilha"
           onSubmit={handleSubmit}
-          className="rounded-[28px] border border-[#E7EAF0] bg-white shadow-[0_8px_30px_rgba(15,23,42,0.04)]"
+          className="rounded-[18px] border border-[#e5e5e5] bg-white "
         >
           <div className="grid grid-cols-1 gap-6 p-6 md:p-8">
             {erro ? (
               <div className="rounded-[18px] border border-rose-200 bg-rose-50 p-4">
-                <h2 className="text-sm font-semibold text-rose-700">
+                <h2 className="text-[14px] font-semibold text-rose-700">
                   Não foi possível salvar a trilha
                 </h2>
-                <p className="mt-2 text-sm leading-6 text-rose-600">{erro}</p>
+                <p className="mt-2 text-[14px] leading-6 text-rose-600">{erro}</p>
               </div>
             ) : null}
 
             <div className="grid grid-cols-1 gap-5 xl:grid-cols-12">
               <div className="xl:col-span-12">
-                <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                   Nome da trilha
                 </label>
                 <input
@@ -523,24 +523,24 @@ export default function NovaTrilhaPage() {
                   value={form.title}
                   onChange={(e) => updateField("title", e.target.value)}
                   placeholder="Digite o nome da trilha"
-                  className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none placeholder:text-[#98A2B3] transition focus:border-[#D8BC8B] focus:bg-white"
+                  className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none placeholder:text-[#8a8f9d] transition focus:border-[#DBC094] focus:bg-white"
                 />
               </div>
 
               <div className="xl:col-span-12">
-                <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                   Identificador da trilha
                 </label>
                 <input
                   type="text"
                   value={slugGerado}
                   readOnly
-                  className="h-12 w-full rounded-[16px] border border-[#E4E7EC] bg-[#F9FAFB] px-4 text-sm text-[#667085] outline-none"
+                  className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#666b76] outline-none"
                 />
               </div>
 
               <div className="xl:col-span-12">
-                <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                   Resumo curto
                 </label>
                 <textarea
@@ -550,12 +550,12 @@ export default function NovaTrilhaPage() {
                     updateField("shortDescription", e.target.value)
                   }
                   placeholder="Escreva um resumo curto da trilha"
-                  className="w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 py-3 text-sm text-[#101828] outline-none placeholder:text-[#98A2B3] transition focus:border-[#D8BC8B] focus:bg-white"
+                  className="w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 py-3 text-[14px] text-[#141414] outline-none placeholder:text-[#8a8f9d] transition focus:border-[#DBC094] focus:bg-white"
                 />
               </div>
 
               <div className="xl:col-span-12">
-                <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                   Descrição
                 </label>
                 <textarea
@@ -563,17 +563,17 @@ export default function NovaTrilhaPage() {
                   value={form.description}
                   onChange={(e) => updateField("description", e.target.value)}
                   placeholder="Descreva a trilha"
-                  className="w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 py-3 text-sm text-[#101828] outline-none placeholder:text-[#98A2B3] transition focus:border-[#D8BC8B] focus:bg-white"
+                  className="w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 py-3 text-[14px] text-[#141414] outline-none placeholder:text-[#8a8f9d] transition focus:border-[#DBC094] focus:bg-white"
                 />
               </div>
 
               <div className="xl:col-span-12">
-                <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                   Modelo de capa da trilha
                 </label>
 
-                <div className="rounded-[20px] border border-[#E7EAF0] bg-[#FCFCFD] p-4">
-                  <p className="mb-4 text-sm leading-6 text-[#667085]">
+                <div className="rounded-[18px] border border-[#e5e5e5] bg-white p-4">
+                  <p className="mb-4 text-[14px] leading-6 text-[#666b76]">
                     Selecione o modelo visual da trilha. Para Destaque
                     extragrande, serão liberados dois uploads: vertical grande e
                     horizontal.
@@ -617,25 +617,25 @@ export default function NovaTrilhaPage() {
                           className={[
                             "rounded-[18px] border p-4 text-left transition",
                             selected
-                              ? "border-[#D8BC8B] bg-[#FBF6ED] shadow-[0_12px_28px_rgba(216,188,139,0.18)]"
-                              : "border-[#E7EAF0] bg-white hover:border-[#D8BC8B]/70",
+                              ? "border-[#DBC094] bg-[#f3eee5] "
+                              : "border-[#e5e5e5] bg-white hover:border-[#DBC094]/70",
                           ].join(" ")}
                         >
                           <span
                             className={[
-                              "mb-3 flex h-7 w-7 items-center justify-center rounded-full border text-xs font-black",
+                              "mb-3 flex h-7 w-7 items-center justify-center rounded-full border text-[12px] font-black",
                               selected
-                                ? "border-[#D8BC8B] bg-[#D8BC8B] text-black"
-                                : "border-[#D0D5DD] bg-white text-[#667085]",
+                                ? "border-[#DBC094] bg-[#DBC094] text-black"
+                                : "border-[#e5e5e5] bg-white text-[#666b76]",
                             ].join(" ")}
                           >
                             {selected ? "✓" : ""}
                           </span>
 
-                          <strong className="block text-sm font-semibold text-[#101828]">
+                          <strong className="block text-[14px] font-semibold text-[#141414]">
                             {option.title}
                           </strong>
-                          <span className="mt-1 block text-sm leading-6 text-[#667085]">
+                          <span className="mt-1 block text-[14px] leading-6 text-[#666b76]">
                             {option.description}
                           </span>
                         </button>
@@ -643,11 +643,11 @@ export default function NovaTrilhaPage() {
                     })}
                   </div>
 
-                  <div className="mt-4 rounded-[16px] border border-[#EAD7B7] bg-[#FBF6ED] p-4">
-                    <p className="text-sm font-semibold text-[#7A551C]">
+                  <div className="mt-4 rounded-[12px] border border-[#e2d2b6] bg-[#f3eee5] p-4">
+                    <p className="text-[14px] font-semibold text-[#7A551C]">
                       Modelo selecionado: {getFormatLabel(form.preferredCardFormat)}
                     </p>
-                    <p className="mt-1 text-sm leading-6 text-[#8A6A3F]">
+                    <p className="mt-1 text-[14px] leading-6 text-[#8A6A3F]">
                       {form.preferredCardFormat === "featured"
                         ? "Envie a capa vertical grande para o card parado e a capa horizontal para o hover paisagem."
                         : "O upload abaixo ficará ativo somente para o modelo selecionado."}
@@ -665,16 +665,16 @@ export default function NovaTrilhaPage() {
                     return (
                       <div
                         key={kind}
-                        className="rounded-[20px] border border-[#E7EAF0] bg-[#FCFCFD] p-4"
+                        className="rounded-[18px] border border-[#e5e5e5] bg-white p-4"
                       >
                         <div className="mb-4">
-                          <label className="block text-sm font-semibold text-[#344054]">
+                          <label className="block text-[14px] font-semibold text-[#52525b]">
                             {coverConfig.label}
                           </label>
-                          <p className="mt-1 text-sm leading-6 text-[#667085]">
+                          <p className="mt-1 text-[14px] leading-6 text-[#666b76]">
                             {coverConfig.description}
                           </p>
-                          <p className="mt-1 text-xs font-medium text-[#98A2B3]">
+                          <p className="mt-1 text-[12px] font-medium text-[#8a8f9d]">
                             {coverConfig.helper}
                           </p>
                         </div>
@@ -684,7 +684,7 @@ export default function NovaTrilhaPage() {
                             <div className="flex min-w-0 gap-4">
                               <div
                                 className={[
-                                  "flex shrink-0 items-center justify-center overflow-hidden rounded-[16px] border border-[#E4E7EC] bg-white",
+                                  "flex shrink-0 items-center justify-center overflow-hidden rounded-[12px] border border-[#e5e5e5] bg-white",
                                   coverConfig.previewClass,
                                 ].join(" ")}
                               >
@@ -695,25 +695,25 @@ export default function NovaTrilhaPage() {
                                     className="h-full w-full object-cover"
                                   />
                                 ) : (
-                                  <ImageIcon className="h-6 w-6 text-[#98A2B3]" />
+                                  <ImageIcon className="h-6 w-6 text-[#8a8f9d]" />
                                 )}
                               </div>
 
                               <div className="min-w-0">
-                                <p className="truncate text-sm font-semibold text-[#101828]">
+                                <p className="truncate text-[14px] font-semibold text-[#141414]">
                                   {cover.file.name}
                                 </p>
-                                <p className="mt-1 text-sm text-[#667085]">
+                                <p className="mt-1 text-[14px] text-[#666b76]">
                                   {cover.file.type || "Tipo não identificado"}
                                 </p>
-                                <p className="mt-1 text-sm text-[#98A2B3]">
+                                <p className="mt-1 text-[14px] text-[#8a8f9d]">
                                   {formatarTamanho(cover.file.size)}
                                 </p>
                               </div>
                             </div>
 
                             <div className="flex flex-wrap gap-2">
-                              <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-[14px] border border-[#E4E7EC] bg-white px-4 py-2 text-sm font-semibold text-[#344054] transition hover:bg-[#F9FAFB]">
+                              <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-[14px] border border-[#e5e5e5] bg-white px-4 py-2 text-[14px] font-semibold text-[#52525b] transition hover:bg-[#f7f7f7]">
                                 <Upload className="h-4 w-4" />
                                 Substituir capa
                                 <input
@@ -729,7 +729,7 @@ export default function NovaTrilhaPage() {
                               <button
                                 type="button"
                                 onClick={() => removerCapaSelecionada(kind)}
-                                className="inline-flex items-center justify-center gap-2 rounded-[14px] border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
+                                className="inline-flex items-center justify-center gap-2 rounded-[14px] border border-rose-200 bg-rose-50 px-4 py-2 text-[14px] font-semibold text-rose-700 transition hover:bg-rose-100"
                               >
                                 <Trash2 className="h-4 w-4" />
                                 Excluir capa
@@ -739,15 +739,15 @@ export default function NovaTrilhaPage() {
                         ) : (
                           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                             <div>
-                              <p className="text-sm font-semibold text-[#101828]">
+                              <p className="text-[14px] font-semibold text-[#141414]">
                                 Nenhuma imagem selecionada
                               </p>
-                              <p className="mt-1 text-sm leading-6 text-[#667085]">
+                              <p className="mt-1 text-[14px] leading-6 text-[#666b76]">
                                 Upload ativo para: {coverConfig.label}.
                               </p>
                             </div>
 
-                            <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-[16px] border border-[#EAD7B7] bg-[#D8BC8B] px-4 py-2.5 text-sm font-semibold text-[#111111] transition hover:brightness-[1.02]">
+                            <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-[12px] border border-[#e2d2b6] bg-[#DBC094] px-4 py-2.5 text-[14px] font-semibold text-black transition hover:brightness-105">
                               <Upload className="h-4 w-4" />
                               Enviar capa
                               <input
@@ -768,7 +768,7 @@ export default function NovaTrilhaPage() {
               </div>
 
               <div className="xl:col-span-4">
-                <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                   Rank mínimo exigido
                 </label>
                 <input
@@ -777,12 +777,12 @@ export default function NovaTrilhaPage() {
                   value={form.requiredRank}
                   onChange={(e) => updateField("requiredRank", e.target.value)}
                   placeholder="0"
-                  className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none placeholder:text-[#98A2B3] transition focus:border-[#D8BC8B] focus:bg-white"
+                  className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none placeholder:text-[#8a8f9d] transition focus:border-[#DBC094] focus:bg-white"
                 />
               </div>
 
               <div className="xl:col-span-4">
-                <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                   Status visual
                 </label>
                 <select
@@ -790,7 +790,7 @@ export default function NovaTrilhaPage() {
                   onChange={(e) =>
                     updateField("status", e.target.value as StatusTrilha)
                   }
-                  className="h-12 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] px-4 text-sm text-[#101828] outline-none transition focus:border-[#D8BC8B] focus:bg-white"
+                  className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
                 >
                   <option value="draft">Rascunho</option>
                   <option value="published">Publicado</option>
@@ -799,25 +799,25 @@ export default function NovaTrilhaPage() {
               </div>
 
               <div className="xl:col-span-4">
-                <label className="mb-2 block text-sm font-semibold text-[#344054]">
+                <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                   Exibição
                 </label>
-                <label className="flex min-h-12 items-start gap-3 rounded-[18px] border border-[#E7EAF0] bg-[#FCFCFD] p-4">
+                <label className="flex min-h-12 items-start gap-3 rounded-[18px] border border-[#e5e5e5] bg-white p-4">
                   <input
                     type="checkbox"
                     checked={form.isFeatured}
                     onChange={(e) =>
                       updateField("isFeatured", e.target.checked)
                     }
-                    className="mt-1 h-4 w-4 rounded border-[#D0D5DD] text-[#B07A2A] focus:ring-[#D8BC8B]"
+                    className="mt-1 h-4 w-4 rounded border-[#e5e5e5] text-[#8a6836] focus:ring-[#DBC094]"
                   />
 
                   <span className="block">
-                    <span className="inline-flex items-center gap-2 text-sm font-semibold text-[#101828]">
-                      <Sparkles className="h-4 w-4 text-[#B07A2A]" />
+                    <span className="inline-flex items-center gap-2 text-[14px] font-semibold text-[#141414]">
+                      <Star className="h-4 w-4 text-[#8a6836]" />
                       Marcar como destaque
                     </span>
-                    <span className="mt-1 block text-sm leading-6 text-[#667085]">
+                    <span className="mt-1 block text-[14px] leading-6 text-[#666b76]">
                       Este campo ajuda a organizar a prioridade de exibição no
                       sistema.
                     </span>

@@ -4,17 +4,14 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import {
+  ArrowUpRight,
   BookOpen,
   ChevronRight,
   Clock3,
-  FolderKanban,
   GraduationCap,
   Layers3,
-  PlayCircle,
-  RefreshCcw,
+  RefreshCw,
   Search,
-  ShieldCheck,
-  Sparkles,
   Star,
 } from "lucide-react";
 
@@ -69,20 +66,33 @@ function traduzirStatus(status: StatusCurso) {
     case "archived":
       return "Arquivado";
     default:
-      return status;
+      return status || "Sem status";
   }
 }
 
 function statusClasses(status: StatusCurso) {
   switch (status) {
     case "published":
-      return "border-emerald-200 bg-emerald-50 text-emerald-700";
+      return "bg-[#f3eee5] text-[#8a6836]";
     case "draft":
-      return "border-amber-200 bg-amber-50 text-amber-700";
+      return "bg-[#fff7ed] text-[#9a3412]";
     case "archived":
-      return "border-slate-200 bg-slate-100 text-slate-600";
+      return "bg-[#f4f4f5] text-[#52525b]";
     default:
-      return "border-slate-200 bg-slate-100 text-slate-600";
+      return "bg-[#f4f4f5] text-[#52525b]";
+  }
+}
+
+function statusDotClasses(status: StatusCurso) {
+  switch (status) {
+    case "published":
+      return "bg-[#DBC094]";
+    case "draft":
+      return "bg-[#f97316]";
+    case "archived":
+      return "bg-[#a1a1aa]";
+    default:
+      return "bg-[#a1a1aa]";
   }
 }
 
@@ -91,12 +101,21 @@ function formatarData(data: string | null) {
 
   try {
     return new Intl.DateTimeFormat("pt-BR", {
-      dateStyle: "short",
-      timeStyle: "short",
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     }).format(new Date(data));
   } catch {
     return "—";
   }
+}
+
+function formatarNumero(value: number) {
+  return value.toLocaleString("pt-BR", {
+    maximumFractionDigits: 0,
+  });
 }
 
 function resumoCurso(curso: Curso) {
@@ -107,34 +126,42 @@ function resumoCurso(curso: Curso) {
   );
 }
 
-type MetricCardProps = {
-  title: string;
-  value: string;
-  icon: React.ReactNode;
-  iconTone: "gold" | "violet" | "blue" | "goldSoft";
-};
-
-function MetricCard({ title, value, icon, iconTone }: MetricCardProps) {
-  const tones = {
-    gold: "bg-[#F8EFE0] text-[#B07A2A]",
-    violet: "bg-[#EFE9FB] text-[#6F4AA7]",
-    blue: "bg-[#EAF3FB] text-[#4C84B8]",
-    goldSoft: "bg-[#F5EEDC] text-[#9F7A28]",
-  };
-
+function StatusBadge({ status }: { status: StatusCurso }) {
   return (
-    <article className="rounded-[24px] border border-[#E7EAF0] bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,0.04)]">
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <p className="text-sm font-medium text-[#667085]">{title}</p>
-          <p className="mt-4 text-5xl font-semibold tracking-tight text-[#111827]">
-            {value}
-          </p>
-        </div>
+    <span
+      className={cx(
+        "inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[13px] font-semibold",
+        statusClasses(status),
+      )}
+    >
+      <span className={cx("h-2 w-2 rounded-full", statusDotClasses(status))} />
+      {traduzirStatus(status)}
+    </span>
+  );
+}
 
-        <div className={cx("rounded-full p-4", tones[iconTone])}>{icon}</div>
-      </div>
-    </article>
+function FilterButton({
+  active,
+  children,
+  onClick,
+}: {
+  active: boolean;
+  children: React.ReactNode;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cx(
+        "h-10 rounded-[10px] px-4 text-[13px] font-semibold transition",
+        active
+          ? "bg-[#DBC094] text-black"
+          : "text-[#666b76] hover:bg-[#f7f7f7] hover:text-[#141414]",
+      )}
+    >
+      {children}
+    </button>
   );
 }
 
@@ -154,14 +181,14 @@ export default function AdminAulasPage() {
 
       if (!supabase) {
         throw new Error(
-          "As variáveis públicas do Supabase não foram encontradas."
+          "As variáveis públicas do Supabase não foram encontradas.",
         );
       }
 
       const { data, error } = await supabase
         .from("courses")
         .select(
-          "id, slug, title, short_description, description, cover_path, status, required_rank, is_featured, published_at, created_by, created_at, updated_at"
+          "id, slug, title, short_description, description, cover_path, status, required_rank, is_featured, published_at, created_by, created_at, updated_at",
         )
         .order("updated_at", { ascending: false });
 
@@ -214,256 +241,316 @@ export default function AdminAulasPage() {
 
   const totalCursos = cursos.length;
   const totalPublicados = cursos.filter(
-    (curso) => curso.status === "published"
+    (curso) => curso.status === "published",
   ).length;
-  const totalRascunhos = cursos.filter(
-    (curso) => curso.status === "draft"
-  ).length;
+  const totalRascunhos = cursos.filter((curso) => curso.status === "draft").length;
   const totalDestaques = cursos.filter((curso) => curso.is_featured).length;
 
   return (
-    <div className="min-h-screen bg-transparent text-[#111827]">
-      <div className="flex w-full flex-col gap-6">
-        <section className="rounded-[28px] border border-[#E7EAF0] bg-white shadow-[0_8px_30px_rgba(15,23,42,0.04)]">
-          <div className="flex flex-col gap-6 p-6 md:p-8 xl:flex-row xl:items-end xl:justify-between">
-            <div className="max-w-3xl">
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#EAD7B7] bg-[#FBF6ED] px-3 py-1 text-xs font-medium uppercase tracking-[0.14em] text-[#9B6B22]">
-                <Sparkles className="h-3.5 w-3.5" />
-                Módulos e aulas
-              </div>
+    <div className="space-y-7">
+      <section className="flex flex-col gap-5 border-b border-[#e5e5e5] pb-7 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8a8f9d]">
+            Módulo cursos
+          </p>
 
-              <p className="text-xs font-medium uppercase tracking-[0.28em] text-[#8A94A6]">
-                Painel administrativo
-              </p>
+          <h1 className="mt-2 text-[38px] font-semibold leading-none tracking-[-0.04em] text-[#141414] sm:text-[46px]">
+            Cursos, módulos e aulas
+          </h1>
 
-              <h1 className="mt-2 text-4xl font-semibold tracking-tight text-[#0F172A] md:text-5xl">
-                Módulos e aulas
-              </h1>
+          <p className="mt-3 max-w-2xl text-[15px] leading-6 text-[#5d6472]">
+            Selecione um curso real para abrir a gestão operacional de módulos e aulas vinculados ao banco.
+          </p>
+        </div>
 
-              <p className="mt-4 max-w-2xl text-sm leading-7 text-[#667085] md:text-base">
-                Selecione um curso real para abrir a gestão operacional de módulos
-                e aulas vinculados ao banco.
-              </p>
-            </div>
+        <Link
+          href="/admin/cursos"
+          className="inline-flex h-12 items-center justify-center gap-3 self-start rounded-[12px] bg-[#DBC094] px-5 text-[14px] font-semibold text-black transition hover:brightness-105 lg:self-auto"
+        >
+          Ir para cursos
+          <ArrowUpRight className="h-4 w-4" />
+        </Link>
+      </section>
 
-            <Link
-              href="/admin/cursos"
-              className="inline-flex items-center justify-center gap-2 rounded-[18px] border border-[#E4E7EC] bg-white px-5 py-3 text-sm font-semibold text-[#344054] transition hover:bg-[#F9FAFB]"
+      <section className="overflow-hidden rounded-[18px] border border-[#e5e5e5] bg-white">
+        <div className="grid divide-y divide-[#e5e5e5] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-4">
+          <div className="p-5">
+            <p className="text-[13px] font-medium text-[#666b76]">
+              Cursos disponíveis
+            </p>
+
+            <strong className="mt-3 block text-[36px] font-semibold leading-none tracking-[-0.05em] text-[#141414]">
+              {formatarNumero(totalCursos)}
+            </strong>
+          </div>
+
+          <div className="p-5">
+            <p className="text-[13px] font-medium text-[#666b76]">
+              Publicados
+            </p>
+
+            <strong className="mt-3 block text-[36px] font-semibold leading-none tracking-[-0.05em] text-[#141414]">
+              {formatarNumero(totalPublicados)}
+            </strong>
+          </div>
+
+          <div className="p-5">
+            <p className="text-[13px] font-medium text-[#666b76]">
+              Rascunhos
+            </p>
+
+            <strong className="mt-3 block text-[36px] font-semibold leading-none tracking-[-0.05em] text-[#141414]">
+              {formatarNumero(totalRascunhos)}
+            </strong>
+          </div>
+
+          <div className="p-5">
+            <p className="text-[13px] font-medium text-[#666b76]">
+              Destaques
+            </p>
+
+            <strong className="mt-3 block text-[36px] font-semibold leading-none tracking-[-0.05em] text-[#141414]">
+              {formatarNumero(totalDestaques)}
+            </strong>
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-[18px] border border-[#e5e5e5] bg-white">
+        <div className="flex flex-col gap-4 border-b border-[#e5e5e5] px-5 py-4 xl:flex-row xl:items-center xl:justify-between">
+          <div>
+            <h2 className="text-[22px] font-semibold tracking-[-0.03em] text-[#141414]">
+              Seleção do curso
+            </h2>
+
+            <p className="mt-1 text-[13px] text-[#767b87]">
+              Escolha o curso que terá seus módulos e aulas gerenciados.
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
+            <button
+              type="button"
+              onClick={() => void carregarCursos()}
+              disabled={carregando}
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-[10px] border border-[#e5e5e5] bg-white px-4 text-[13px] font-semibold text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836] disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <GraduationCap className="h-4 w-4" />
-              Ir para cursos
-            </Link>
-          </div>
-        </section>
+              <RefreshCw
+                className={cx("h-4 w-4", carregando && "animate-spin")}
+              />
+              Atualizar
+            </button>
 
-        <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <MetricCard
-            title="Cursos disponíveis"
-            value={String(totalCursos).padStart(2, "0")}
-            icon={<GraduationCap className="h-5 w-5" />}
-            iconTone="gold"
-          />
-          <MetricCard
-            title="Publicados"
-            value={String(totalPublicados).padStart(2, "0")}
-            icon={<BookOpen className="h-5 w-5" />}
-            iconTone="blue"
-          />
-          <MetricCard
-            title="Rascunhos"
-            value={String(totalRascunhos).padStart(2, "0")}
-            icon={<FolderKanban className="h-5 w-5" />}
-            iconTone="violet"
-          />
-          <MetricCard
-            title="Destaques"
-            value={String(totalDestaques).padStart(2, "0")}
-            icon={<Star className="h-5 w-5" />}
-            iconTone="goldSoft"
-          />
-        </section>
+            <div className="relative w-[360px] max-w-full">
+              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8a8f9d]" />
 
-        <section className="rounded-[28px] border border-[#E7EAF0] bg-white shadow-[0_8px_30px_rgba(15,23,42,0.04)]">
-          <div className="flex flex-col gap-4 border-b border-[#EEF1F5] p-5 md:p-6 xl:flex-row xl:items-center xl:justify-between">
-            <div>
-              <h2 className="text-2xl font-semibold tracking-tight text-[#101828]">
-                Seleção do curso
-              </h2>
-              <p className="mt-2 text-sm text-[#667085]">
-                Escolha o curso que terá seus módulos e aulas gerenciados.
-              </p>
-            </div>
-
-            <div className="flex flex-col gap-3 md:flex-row md:items-center">
-              <button
-                type="button"
-                onClick={() => void carregarCursos()}
-                className="inline-flex items-center justify-center gap-2 rounded-[16px] border border-[#E4E7EC] bg-white px-4 py-2.5 text-sm font-semibold text-[#344054] transition hover:bg-[#F9FAFB]"
-              >
-                <RefreshCcw className="h-4 w-4" />
-                Atualizar
-              </button>
-
-              <div className="relative min-w-[280px]">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#98A2B3]" />
-                <input
-                  value={busca}
-                  onChange={(e) => setBusca(e.target.value)}
-                  placeholder="Buscar curso"
-                  className="h-11 w-full rounded-[16px] border border-[#DDE3EA] bg-[#F9FAFB] pl-10 pr-4 text-sm text-[#101828] outline-none placeholder:text-[#98A2B3] transition focus:border-[#D8BC8B] focus:bg-white"
-                />
-              </div>
-
-              <div className="flex items-center gap-2 rounded-[16px] border border-[#E4E7EC] bg-[#F9FAFB] p-1">
-                {filtros.map((filtro) => {
-                  const ativo = filtroAtivo === filtro.id;
-
-                  return (
-                    <button
-                      key={filtro.id}
-                      type="button"
-                      onClick={() => setFiltroAtivo(filtro.id)}
-                      className={cx(
-                        "rounded-[12px] px-4 py-2 text-sm font-medium transition",
-                        ativo
-                          ? "bg-[#D8BC8B] text-[#111111]"
-                          : "text-[#667085] hover:bg-white hover:text-[#101828]"
-                      )}
-                    >
-                      {filtro.label}
-                    </button>
-                  );
-                })}
-              </div>
+              <input
+                value={busca}
+                onChange={(event) => setBusca(event.target.value)}
+                placeholder="Buscar curso"
+                className="h-11 w-full rounded-[12px] border border-[#e5e5e5] bg-white pl-11 pr-4 text-[14px] font-medium text-[#27272a] outline-none transition placeholder:text-[#8a8f9d] focus:border-[#DBC094]"
+              />
             </div>
           </div>
+        </div>
 
+        <div className="flex flex-wrap gap-2 border-b border-[#e5e5e5] px-5 py-4">
+          {filtros.map((filtro) => (
+            <FilterButton
+              key={filtro.id}
+              active={filtroAtivo === filtro.id}
+              onClick={() => setFiltroAtivo(filtro.id)}
+            >
+              {filtro.label}
+            </FilterButton>
+          ))}
+        </div>
+
+        <div className="px-5 py-5">
           {erro ? (
-            <div className="p-6">
-              <div className="rounded-[20px] border border-rose-200 bg-rose-50 p-5">
-                <h3 className="text-sm font-semibold text-rose-700">
-                  Erro ao carregar cursos
-                </h3>
-                <p className="mt-2 text-sm leading-6 text-rose-600">{erro}</p>
-              </div>
+            <div className="mb-4 rounded-[12px] border border-red-200 bg-red-50 px-4 py-4 text-[14px] font-medium text-red-700">
+              <strong className="block">Erro ao carregar cursos</strong>
+              <span className="mt-1 block font-normal">{erro}</span>
             </div>
           ) : null}
 
-          <div className="hidden grid-cols-[1.25fr_0.65fr_0.6fr_0.7fr_0.65fr] gap-4 border-b border-[#EEF1F5] px-6 py-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#98A2B3] lg:grid">
-            <div>Curso</div>
-            <div>Status</div>
-            <div>Rank</div>
-            <div>Atualizado em</div>
-            <div className="text-right">Ação</div>
-          </div>
-
-          <div className="divide-y divide-[#EEF1F5]">
-            {carregando ? (
-              <div className="p-6">
-                <div className="grid grid-cols-1 gap-4">
-                  {Array.from({ length: 4 }).map((_, index) => (
-                    <div
-                      key={index}
-                      className="rounded-[20px] border border-[#EEF1F5] bg-[#FCFCFD] p-5"
-                    >
-                      <div className="animate-pulse space-y-3">
-                        <div className="h-4 w-40 rounded bg-[#E9EDF3]" />
-                        <div className="h-3 w-64 rounded bg-[#EEF2F6]" />
-                        <div className="h-3 w-52 rounded bg-[#EEF2F6]" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : cursosFiltrados.length === 0 ? (
-              <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
-                <div className="mb-4 rounded-full border border-[#E4E7EC] bg-[#F9FAFB] p-4">
-                  <Layers3 className="h-6 w-6 text-[#98A2B3]" />
-                </div>
-                <h3 className="text-base font-semibold text-[#101828]">
-                  Nenhum curso encontrado
-                </h3>
-                <p className="mt-2 max-w-md text-sm text-[#667085]">
-                  Não há cursos compatíveis com os filtros atuais.
-                </p>
-              </div>
-            ) : (
-              cursosFiltrados.map((curso) => (
-                <article
-                  key={curso.id}
-                  className="px-5 py-5 transition hover:bg-[#FCFCFD] md:px-6"
+          {carregando ? (
+            <div className="divide-y divide-[#ededed]">
+              {Array.from({ length: 5 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="grid gap-4 py-5 lg:grid-cols-[minmax(0,1fr)_140px_120px_190px_150px]"
                 >
-                  <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[1.25fr_0.65fr_0.6fr_0.7fr_0.65fr] lg:items-center lg:gap-4">
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        {curso.is_featured ? (
-                          <span className="inline-flex items-center gap-1 rounded-full border border-[#EAD7B7] bg-[#FBF6ED] px-2.5 py-1 text-[11px] font-semibold text-[#9B6B22]">
-                            <Star className="h-3 w-3" />
-                            Destaque
-                          </span>
-                        ) : null}
+                  <div className="h-5 animate-pulse rounded bg-[#f3f4f6]" />
+                  <div className="h-5 animate-pulse rounded bg-[#f3f4f6]" />
+                  <div className="h-5 animate-pulse rounded bg-[#f3f4f6]" />
+                  <div className="h-5 animate-pulse rounded bg-[#f3f4f6]" />
+                  <div className="h-5 animate-pulse rounded bg-[#f3f4f6]" />
+                </div>
+              ))}
+            </div>
+          ) : cursosFiltrados.length === 0 ? (
+            <div className="flex min-h-[240px] flex-col items-center justify-center border border-dashed border-[#e5e5e5] px-6 text-center">
+              <Layers3 className="h-8 w-8 text-[#DBC094]" />
 
-                        <span className="inline-flex items-center gap-1 rounded-full border border-[#D9E6F5] bg-[#EEF5FB] px-2.5 py-1 text-[11px] font-medium text-[#476A8E]">
-                          <PlayCircle className="h-3 w-3" />
-                          Gestão de aulas
-                        </span>
-                      </div>
+              <h3 className="mt-4 text-[22px] font-semibold tracking-[-0.03em] text-[#141414]">
+                Nenhum curso encontrado
+              </h3>
 
-                      <h3 className="mt-3 truncate text-base font-semibold text-[#101828] md:text-[17px]">
-                        {curso.title}
-                      </h3>
+              <p className="mt-2 max-w-[520px] text-[14px] leading-6 text-[#666b76]">
+                Não há cursos compatíveis com os filtros atuais.
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="hidden xl:block">
+                <table className="w-full table-auto">
+                  <thead>
+                    <tr className="border-b border-[#e5e5e5]">
+                      <th className="whitespace-nowrap px-4 py-3 text-left text-[12px] font-semibold uppercase tracking-[0.16em] text-[#8a8f9d]">
+                        Curso
+                      </th>
+                      <th className="whitespace-nowrap px-4 py-3 text-left text-[12px] font-semibold uppercase tracking-[0.16em] text-[#8a8f9d]">
+                        Status
+                      </th>
+                      <th className="whitespace-nowrap px-4 py-3 text-left text-[12px] font-semibold uppercase tracking-[0.16em] text-[#8a8f9d]">
+                        Nível
+                      </th>
+                      <th className="whitespace-nowrap px-4 py-3 text-left text-[12px] font-semibold uppercase tracking-[0.16em] text-[#8a8f9d]">
+                        Atualizado
+                      </th>
+                      <th className="whitespace-nowrap px-4 py-3 text-right text-[12px] font-semibold uppercase tracking-[0.16em] text-[#8a8f9d]">
+                        Ação
+                      </th>
+                    </tr>
+                  </thead>
 
-                      <p className="mt-1 line-clamp-2 text-sm leading-6 text-[#667085]">
-                        {resumoCurso(curso)}
-                      </p>
-
-                      <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-[#98A2B3] lg:hidden">
-                        <span className="inline-flex items-center gap-1.5">
-                          <ShieldCheck className="h-3.5 w-3.5" />
-                          Rank {curso.required_rank}
-                        </span>
-                        <span className="inline-flex items-center gap-1.5">
-                          <Clock3 className="h-3.5 w-3.5" />
-                          {formatarData(curso.updated_at)}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div>
-                      <span
-                        className={cx(
-                          "inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium",
-                          statusClasses(curso.status)
-                        )}
+                  <tbody>
+                    {cursosFiltrados.map((curso) => (
+                      <tr
+                        key={curso.id}
+                        className="border-b border-[#ededed] last:border-b-0"
                       >
-                        {traduzirStatus(curso.status)}
+                        <td className="px-4 py-5">
+                          <div className="flex min-w-0 items-start gap-3">
+                            <div className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#f3eee5] text-[#8a6836]">
+                              <BookOpen className="h-5 w-5" />
+                            </div>
+
+                            <div className="min-w-0">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <h3 className="truncate text-[15px] font-semibold text-[#18181b]">
+                                  {curso.title}
+                                </h3>
+
+                                {curso.is_featured ? (
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-[#f3eee5] px-2.5 py-1 text-[11px] font-semibold text-[#8a6836]">
+                                    <Star className="h-3 w-3" />
+                                    Destaque
+                                  </span>
+                                ) : null}
+                              </div>
+
+                              <p className="mt-1 line-clamp-2 max-w-[580px] text-[14px] leading-6 text-[#666b76]">
+                                {resumoCurso(curso)}
+                              </p>
+
+                              <p className="mt-1 text-[12px] font-medium text-[#8a8f9d]">
+                                Slug: {curso.slug}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+
+                        <td className="px-4 py-5">
+                          <StatusBadge status={curso.status} />
+                        </td>
+
+                        <td className="px-4 py-5 text-[14px] font-medium text-[#52525b]">
+                          {curso.required_rank}
+                        </td>
+
+                        <td className="px-4 py-5 text-[14px] text-[#666b76]">
+                          <span className="inline-flex items-center gap-2">
+                            <Clock3 className="h-3.5 w-3.5 text-[#b89a65]" />
+                            {formatarData(curso.updated_at)}
+                          </span>
+                        </td>
+
+                        <td className="px-4 py-5">
+                          <div className="flex justify-end">
+                            <Link
+                              href={`/admin/cursos/${curso.id}/modulos`}
+                              className="inline-flex h-10 items-center justify-center gap-2 rounded-[10px] border border-[#e2d2b6] px-4 text-[13px] font-semibold text-[#7a5a27] transition hover:bg-[#DBC094] hover:text-black"
+                            >
+                              Abrir gestão
+                              <ChevronRight className="h-4 w-4" />
+                            </Link>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="divide-y divide-[#ededed] xl:hidden">
+                {cursosFiltrados.map((curso) => (
+                  <article key={curso.id} className="py-5">
+                    <div className="flex items-start gap-3">
+                      <div className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#f3eee5] text-[#8a6836]">
+                        <GraduationCap className="h-5 w-5" />
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="text-[16px] font-semibold tracking-[-0.02em] text-[#18181b]">
+                            {curso.title}
+                          </h3>
+
+                          {curso.is_featured ? (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-[#f3eee5] px-2.5 py-1 text-[11px] font-semibold text-[#8a6836]">
+                              <Star className="h-3 w-3" />
+                              Destaque
+                            </span>
+                          ) : null}
+                        </div>
+
+                        <p className="mt-2 text-[14px] leading-6 text-[#666b76]">
+                          {resumoCurso(curso)}
+                        </p>
+
+                        <div className="mt-3 flex flex-wrap items-center gap-3">
+                          <StatusBadge status={curso.status} />
+
+                          <span className="text-[13px] font-medium text-[#8a8f9d]">
+                            Nível {curso.required_rank}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <span className="inline-flex items-center gap-2 text-[13px] text-[#666b76]">
+                        <Clock3 className="h-3.5 w-3.5 text-[#b89a65]" />
+                        {formatarData(curso.updated_at)}
                       </span>
-                    </div>
 
-                    <div className="text-sm font-medium text-[#344054]">
-                      {curso.required_rank}
-                    </div>
-
-                    <div className="text-sm text-[#475467]">
-                      {formatarData(curso.updated_at)}
-                    </div>
-
-                    <div className="flex justify-start lg:justify-end">
                       <Link
                         href={`/admin/cursos/${curso.id}/modulos`}
-                        className="inline-flex items-center gap-2 rounded-[16px] border border-[#E4E7EC] bg-white px-3.5 py-2 text-sm font-semibold text-[#344054] transition hover:bg-[#F9FAFB]"
+                        className="inline-flex h-10 items-center justify-center gap-2 rounded-[10px] border border-[#e2d2b6] px-4 text-[13px] font-semibold text-[#7a5a27] transition hover:bg-[#DBC094] hover:text-black"
                       >
                         Abrir gestão
                         <ChevronRight className="h-4 w-4" />
                       </Link>
                     </div>
-                  </div>
-                </article>
-              ))
-            )}
-          </div>
-        </section>
-      </div>
+                  </article>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      </section>
     </div>
   );
 }
