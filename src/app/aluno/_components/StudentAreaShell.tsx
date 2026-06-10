@@ -66,95 +66,168 @@ export function StudentAreaShell({
   children,
 }: StudentAreaShellProps) {
   const pathname = usePathname();
+  const shouldShowPageHeader = title.trim().toLowerCase() !== "conta ativa";
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[#050609] text-white">
+    <main className="min-h-screen overflow-x-hidden bg-[#050609] pb-[92px] text-white">
       <StudentHeader />
 
-      <section className="px-5 pb-16 pt-[92px] sm:px-8 lg:px-10">
-        <div className="mx-auto grid max-w-[1720px] gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
-          <aside className="xl:sticky xl:top-[92px] xl:h-[calc(100vh-112px)]">
-            <div className="h-full overflow-hidden rounded-[26px] border border-white/10 bg-[#101116]">
-              <div className="border-b border-white/10 p-5">
-                <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[#DBC094]">
-                  Universidade de Líderes
-                </p>
+      <aside className="fixed bottom-[76px] left-0 top-[84px] z-20 hidden w-[286px] border-r border-white/10 bg-[#050609] xl:flex xl:flex-col">
+        <div className="border-b border-white/10 px-6 py-6">
+          <h2 className="text-[21px] font-semibold leading-tight tracking-[-0.02em] text-white">
+            Área do Aluno
+          </h2>
 
-                <h2 className="mt-2 text-[25px] font-black leading-tight tracking-[-0.05em] text-white">
-                  Área do Aluno
-                </h2>
+          <div className="mt-4 inline-flex items-center gap-2 text-[12px] font-medium text-white/52">
+            <span className="h-2 w-2 rounded-full bg-[#DBC094]" />
+            Conta ativa
+          </div>
+        </div>
 
-                <p className="mt-2 text-[13px] leading-5 text-white/46">
-                  Acompanhe seus dados, cursos, trilhas, progresso, conquistas e certificados.
-                </p>
+        <nav className="flex-1 overflow-y-auto">
+          {studentAreaMenu.map((item) => {
+            const Icon = item.icon;
+
+            const isActive = item.activePaths.some((activePath) =>
+              activePath === "/aluno/area"
+                ? pathname === activePath
+                : pathname?.startsWith(activePath),
+            );
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={
+                  isActive
+                    ? "group flex min-h-[62px] items-center gap-4 border-b border-white/10 px-6 text-[#DBC094]"
+                    : "group flex min-h-[62px] items-center gap-4 border-b border-white/10 px-6 text-white/64 transition hover:bg-[#DBC094] hover:text-black"
+                }
+              >
+                <Icon
+                  className={
+                    isActive
+                      ? "h-[25px] w-[25px] shrink-0 text-[#DBC094]"
+                      : "h-[25px] w-[25px] shrink-0 text-white/72 transition group-hover:text-black"
+                  }
+                  strokeWidth={1.8}
+                />
+
+                <span
+                  className={
+                    isActive
+                      ? "min-w-0 flex-1 truncate text-[15px] font-semibold"
+                      : "min-w-0 flex-1 truncate text-[15px] font-medium"
+                  }
+                >
+                  {item.label}
+                </span>
+
+                <ChevronRight
+                  className={
+                    isActive
+                      ? "h-4 w-4 shrink-0 text-[#DBC094]"
+                      : "h-4 w-4 shrink-0 text-white/28 transition group-hover:text-black/70"
+                  }
+                  strokeWidth={1.8}
+                />
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="border-t border-white/10 px-6 py-5">
+          <p className="text-[11px] font-medium leading-5 text-white/30">
+            Conteúdos, trilhas, conquistas e certificados em um só lugar.
+          </p>
+        </div>
+      </aside>
+
+      <section className="px-5 pb-10 pt-[104px] sm:px-8 lg:px-10 xl:pl-[326px]">
+        <div className="mx-auto max-w-[1394px]">
+          <aside className="mb-6 overflow-hidden border border-white/10 bg-[#050609] xl:hidden">
+            <div className="border-b border-white/10 px-5 py-5">
+              <h2 className="text-[21px] font-semibold leading-tight tracking-[-0.02em] text-white">
+                Área do Aluno
+              </h2>
+
+              <div className="mt-4 inline-flex items-center gap-2 text-[12px] font-medium text-white/52">
+                <span className="h-2 w-2 rounded-full bg-[#DBC094]" />
+                Conta ativa
               </div>
+            </div>
 
-              <nav className="grid gap-2 p-3">
-                {studentAreaMenu.map((item) => {
-                  const Icon = item.icon;
+            <nav>
+              {studentAreaMenu.map((item) => {
+                const Icon = item.icon;
 
-                  const isActive = item.activePaths.some((activePath) =>
-                    activePath === "/aluno/area"
-                      ? pathname === activePath
-                      : pathname?.startsWith(activePath)
-                  );
+                const isActive = item.activePaths.some((activePath) =>
+                  activePath === "/aluno/area"
+                    ? pathname === activePath
+                    : pathname?.startsWith(activePath),
+                );
 
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={
+                      isActive
+                        ? "group flex min-h-[58px] items-center gap-4 border-b border-white/10 px-5 text-[#DBC094]"
+                        : "group flex min-h-[58px] items-center gap-4 border-b border-white/10 px-5 text-white/64 transition hover:bg-[#DBC094] hover:text-black"
+                    }
+                  >
+                    <Icon
                       className={
                         isActive
-                          ? "group flex items-center justify-between gap-3 rounded-[16px] border border-[#DBC094]/42 bg-[#DBC094]/14 px-3 py-3 text-[#DBC094]"
-                          : "group flex items-center justify-between gap-3 rounded-[16px] border border-white/8 bg-white/[0.025] px-3 py-3 text-white/62 transition hover:border-[#DBC094]/35 hover:bg-white/[0.055] hover:text-[#DBC094]"
+                          ? "h-[24px] w-[24px] shrink-0 text-[#DBC094]"
+                          : "h-[24px] w-[24px] shrink-0 text-white/72 transition group-hover:text-black"
+                      }
+                      strokeWidth={1.8}
+                    />
+
+                    <span
+                      className={
+                        isActive
+                          ? "min-w-0 flex-1 truncate text-[14px] font-semibold"
+                          : "min-w-0 flex-1 truncate text-[14px] font-medium"
                       }
                     >
-                      <span className="flex min-w-0 items-center gap-3">
-                        <span
-                          className={
-                            isActive
-                              ? "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#DBC094] text-black"
-                              : "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 text-white/68 transition group-hover:bg-[#DBC094] group-hover:text-black"
-                          }
-                        >
-                          <Icon className="h-[18px] w-[18px]" />
-                        </span>
+                      {item.label}
+                    </span>
 
-                        <span className="truncate text-[14px] font-black">
-                          {item.label}
-                        </span>
-                      </span>
-
-                      <ChevronRight
-                        className={
-                          isActive
-                            ? "h-4 w-4 text-[#DBC094]"
-                            : "h-4 w-4 text-white/28 transition group-hover:text-[#DBC094]"
-                        }
-                      />
-                    </Link>
-                  );
-                })}
-              </nav>
-            </div>
+                    <ChevronRight
+                      className={
+                        isActive
+                          ? "h-4 w-4 shrink-0 text-[#DBC094]"
+                          : "h-4 w-4 shrink-0 text-white/28 transition group-hover:text-black/70"
+                      }
+                      strokeWidth={1.8}
+                    />
+                  </Link>
+                );
+              })}
+            </nav>
           </aside>
 
           <div className="min-w-0">
-            <header className="mb-6 rounded-[28px] border border-white/10 bg-[#101116] p-5 sm:p-7">
-              <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[#DBC094]">
-                {eyebrow}
-              </p>
-
-              <h1 className="mt-3 max-w-[900px] text-[34px] font-black leading-[1.02] tracking-[-0.06em] text-white sm:text-[46px]">
-                {title}
-              </h1>
-
-              {description ? (
-                <p className="mt-4 max-w-[820px] text-[15px] leading-7 text-white/58">
-                  {description}
+            {shouldShowPageHeader ? (
+              <header className="mb-6 px-1">
+                <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#DBC094]">
+                  {eyebrow}
                 </p>
-              ) : null}
-            </header>
+
+                <h1 className="mt-2 max-w-[900px] text-[30px] font-semibold leading-[1.08] tracking-[-0.035em] text-white sm:text-[41px]">
+                  {title}
+                </h1>
+
+                {description ? (
+                  <p className="mt-3 max-w-[820px] text-[14px] leading-6 text-white/52">
+                    {description}
+                  </p>
+                ) : null}
+              </header>
+            ) : null}
 
             {children}
           </div>

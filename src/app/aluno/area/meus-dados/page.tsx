@@ -2,7 +2,6 @@
 
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import {
-  BadgeCheck,
   CalendarDays,
   Camera,
   KeyRound,
@@ -219,26 +218,23 @@ export default function StudentDataPage() {
 
   return (
     <StudentAreaShell
-      eyebrow="Status"
+      eyebrow="Perfil"
       title="Conta ativa"
-      description="Mantenha seus dados atualizados. O e-mail e o tipo de acesso são informações de autenticação e não podem ser alterados nesta tela."
+      description="Mantenha seus dados atualizados."
     >
       {loading ? (
-        <section className="flex min-h-[360px] items-center justify-center rounded-[26px] border border-white/10 bg-[#101116]">
-          <div className="flex items-center gap-3 text-[14px] font-bold text-white/62">
+        <section className="flex min-h-[320px] items-center justify-center rounded-[24px] border border-white/8 bg-[#101116]/72">
+          <div className="flex items-center gap-3 text-[14px] font-medium text-white/58">
             <Loader2 className="h-5 w-5 animate-spin text-[#DBC094]" />
             Carregando seus dados...
           </div>
         </section>
       ) : (
-        <form
-          onSubmit={handleSubmit}
-          className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]"
-        >
-          <section className="rounded-[26px] border border-white/10 bg-[#101116] px-5 py-5 sm:px-6 sm:py-6">
-            <div className="flex flex-wrap items-center gap-5">
+        <form onSubmit={handleSubmit} className="rounded-[24px] border border-white/8 bg-[#101116]/72 p-5 sm:p-6">
+          <div className="flex flex-wrap items-center justify-between gap-5 border-b border-white/8 pb-6">
+            <div className="flex min-w-0 items-center gap-4">
               <div className="relative">
-                <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-[#DBC094] text-[24px] font-black text-black">
+                <div className="flex h-18 w-18 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-[#DBC094] text-[22px] font-semibold text-black sm:h-20 sm:w-20">
                   {avatarPreview ? (
                     <img
                       src={avatarPreview}
@@ -262,24 +258,39 @@ export default function StudentDataPage() {
               </div>
 
               <div className="min-w-0">
-                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#DBC094]">
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#DBC094]">
                   Perfil do aluno
                 </p>
 
-                <h2 className="mt-2 text-[28px] font-black leading-tight tracking-[-0.045em] text-white sm:text-[34px]">
+                <h2 className="mt-1 text-[26px] font-semibold leading-tight tracking-[-0.025em] text-white sm:text-[31px]">
                   {studentName}
                 </h2>
 
-                <p className="mt-2 text-[14px] leading-6 text-white/50">
-                  Atualize seus dados principais, foto de perfil e senha de acesso.
+                <p className="mt-1 text-[13px] leading-5 text-white/44">
+                  Edite seus dados principais, foto de perfil e senha.
                 </p>
               </div>
             </div>
 
-            <div className="mt-7 border-t border-white/10">
+            <button
+              type="submit"
+              disabled={saving || !user?.id}
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-[12px] bg-[#DBC094] px-5 text-[13px] font-semibold text-black transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-55"
+            >
+              {saving ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
+              {saving ? "Salvando..." : "Salvar alterações"}
+            </button>
+          </div>
+
+          <div className="mt-6 grid gap-5 xl:grid-cols-[minmax(0,1fr)_260px]">
+            <section className="min-w-0">
               <div className="grid gap-0">
-                <div className="grid gap-3 border-b border-white/10 py-5 sm:grid-cols-[220px_minmax(0,1fr)] sm:items-center">
-                  <div className="flex items-center gap-2 text-[13px] font-black text-white/52">
+                <div className="grid gap-3 border-b border-white/8 py-4 sm:grid-cols-[190px_minmax(0,1fr)] sm:items-center">
+                  <div className="flex items-center gap-2 text-[13px] font-medium text-white/48">
                     <UserRound className="h-4 w-4 text-[#DBC094]" />
                     Nome completo
                   </div>
@@ -288,12 +299,12 @@ export default function StudentDataPage() {
                     value={fullName}
                     onChange={(event) => setFullName(event.target.value)}
                     placeholder="Informe seu nome completo"
-                    className="h-11 rounded-[13px] border border-white/10 bg-black/22 px-4 text-[14px] font-bold text-white outline-none transition placeholder:text-white/28 focus:border-[#DBC094]/60"
+                    className="h-11 rounded-[13px] border border-white/10 bg-black/18 px-4 text-[14px] font-medium text-white outline-none transition placeholder:text-white/28 focus:border-[#DBC094]/60"
                   />
                 </div>
 
-                <div className="grid gap-3 border-b border-white/10 py-5 sm:grid-cols-[220px_minmax(0,1fr)] sm:items-center">
-                  <div className="flex items-center gap-2 text-[13px] font-black text-white/52">
+                <div className="grid gap-3 border-b border-white/8 py-4 sm:grid-cols-[190px_minmax(0,1fr)] sm:items-center">
+                  <div className="flex items-center gap-2 text-[13px] font-medium text-white/48">
                     <Mail className="h-4 w-4 text-[#DBC094]" />
                     E-mail
                   </div>
@@ -301,12 +312,12 @@ export default function StudentDataPage() {
                   <input
                     value={email}
                     disabled
-                    className="h-11 cursor-not-allowed rounded-[13px] border border-white/10 bg-white/[0.035] px-4 text-[14px] font-bold text-white/50 outline-none"
+                    className="h-11 cursor-not-allowed rounded-[13px] border border-white/8 bg-white/[0.025] px-4 text-[14px] font-medium text-white/46 outline-none"
                   />
                 </div>
 
-                <div className="grid gap-3 border-b border-white/10 py-5 sm:grid-cols-[220px_minmax(0,1fr)] sm:items-center">
-                  <div className="flex items-center gap-2 text-[13px] font-black text-white/52">
+                <div className="grid gap-3 border-b border-white/8 py-4 sm:grid-cols-[190px_minmax(0,1fr)] sm:items-center">
+                  <div className="flex items-center gap-2 text-[13px] font-medium text-white/48">
                     <Phone className="h-4 w-4 text-[#DBC094]" />
                     Telefone
                   </div>
@@ -315,25 +326,12 @@ export default function StudentDataPage() {
                     value={phone}
                     onChange={(event) => setPhone(event.target.value)}
                     placeholder="Informe seu telefone"
-                    className="h-11 rounded-[13px] border border-white/10 bg-black/22 px-4 text-[14px] font-bold text-white outline-none transition placeholder:text-white/28 focus:border-[#DBC094]/60"
+                    className="h-11 rounded-[13px] border border-white/10 bg-black/18 px-4 text-[14px] font-medium text-white outline-none transition placeholder:text-white/28 focus:border-[#DBC094]/60"
                   />
                 </div>
 
-                <div className="grid gap-3 border-b border-white/10 py-5 sm:grid-cols-[220px_minmax(0,1fr)] sm:items-center">
-                  <div className="flex items-center gap-2 text-[13px] font-black text-white/52">
-                    <ShieldCheck className="h-4 w-4 text-[#DBC094]" />
-                    Tipo de acesso
-                  </div>
-
-                  <input
-                    value={accessLevelLabel}
-                    disabled
-                    className="h-11 cursor-not-allowed rounded-[13px] border border-white/10 bg-white/[0.035] px-4 text-[14px] font-bold text-[#DBC094] outline-none"
-                  />
-                </div>
-
-                <div className="grid gap-3 border-b border-white/10 py-5 sm:grid-cols-[220px_minmax(0,1fr)] sm:items-start">
-                  <div className="flex items-center gap-2 pt-2 text-[13px] font-black text-white/52">
+                <div className="grid gap-3 border-b border-white/8 py-4 sm:grid-cols-[190px_minmax(0,1fr)] sm:items-start">
+                  <div className="flex items-center gap-2 pt-2 text-[13px] font-medium text-white/48">
                     <KeyRound className="h-4 w-4 text-[#DBC094]" />
                     Alterar senha
                   </div>
@@ -345,7 +343,7 @@ export default function StudentDataPage() {
                       onChange={(event) => setNewPassword(event.target.value)}
                       placeholder="Nova senha"
                       autoComplete="new-password"
-                      className="h-11 rounded-[13px] border border-white/10 bg-black/22 px-4 text-[14px] font-bold text-white outline-none transition placeholder:text-white/28 focus:border-[#DBC094]/60"
+                      className="h-11 rounded-[13px] border border-white/10 bg-black/18 px-4 text-[14px] font-medium text-white outline-none transition placeholder:text-white/28 focus:border-[#DBC094]/60"
                     />
 
                     <input
@@ -354,94 +352,49 @@ export default function StudentDataPage() {
                       onChange={(event) => setConfirmPassword(event.target.value)}
                       placeholder="Confirmar nova senha"
                       autoComplete="new-password"
-                      className="h-11 rounded-[13px] border border-white/10 bg-black/22 px-4 text-[14px] font-bold text-white outline-none transition placeholder:text-white/28 focus:border-[#DBC094]/60"
+                      className="h-11 rounded-[13px] border border-white/10 bg-black/18 px-4 text-[14px] font-medium text-white outline-none transition placeholder:text-white/28 focus:border-[#DBC094]/60"
                     />
 
-                    <p className="text-[12px] leading-5 text-white/36">
-                      Preencha estes campos somente se quiser alterar sua senha.
+                    <p className="text-[12px] leading-5 text-white/34">
+                      Preencha somente se quiser alterar sua senha.
                     </p>
                   </div>
                 </div>
+              </div>
 
-                <div className="grid gap-3 py-5 sm:grid-cols-[220px_minmax(0,1fr)] sm:items-center">
-                  <div className="flex items-center gap-2 text-[13px] font-black text-white/52">
+              {feedback ? (
+                <p className="mt-5 rounded-[14px] border border-[#DBC094]/18 bg-[#DBC094]/9 px-4 py-3 text-[13px] font-medium text-[#DBC094]">
+                  {feedback}
+                </p>
+              ) : null}
+            </section>
+
+            <aside className="rounded-[20px] bg-white/[0.025] p-4">
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#DBC094]">
+                Dados da conta
+              </p>
+
+              <div className="mt-4 space-y-4 text-[13px]">
+                <div>
+                  <div className="flex items-center gap-2 text-white/38">
+                    <ShieldCheck className="h-4 w-4 text-[#DBC094]" />
+                    Tipo de acesso
+                  </div>
+                  <p className="mt-1 font-semibold text-[#DBC094]">
+                    {accessLevelLabel}
+                  </p>
+                </div>
+
+                <div>
+                  <div className="flex items-center gap-2 text-white/38">
                     <CalendarDays className="h-4 w-4 text-[#DBC094]" />
                     Cadastro
                   </div>
-
-                  <input
-                    value={createdAt}
-                    disabled
-                    className="h-11 cursor-not-allowed rounded-[13px] border border-white/10 bg-white/[0.035] px-4 text-[14px] font-bold text-white/50 outline-none"
-                  />
+                  <p className="mt-1 font-medium text-white/62">{createdAt}</p>
                 </div>
               </div>
-            </div>
-
-            {feedback ? (
-              <p className="mt-5 rounded-[16px] border border-[#DBC094]/20 bg-[#DBC094]/10 px-4 py-3 text-[13px] font-bold text-[#DBC094]">
-                {feedback}
-              </p>
-            ) : null}
-          </section>
-
-          <aside className="rounded-[26px] border border-white/10 bg-[#101116] px-5 py-5 sm:px-6 sm:py-6">
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#DBC094] text-black">
-                <BadgeCheck className="h-5 w-5" />
-              </div>
-
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#DBC094]">
-                  Edição do perfil
-                </p>
-
-                <h2 className="text-[21px] font-black tracking-[-0.04em] text-white">
-                  Salvar alterações
-                </h2>
-              </div>
-            </div>
-
-            <p className="mt-4 text-[13px] leading-6 text-white/48">
-              Após alterar nome, telefone, foto ou senha, clique no botão abaixo para gravar suas informações.
-            </p>
-
-            <div className="mt-5 space-y-3 border-t border-white/10 pt-5">
-              <div className="flex items-center justify-between gap-4 text-[13px]">
-                <span className="text-white/48">Sessão</span>
-                <span className="font-black text-[#DBC094]">
-                  {user?.id ? "ativa" : "não identificada"}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between gap-4 text-[13px]">
-                <span className="text-white/48">Perfil</span>
-                <span className="font-black text-white">
-                  {profile ? "encontrado" : "novo perfil"}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between gap-4 text-[13px]">
-                <span className="text-white/48">Acesso</span>
-                <span className="font-black text-[#DBC094]">
-                  {accessLevelLabel}
-                </span>
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={saving || !user?.id}
-              className="mt-6 inline-flex h-11 w-full items-center justify-center gap-2 rounded-[12px] bg-[#DBC094] px-5 text-[13px] font-black text-black transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-55"
-            >
-              {saving ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Save className="h-4 w-4" />
-              )}
-              {saving ? "Salvando..." : "Salvar alterações"}
-            </button>
-          </aside>
+            </aside>
+          </div>
         </form>
       )}
     </StudentAreaShell>

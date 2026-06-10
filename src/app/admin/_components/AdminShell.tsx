@@ -4,67 +4,137 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
+import {
+  Award,
+  Bell,
+  BookOpen,
+  ChevronRight,
+  CreditCard,
+  FileText,
+  Home,
+  LayoutDashboard,
+  Menu,
+  MessageCircle,
+  MonitorPlay,
+  ShieldCheck,
+  Trophy,
+  User,
+  UserCheck,
+  Users,
+  X,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 
 type NavChild = {
   label: string;
   href: string;
-  icon: string;
+  icon: React.ElementType;
 };
 
 type NavGroup = {
   label: string;
-  icon: string;
-  children?: NavChild[];
+  children: NavChild[];
 };
 
 const navGroups: NavGroup[] = [
   {
     label: "Painel",
-    icon: "▦",
-    children: [{ label: "Visão geral", href: "/admin", icon: "⌂" }],
+    children: [
+      {
+        label: "Visão geral",
+        href: "/admin",
+        icon: LayoutDashboard,
+      },
+    ],
   },
   {
     label: "Alunos",
-    icon: "◔",
     children: [
-      { label: "Cadastros pendentes", href: "/admin/cadastros", icon: "📝" },
-      { label: "Alunos ativos", href: "/admin/alunos", icon: "👥" },
-      { label: "Níveis e permissões", href: "/admin/niveis", icon: "🔐" },
+      {
+        label: "Cadastros pendentes",
+        href: "/admin/cadastros",
+        icon: UserCheck,
+      },
+      {
+        label: "Alunos ativos",
+        href: "/admin/alunos",
+        icon: Users,
+      },
+      {
+        label: "Níveis e permissões",
+        href: "/admin/niveis",
+        icon: ShieldCheck,
+      },
     ],
   },
   {
     label: "Cursos",
-    icon: "▣",
     children: [
-      { label: "Trilhas e cursos", href: "/admin/cursos", icon: "📚" },
-      { label: "Módulos e aulas", href: "/admin/aulas", icon: "🎓" },
+      {
+        label: "Trilhas e cursos",
+        href: "/admin/cursos",
+        icon: BookOpen,
+      },
+      {
+        label: "Módulos e aulas",
+        href: "/admin/aulas",
+        icon: Award,
+      },
     ],
   },
   {
     label: "Área do aluno",
-    icon: "▶",
     children: [
-      { label: "Banner Principal", href: "/admin/banners-aluno", icon: "🖼️" },
-      { label: "Categorias/Cards", href: "/admin/home-aluno", icon: "🏠" },
+      {
+        label: "Banner principal",
+        href: "/admin/banners-aluno",
+        icon: MonitorPlay,
+      },
+      {
+        label: "Categorias/Cards",
+        href: "/admin/home-aluno",
+        icon: Home,
+      },
     ],
   },
   {
     label: "Experiência",
-    icon: "✦",
     children: [
-      { label: "Lives", href: "/admin/lives", icon: "🎥" },
-      { label: "Comunidade", href: "/admin/comunidade", icon: "💬" },
-      { label: "Gamificação", href: "/admin/gamificacao", icon: "🏆" },
+      {
+        label: "Lives",
+        href: "/admin/lives",
+        icon: MonitorPlay,
+      },
+      {
+        label: "Comunidade",
+        href: "/admin/comunidade",
+        icon: MessageCircle,
+      },
+      {
+        label: "Gamificação",
+        href: "/admin/gamificacao",
+        icon: Trophy,
+      },
     ],
   },
   {
     label: "Acadêmico",
-    icon: "✓",
     children: [
-      { label: "Avaliações", href: "/admin/avaliacoes", icon: "📋" },
-      { label: "Certificados", href: "/admin/certificados", icon: "📜" },
-      { label: "Assinaturas", href: "/admin/assinaturas", icon: "💳" },
+      {
+        label: "Avaliações",
+        href: "/admin/avaliacoes",
+        icon: FileText,
+      },
+      {
+        label: "Certificados",
+        href: "/admin/certificados",
+        icon: Award,
+      },
+      {
+        label: "Assinaturas",
+        href: "/admin/assinaturas",
+        icon: CreditCard,
+      },
     ],
   },
 ];
@@ -73,144 +143,135 @@ function cn(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ");
 }
 
-function isGroupActive(pathname: string, group: NavGroup) {
-  return group.children?.some((child) => pathname === child.href) ?? false;
+function isChildActive(pathname: string, href: string) {
+  if (href === "/admin") return pathname === "/admin";
+
+  return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-function SidebarGroup({
-  group,
+function SidebarNavigation({
   pathname,
   collapsed,
   onNavigate,
 }: {
-  group: NavGroup;
   pathname: string;
   collapsed: boolean;
   onNavigate?: () => void;
 }) {
-  const active = isGroupActive(pathname, group);
-  const [open, setOpen] = useState(active);
-
-  useEffect(() => {
-    if (active) setOpen(true);
-  }, [active]);
-
-  if (collapsed) {
-    return (
-      <div className="mb-3 flex justify-center">
-        <button
-          type="button"
-          onClick={() => setOpen((current) => !current)}
-          className={cn(
-            "inline-flex h-12 w-12 items-center justify-center rounded-[14px] border transition",
-            active
-              ? "border-[#DBC094]/40 bg-[#DBC094] text-black"
-              : "border-[#e6e6e6] bg-white text-[#676b78] hover:border-[#DBC094]/24 hover:text-[#1d2230]"
-          )}
-          title={group.label}
-        >
-          <span className="text-base">{group.icon}</span>
-        </button>
-      </div>
-    );
-  }
-
   return (
-    <div className="mb-3">
-      <button
-        type="button"
-        onClick={() => setOpen((current) => !current)}
-        className={cn(
-          "flex w-full items-center justify-between rounded-[14px] border px-4 py-3 text-left transition",
-          active
-            ? "border-[#DBC094]/32 bg-[#DBC094]/14 text-[#1d2230]"
-            : "border-[#ececf2] bg-white text-[#3e4353] hover:border-[#DBC094]/24 hover:bg-[#faf8f4]"
-        )}
-      >
-        <div className="flex items-center gap-3">
-          <span
-            className={cn(
-              "inline-flex h-9 w-9 items-center justify-center rounded-[10px] text-base",
-              active
-                ? "bg-[#DBC094] text-black"
-                : "bg-[#f5f6fb] text-[#7e8496]"
-            )}
-          >
-            {group.icon}
-          </span>
-          <span className="text-[15px] font-medium">{group.label}</span>
-        </div>
+    <nav>
+      {navGroups.map((group) => (
+        <div key={group.label} className="border-b border-[#e9ebf2] py-4">
+          {!collapsed ? (
+            <p className="px-5 pb-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-[#8b90a2]">
+              {group.label}
+            </p>
+          ) : null}
 
-        <span
-          className={cn(
-            "text-sm text-[#7d8190] transition-transform",
-            open ? "rotate-180" : ""
-          )}
-        >
-          ˅
-        </span>
-      </button>
+          <div>
+            {group.children.map((child) => {
+              const Icon = child.icon;
+              const active = isChildActive(pathname, child.href);
 
-      <AnimatePresence initial={false}>
-        {open && group.children ? (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.22 }}
-            className="overflow-hidden"
-          >
-            <div className="ml-6 mt-2 border-l border-[#ececf2] pl-4">
-              {group.children.map((child) => {
-                const childActive = pathname === child.href;
-
+              if (collapsed) {
                 return (
                   <Link
                     key={child.href}
                     href={child.href}
                     onClick={onNavigate}
+                    title={child.label}
                     className={cn(
-                      "mb-1.5 flex items-center gap-3 rounded-[12px] px-3 py-2.5 text-[14px] transition",
-                      childActive
-                        ? "bg-[#f7f0e2] text-[#7b5a28]"
-                        : "text-[#666c7c] hover:bg-[#f6f7fb] hover:text-[#1e2230]"
+                      "group mx-auto flex h-[54px] w-[54px] items-center justify-center border-b border-transparent text-[#707789] transition last:border-b-0 hover:bg-[#DBC094] hover:text-black",
+                      active ? "text-[#9b7539]" : "",
                     )}
                   >
-                    <span
+                    <Icon
                       className={cn(
-                        "inline-flex h-7 w-7 items-center justify-center rounded-[8px] text-[14px]",
-                        childActive
-                          ? "bg-[#DBC094]/22 text-[#7b5a28]"
-                          : "bg-[#f3f4f8] text-[#8a90a2]"
+                        "h-[23px] w-[23px] transition",
+                        active
+                          ? "text-[#9b7539]"
+                          : "text-[#707789] group-hover:text-black",
                       )}
-                    >
-                      {child.icon}
-                    </span>
-                    <span>{child.label}</span>
+                      strokeWidth={1.8}
+                    />
                   </Link>
                 );
-              })}
-            </div>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
-    </div>
+              }
+
+              return (
+                <Link
+                  key={child.href}
+                  href={child.href}
+                  onClick={onNavigate}
+                  className={cn(
+                    "group flex min-h-[58px] items-center gap-4 border-t border-[#eef0f5] px-5 text-[15px] transition first:border-t-0",
+                    active
+                      ? "text-[#9b7539]"
+                      : "text-[#51586b] hover:bg-[#DBC094] hover:text-black",
+                  )}
+                >
+                  <Icon
+                    className={cn(
+                      "h-[23px] w-[23px] shrink-0 transition",
+                      active
+                        ? "text-[#9b7539]"
+                        : "text-[#7d8494] group-hover:text-black",
+                    )}
+                    strokeWidth={1.8}
+                  />
+
+                  <span
+                    className={cn(
+                      "min-w-0 flex-1 truncate",
+                      active ? "font-semibold" : "font-medium",
+                    )}
+                  >
+                    {child.label}
+                  </span>
+
+                  <ChevronRight
+                    className={cn(
+                      "h-4 w-4 shrink-0 transition",
+                      active
+                        ? "text-[#9b7539]"
+                        : "text-[#a3a8b5] group-hover:text-black/65",
+                    )}
+                    strokeWidth={1.8}
+                  />
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </nav>
   );
 }
 
 function HeaderIconButton({
   children,
   title,
+  href,
+  onClick,
 }: {
   children: React.ReactNode;
   title: string;
+  href?: string;
+  onClick?: () => void;
 }) {
+  const className =
+    "inline-flex h-11 w-11 items-center justify-center rounded-full bg-[#f3f4f8] text-[#4a4f60] transition hover:bg-[#ebeef6] hover:text-[#1e2230]";
+
+  if (href) {
+    return (
+      <Link href={href} title={title} className={className}>
+        {children}
+      </Link>
+    );
+  }
+
   return (
-    <button
-      type="button"
-      title={title}
-      className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-[#f3f4f8] text-[#4a4f60] transition hover:bg-[#ebeef6] hover:text-[#1e2230]"
-    >
+    <button type="button" title={title} onClick={onClick} className={className}>
       {children}
     </button>
   );
@@ -222,20 +283,24 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const [profileOpen, setProfileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
 
+  useEffect(() => {
+    setProfileOpen(false);
+  }, [pathname]);
+
   return (
     <div className="min-h-screen bg-[#f5f6fb] text-[#1f2230]">
       <div className="flex min-h-screen">
         <aside
           className={cn(
             "hidden border-r border-[#e9ebf2] bg-white transition-all duration-300 lg:flex lg:flex-col",
-            collapsed ? "w-[92px]" : "w-[312px]"
+            collapsed ? "w-[92px]" : "w-[312px]",
           )}
         >
           <div className="flex h-[82px] items-center border-b border-[#eef0f5] px-5">
             <div
               className={cn(
                 "flex w-full items-center",
-                collapsed ? "justify-center" : "justify-between gap-4"
+                collapsed ? "justify-center" : "justify-between gap-4",
               )}
             >
               <Link href="/" className="inline-flex items-center">
@@ -247,7 +312,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                   priority
                   className={cn(
                     "h-auto object-contain",
-                    collapsed ? "w-[48px]" : "w-[148px]"
+                    collapsed ? "w-[48px]" : "w-[148px]",
                   )}
                 />
               </Link>
@@ -257,6 +322,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                   type="button"
                   onClick={() => setCollapsed(true)}
                   className="inline-flex h-10 w-10 items-center justify-center rounded-[12px] bg-[#f5f6fb] text-[#5f6475] transition hover:bg-[#eceff6] hover:text-[#1f2230]"
+                  aria-label="Recolher menu"
+                  title="Recolher menu"
                 >
                   ←
                 </button>
@@ -264,35 +331,22 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto px-4 py-5">
+          <div className="flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {collapsed ? (
-              <div className="mb-4 flex justify-center">
+              <div className="border-b border-[#e9ebf2] py-4">
                 <button
                   type="button"
                   onClick={() => setCollapsed(false)}
-                  className="inline-flex h-12 w-12 items-center justify-center rounded-[14px] bg-[#f5f6fb] text-[#5f6475] transition hover:bg-[#eceff6] hover:text-[#1f2230]"
+                  className="mx-auto flex h-[54px] w-[54px] items-center justify-center bg-[#f5f6fb] text-[#5f6475] transition hover:bg-[#DBC094] hover:text-black"
+                  aria-label="Expandir menu"
+                  title="Expandir menu"
                 >
                   →
                 </button>
               </div>
             ) : null}
 
-            {!collapsed ? (
-              <div className="mb-4 text-[11px] font-medium uppercase tracking-[0.2em] text-[#8b90a2]">
-                Módulos
-              </div>
-            ) : null}
-
-            <nav>
-              {navGroups.map((group) => (
-                <SidebarGroup
-                  key={group.label}
-                  group={group}
-                  pathname={pathname}
-                  collapsed={collapsed}
-                />
-              ))}
-            </nav>
+            <SidebarNavigation pathname={pathname} collapsed={collapsed} />
           </div>
         </aside>
 
@@ -304,8 +358,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                   type="button"
                   onClick={() => setMobileSidebarOpen(true)}
                   className="inline-flex h-11 w-11 items-center justify-center rounded-[12px] bg-[#f3f4f8] text-[#505567] lg:hidden"
+                  aria-label="Abrir menu"
                 >
-                  ☰
+                  <Menu className="h-5 w-5" />
                 </button>
 
                 <div className="relative hidden w-full max-w-[430px] sm:block">
@@ -321,23 +376,19 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               </div>
 
               <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-                <HeaderIconButton title="Tema">☼</HeaderIconButton>
-                <HeaderIconButton title="Mensagens">✉</HeaderIconButton>
-                <HeaderIconButton title="Notificações">🔔</HeaderIconButton>
+
+                <HeaderIconButton title="Notificações" href="/admin/cadastros">
+                  <Bell className="h-5 w-5" />
+                </HeaderIconButton>
 
                 <div className="relative">
                   <button
                     type="button"
                     onClick={() => setProfileOpen((current) => !current)}
-                    className="inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-[#f3f4f8]"
+                    className="inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-[#f3f4f8] text-[13px] font-semibold text-[#1f2230]"
+                    aria-label="Abrir perfil"
                   >
-                    <Image
-                      src="/lideres.jpg"
-                      alt="Administrador"
-                      width={44}
-                      height={44}
-                      className="h-full w-full object-cover"
-                    />
+                    AD
                   </button>
 
                   <AnimatePresence>
@@ -350,13 +401,10 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                         className="absolute right-0 top-[calc(100%+12px)] w-[310px] overflow-hidden rounded-[20px] border border-[#e6eaf1] bg-white shadow-[0_18px_42px_rgba(31,34,48,0.12)]"
                       >
                         <div className="m-4 flex items-center gap-4 rounded-[16px] bg-[#f7f0e2] p-4">
-                          <Image
-                            src="/lideres.jpg"
-                            alt="Administrador"
-                            width={56}
-                            height={56}
-                            className="h-14 w-14 rounded-full object-cover"
-                          />
+                          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#DBC094] text-[15px] font-semibold text-black">
+                            AD
+                          </div>
+
                           <div>
                             <div className="text-[18px] font-semibold text-[#1f2230]">
                               Administrador
@@ -369,22 +417,47 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
                         <div className="px-3 pb-3">
                           {[
-                            { label: "Meu perfil", icon: "👤" },
-                            { label: "Mensagens", icon: "✉" },
-                            { label: "Configurações", icon: "⚙" },
-                            { label: "Sair", icon: "⏻" },
-                          ].map((item) => (
-                            <button
-                              key={item.label}
-                              type="button"
-                              className="flex w-full items-center gap-3 rounded-[14px] px-4 py-3 text-left text-[15px] text-[#4f5568] transition hover:bg-[#f6f7fb] hover:text-[#1f2230]"
-                            >
-                              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#f3f4f8] text-[#6d7386]">
-                                {item.icon}
-                              </span>
-                              {item.label}
-                            </button>
-                          ))}
+                            {
+                              label: "Meu perfil",
+                              href: "/admin/perfil",
+                              icon: User,
+                            },
+                            {
+                              label: "Mensagens",
+                              href: "/admin/comunidade",
+                              icon: MessageCircle,
+                            },
+                            {
+                              label: "Configurações",
+                              href: "/admin/configuracoes",
+                              icon: ShieldCheck,
+                            },
+                          ].map((item) => {
+                            const Icon = item.icon;
+
+                            return (
+                              <Link
+                                key={item.label}
+                                href={item.href}
+                                className="flex w-full items-center gap-3 rounded-[14px] px-4 py-3 text-left text-[15px] text-[#4f5568] transition hover:bg-[#f6f7fb] hover:text-[#1f2230]"
+                              >
+                                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#f3f4f8] text-[#6d7386]">
+                                  <Icon className="h-4 w-4" />
+                                </span>
+                                {item.label}
+                              </Link>
+                            );
+                          })}
+
+                          <Link
+                            href="/login"
+                            className="flex w-full items-center gap-3 rounded-[14px] px-4 py-3 text-left text-[15px] text-[#4f5568] transition hover:bg-[#f6f7fb] hover:text-[#1f2230]"
+                          >
+                            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#f3f4f8] text-[#6d7386]">
+                              ×
+                            </span>
+                            Sair
+                          </Link>
                         </div>
                       </motion.div>
                     ) : null}
@@ -430,27 +503,18 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                   type="button"
                   onClick={() => setMobileSidebarOpen(false)}
                   className="inline-flex h-10 w-10 items-center justify-center rounded-[12px] bg-[#f5f6fb] text-[#5f6475]"
+                  aria-label="Fechar menu"
                 >
-                  ✕
+                  <X className="h-5 w-5" />
                 </button>
               </div>
 
-              <div className="overflow-y-auto px-4 py-5">
-                <div className="mb-4 text-[11px] font-medium uppercase tracking-[0.2em] text-[#8b90a2]">
-                  Módulos
-                </div>
-
-                <nav>
-                  {navGroups.map((group) => (
-                    <SidebarGroup
-                      key={group.label}
-                      group={group}
-                      pathname={pathname}
-                      collapsed={false}
-                      onNavigate={() => setMobileSidebarOpen(false)}
-                    />
-                  ))}
-                </nav>
+              <div className="h-[calc(100vh-82px)] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <SidebarNavigation
+                  pathname={pathname}
+                  collapsed={false}
+                  onNavigate={() => setMobileSidebarOpen(false)}
+                />
               </div>
             </motion.aside>
           </>
