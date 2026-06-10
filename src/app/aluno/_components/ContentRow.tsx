@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ChevronLeft, ChevronRight, Info, Play, Plus, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Play, Plus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { StudentContentItem } from "../_data/student-content";
 
@@ -78,48 +78,6 @@ function buildFavoritePayload(item: StudentContentItem) {
     target_url: item.targetUrl || null,
   };
 }
-
-
-function ContentInfoBubble({ item }: { item: StudentContentItem }) {
-  return (
-    <span className="pointer-events-none absolute bottom-[calc(100%+14px)] left-1/2 z-[60] hidden w-[330px] -translate-x-1/2 rounded-[18px] border border-white/18 bg-[#090a0f]/52 p-4 text-left shadow-[0_24px_90px_rgba(0,0,0,0.58)] ring-1 ring-white/[0.10] backdrop-blur-[42px] backdrop-saturate-200 group-hover/info:block">
-      <span className="mb-2 inline-flex rounded-full border border-[#DBC094]/24 bg-[#DBC094]/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-[#DBC094]">
-        {item.category || "Conteúdo"}
-      </span>
-
-      <span className="block text-[15px] font-black leading-tight text-white">
-        {item.infoTitle || item.title}
-      </span>
-
-      <span className="mt-2 line-clamp-4 block text-[12px] font-medium leading-5 text-white/68">
-        {item.infoDescription || item.subtitle || "Informações do conteúdo."}
-      </span>
-
-      <span className="mt-3 flex flex-wrap gap-2">
-        {item.duration ? (
-          <span className="rounded-full bg-white/[0.08] px-2.5 py-1 text-[11px] font-bold text-white/72">
-            {item.duration}
-          </span>
-        ) : null}
-
-        {item.level ? (
-          <span className="rounded-full bg-[#DBC094]/16 px-2.5 py-1 text-[11px] font-bold text-[#DBC094]">
-            {item.level}
-          </span>
-        ) : null}
-
-        {item.badge ? (
-          <span className="rounded-full bg-white/[0.08] px-2.5 py-1 text-[11px] font-bold text-white/72">
-            {item.badge}
-          </span>
-        ) : null}
-      </span>
-
-      <span className="absolute left-1/2 top-full h-3 w-3 -translate-x-1/2 -translate-y-1.5 rotate-45 border-b border-r border-white/18 bg-[#090a0f]/52 backdrop-blur-[42px]" />
-    </span>
-  );
-}
-
 
 export function ContentRow({ title, items, variant }: ContentRowProps) {
   const carouselRef = useRef<HTMLDivElement | null>(null);
@@ -411,23 +369,6 @@ export function ContentRow({ title, items, variant }: ContentRowProps) {
                     >
                       {isFavorite ? <Check size={20} /> : <Plus size={22} />}
                     </button>
-
-                    <span className="group/info relative inline-flex">
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                        }}
-                        className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/16 text-white transition hover:bg-white/24"
-                        aria-label="Informações"
-                        title="Informações"
-                      >
-                        <Info size={21} />
-                      </button>
-
-                      <ContentInfoBubble item={item} />
-                    </span>
                   </div>
 
                   {typeof item.progress === "number" ? (
