@@ -409,7 +409,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                             <div className="text-[18px] font-semibold text-[#1f2230]">
                               Administrador
                             </div>
-                            <div className="mt-1 text-sm text-[#667085]">
+                            <div className="mt-1 text-sm text-[#666b76]">
                               Universidade de Líderes
                             </div>
                           </div>

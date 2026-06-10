@@ -707,21 +707,21 @@ export default function NewStudentHomeConfigPage() {
       <div className="mb-8">
         <Link
           href="/admin/home-aluno"
-          className="mb-5 inline-flex items-center gap-2 text-sm font-semibold text-[#667085] transition hover:text-[#202431]"
+          className="mb-5 inline-flex items-center gap-2 text-[14px] font-semibold text-[#666b76] transition hover:text-[#141414]"
         >
           <ArrowLeft size={18} />
           Voltar para Categorias/Cards
         </Link>
 
-        <span className="mb-3 inline-flex items-center rounded-full border border-[#DBC094]/35 bg-[#DBC094]/12 px-4 py-2 text-sm font-semibold text-[#8b6b35]">
+        <span className="mb-3 inline-flex items-center rounded-full border border-[#DBC094]/35 bg-[#DBC094]/12 px-4 py-2 text-[14px] font-semibold text-[#8a6836]">
           Área do aluno
         </span>
 
-        <h1 className="text-[34px] font-semibold tracking-[-0.04em] text-[#202431] sm:text-[42px]">
+        <h1 className="text-[34px] font-semibold tracking-[-0.04em] text-[#141414] sm:text-[42px]">
           {pageTitle}
         </h1>
 
-        <p className="mt-3 max-w-[760px] text-[16px] leading-7 text-[#667085]">
+        <p className="mt-3 max-w-[760px] text-[16px] leading-7 text-[#666b76]">
           {mode === "categoria"
             ? "Configure uma fileira da home do aluno, definindo título, formato de card, ordem e status."
             : "Escolha uma trilha, curso, aula ou live já cadastrada no ADM para aparecer dentro de uma categoria da home do aluno."}
@@ -729,21 +729,21 @@ export default function NewStudentHomeConfigPage() {
       </div>
 
       {message ? (
-        <div className="mb-5 flex items-center gap-3 rounded-[18px] border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm font-semibold text-emerald-700">
+        <div className="mb-5 flex items-center gap-3 rounded-[18px] border border-emerald-200 bg-emerald-50 px-5 py-4 text-[14px] font-semibold text-emerald-700">
           <CheckCircle2 size={20} />
           {message}
         </div>
       ) : null}
 
       {errorMessage ? (
-        <div className="mb-5 rounded-[18px] border border-red-200 bg-red-50 px-5 py-4 text-sm font-semibold text-red-700">
+        <div className="mb-5 rounded-[18px] border border-red-200 bg-red-50 px-5 py-4 text-[14px] font-semibold text-red-700">
           {errorMessage}
         </div>
       ) : null}
 
       {loading ? (
-        <div className="flex min-h-[460px] items-center justify-center rounded-[26px] border border-[#e7e9f0] bg-white">
-          <div className="flex items-center gap-3 text-sm font-semibold text-[#667085]">
+        <div className="flex min-h-[460px] items-center justify-center rounded-[18px] border border-[#e5e5e5] bg-white">
+          <div className="flex items-center gap-3 text-[14px] font-semibold text-[#666b76]">
             <Loader2 size={18} className="animate-spin" />
             Carregando...
           </div>
@@ -751,11 +751,11 @@ export default function NewStudentHomeConfigPage() {
       ) : mode === "categoria" ? (
         <form
           onSubmit={handleSectionSubmit}
-          className="rounded-[26px] border border-[#e7e9f0] bg-white p-5 shadow-[0_20px_60px_rgba(31,34,48,0.06)] sm:p-6"
+          className="rounded-[18px] border border-[#e5e5e5] bg-white p-5  sm:p-6"
         >
           <div className="grid gap-5">
             <label className="block">
-              <span className="mb-2 block text-sm font-semibold text-[#3b4151]">
+              <span className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                 Título da categoria *
               </span>
               <input
@@ -765,12 +765,12 @@ export default function NewStudentHomeConfigPage() {
                   updateSectionField("title", event.target.value)
                 }
                 placeholder="Ex: Trilhas recomendadas para você"
-                className="h-12 w-full rounded-[14px] border border-[#dfe3ec] bg-white px-4 text-[15px] text-[#202431] outline-none transition placeholder:text-[#9aa1b2] focus:border-[#DBC094]"
+                className="h-12 w-full rounded-[14px] border border-[#e5e5e5] bg-white px-4 text-[15px] text-[#141414] outline-none transition placeholder:text-[#8a8f9d] focus:border-[#DBC094]"
               />
             </label>
 
             <label className="block">
-              <span className="mb-2 block text-sm font-semibold text-[#3b4151]">
+              <span className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                 Slug
               </span>
               <input
@@ -780,12 +780,12 @@ export default function NewStudentHomeConfigPage() {
                   updateSectionField("slug", slugify(event.target.value))
                 }
                 placeholder="trilhas-recomendadas"
-                className="h-12 w-full rounded-[14px] border border-[#dfe3ec] bg-white px-4 text-[15px] text-[#202431] outline-none transition placeholder:text-[#9aa1b2] focus:border-[#DBC094]"
+                className="h-12 w-full rounded-[14px] border border-[#e5e5e5] bg-white px-4 text-[15px] text-[#141414] outline-none transition placeholder:text-[#8a8f9d] focus:border-[#DBC094]"
               />
             </label>
 
             <label className="block">
-              <span className="mb-2 block text-sm font-semibold text-[#3b4151]">
+              <span className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                 Descrição interna
               </span>
               <textarea
@@ -795,13 +795,13 @@ export default function NewStudentHomeConfigPage() {
                 }
                 rows={4}
                 placeholder="Descrição apenas para organização do ADM"
-                className="w-full resize-none rounded-[14px] border border-[#dfe3ec] bg-white px-4 py-3 text-[15px] leading-6 text-[#202431] outline-none transition placeholder:text-[#9aa1b2] focus:border-[#DBC094]"
+                className="w-full resize-none rounded-[14px] border border-[#e5e5e5] bg-white px-4 py-3 text-[15px] leading-6 text-[#141414] outline-none transition placeholder:text-[#8a8f9d] focus:border-[#DBC094]"
               />
             </label>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block">
-                <span className="mb-2 block text-sm font-semibold text-[#3b4151]">
+                <span className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                   Formato dos cards
                 </span>
                 <select
@@ -812,7 +812,7 @@ export default function NewStudentHomeConfigPage() {
                       event.target.value as LayoutVariant
                     )
                   }
-                  className="h-12 w-full rounded-[14px] border border-[#dfe3ec] bg-white px-4 text-[15px] text-[#202431] outline-none transition focus:border-[#DBC094]"
+                  className="h-12 w-full rounded-[14px] border border-[#e5e5e5] bg-white px-4 text-[15px] text-[#141414] outline-none transition focus:border-[#DBC094]"
                 >
                   <option value="vertical">Vertical</option>
                   <option value="featured">Destaque extragrande</option>
@@ -821,7 +821,7 @@ export default function NewStudentHomeConfigPage() {
               </label>
 
               <label className="block">
-                <span className="mb-2 block text-sm font-semibold text-[#3b4151]">
+                <span className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                   Ordem
                 </span>
                 <input
@@ -830,17 +830,17 @@ export default function NewStudentHomeConfigPage() {
                   onChange={(event) =>
                     updateSectionField("sort_order", event.target.value)
                   }
-                  className="h-12 w-full rounded-[14px] border border-[#dfe3ec] bg-white px-4 text-[15px] text-[#202431] outline-none transition focus:border-[#DBC094]"
+                  className="h-12 w-full rounded-[14px] border border-[#e5e5e5] bg-white px-4 text-[15px] text-[#141414] outline-none transition focus:border-[#DBC094]"
                 />
               </label>
             </div>
 
-            <label className="flex cursor-pointer items-center justify-between rounded-[16px] border border-[#e4e7ef] bg-[#fafbfe] px-4 py-3">
+            <label className="flex cursor-pointer items-center justify-between rounded-[12px] border border-[#e5e5e5] bg-white px-4 py-3">
               <div>
-                <span className="block text-sm font-semibold text-[#3b4151]">
+                <span className="block text-[14px] font-semibold text-[#52525b]">
                   Categoria ativa
                 </span>
-                <span className="mt-1 block text-xs text-[#8a91a3]">
+                <span className="mt-1 block text-[12px] text-[#8a8f9d]">
                   Categorias inativas não aparecem na área do aluno.
                 </span>
               </div>
@@ -858,7 +858,7 @@ export default function NewStudentHomeConfigPage() {
             <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
               <Link
                 href="/admin/home-aluno"
-                className="inline-flex h-[52px] items-center justify-center rounded-[15px] border border-[#e4e7ef] bg-white px-5 text-[15px] font-bold text-[#343a49] transition hover:bg-[#f6f7fb]"
+                className="inline-flex h-[52px] items-center justify-center rounded-[15px] border border-[#e5e5e5] bg-white px-5 text-[15px] font-bold text-[#52525b] transition hover:bg-[#f7f7f7]"
               >
                 Cancelar
               </Link>
@@ -883,11 +883,11 @@ export default function NewStudentHomeConfigPage() {
       ) : (
         <form
           onSubmit={handleItemSubmit}
-          className="rounded-[26px] border border-[#e7e9f0] bg-white p-5 shadow-[0_20px_60px_rgba(31,34,48,0.06)] sm:p-6"
+          className="rounded-[18px] border border-[#e5e5e5] bg-white p-5  sm:p-6"
         >
           <div className="grid gap-5">
             <label className="block">
-              <span className="mb-2 block text-sm font-semibold text-[#3b4151]">
+              <span className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                 Categoria da home *
               </span>
               <select
@@ -895,7 +895,7 @@ export default function NewStudentHomeConfigPage() {
                 onChange={(event) =>
                   updateItemField("section_id", event.target.value)
                 }
-                className="h-12 w-full rounded-[14px] border border-[#dfe3ec] bg-white px-4 text-[15px] text-[#202431] outline-none transition focus:border-[#DBC094]"
+                className="h-12 w-full rounded-[14px] border border-[#e5e5e5] bg-white px-4 text-[15px] text-[#141414] outline-none transition focus:border-[#DBC094]"
               >
                 <option value="">Selecione</option>
                 {sections.map((section) => (
@@ -908,7 +908,7 @@ export default function NewStudentHomeConfigPage() {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block">
-                <span className="mb-2 block text-sm font-semibold text-[#3b4151]">
+                <span className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                   Tipo de conteúdo
                 </span>
                 <select
@@ -919,7 +919,7 @@ export default function NewStudentHomeConfigPage() {
                       event.target.value as ContentType
                     )
                   }
-                  className="h-12 w-full rounded-[14px] border border-[#dfe3ec] bg-white px-4 text-[15px] text-[#202431] outline-none transition focus:border-[#DBC094]"
+                  className="h-12 w-full rounded-[14px] border border-[#e5e5e5] bg-white px-4 text-[15px] text-[#141414] outline-none transition focus:border-[#DBC094]"
                 >
                   <option value="trail">Trilha</option>
                   <option value="course">Curso</option>
@@ -929,7 +929,7 @@ export default function NewStudentHomeConfigPage() {
               </label>
 
               <label className="block">
-                <span className="mb-2 block text-sm font-semibold text-[#3b4151]">
+                <span className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                   Ordem
                 </span>
                 <input
@@ -938,17 +938,17 @@ export default function NewStudentHomeConfigPage() {
                   onChange={(event) =>
                     updateItemField("sort_order", event.target.value)
                   }
-                  className="h-12 w-full rounded-[14px] border border-[#dfe3ec] bg-white px-4 text-[15px] text-[#202431] outline-none transition focus:border-[#DBC094]"
+                  className="h-12 w-full rounded-[14px] border border-[#e5e5e5] bg-white px-4 text-[15px] text-[#141414] outline-none transition focus:border-[#DBC094]"
                 />
               </label>
             </div>
 
             <div>
-              <span className="mb-2 block text-sm font-semibold text-[#3b4151]">
+              <span className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                 Listagem de conteúdos cadastrados *
               </span>
 
-              <div className="mb-3 rounded-[16px] border border-[#e8eaf0] bg-[#fafbfe] px-4 py-3 text-sm font-semibold text-[#667085]">
+              <div className="mb-3 rounded-[12px] border border-[#e5e5e5] bg-white px-4 py-3 text-[14px] font-semibold text-[#666b76]">
                 {itemForm.content_type === "trail"
                   ? `${trails.length} trilha(s) encontrada(s)`
                   : itemForm.content_type === "course"
@@ -958,27 +958,27 @@ export default function NewStudentHomeConfigPage() {
 
               {selectedContent ? (
                 <div className="mb-3 rounded-[18px] border border-[#DBC094]/50 bg-[#fffaf0] p-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#8b6b35]">
+                  <p className="text-[12px] font-bold uppercase tracking-[0.16em] text-[#8a6836]">
                     Conteúdo selecionado
                   </p>
-                  <h3 className="mt-1 text-[17px] font-semibold tracking-[-0.03em] text-[#202431]">
+                  <h3 className="mt-1 text-[17px] font-semibold tracking-[-0.03em] text-[#141414]">
                     {selectedContent.label}
                   </h3>
-                  <p className="mt-1 text-sm leading-6 text-[#667085]">
+                  <p className="mt-1 text-[14px] leading-6 text-[#666b76]">
                     {selectedContent.meta}
                   </p>
                 </div>
               ) : null}
 
-              <div className="max-h-[520px] overflow-y-auto rounded-[20px] border border-[#e8eaf0] bg-[#fafbfe]">
+              <div className="max-h-[520px] overflow-y-auto rounded-[18px] border border-[#e5e5e5] bg-white">
                 {availableContentOptions.length === 0 ? (
-                  <div className="m-3 rounded-[16px] border border-dashed border-[#d8dde8] bg-white px-5 py-8 text-center">
-                    <p className="text-sm font-semibold text-[#667085]">
+                  <div className="m-3 rounded-[12px] border border-dashed border-[#e5e5e5] bg-white px-5 py-8 text-center">
+                    <p className="text-[14px] font-semibold text-[#666b76]">
                       Nenhum conteúdo cadastrado para este tipo.
                     </p>
 
                     {itemForm.content_type === "trail" ? (
-                      <p className="mt-2 text-xs font-medium leading-5 text-[#98a2b3]">
+                      <p className="mt-2 text-[12px] font-medium leading-5 text-[#98a2b3]">
                         Nenhuma trilha foi encontrada na leitura autenticada de
                         course_categories.
                       </p>
@@ -1001,10 +1001,10 @@ export default function NewStudentHomeConfigPage() {
                         >
                           <div
                             className={[
-                              "mt-1 flex h-7 w-7 items-center justify-center rounded-full border text-xs font-black",
+                              "mt-1 flex h-7 w-7 items-center justify-center rounded-full border text-[12px] font-black",
                               selected
                                 ? "border-[#DBC094] bg-[#DBC094] text-black"
-                                : "border-[#d8dde8] bg-white text-[#8a91a3]",
+                                : "border-[#e5e5e5] bg-white text-[#8a8f9d]",
                             ].join(" ")}
                           >
                             {selected ? "✓" : index + 1}
@@ -1026,7 +1026,7 @@ export default function NewStudentHomeConfigPage() {
 
                           <div className="min-w-0">
                             <div className="mb-2 flex flex-wrap gap-2">
-                              <span className="rounded-full bg-[#eef1f7] px-2.5 py-1 text-[11px] font-bold text-[#596174]">
+                              <span className="rounded-full bg-[#f4f4f5] px-2.5 py-1 text-[11px] font-bold text-[#596174]">
                                 {getContentTypeLabel(itemForm.content_type)}
                               </span>
 
@@ -1042,15 +1042,15 @@ export default function NewStudentHomeConfigPage() {
                               </span>
                             </div>
 
-                            <h4 className="text-[16px] font-semibold leading-tight tracking-[-0.03em] text-[#202431]">
+                            <h4 className="text-[16px] font-semibold leading-tight tracking-[-0.03em] text-[#141414]">
                               {option.label}
                             </h4>
 
-                            <p className="mt-1 line-clamp-2 text-sm leading-5 text-[#667085]">
+                            <p className="mt-1 line-clamp-2 text-[14px] leading-5 text-[#666b76]">
                               {option.description}
                             </p>
 
-                            <p className="mt-2 text-xs font-semibold text-[#8a91a3]">
+                            <p className="mt-2 text-[12px] font-semibold text-[#8a8f9d]">
                               {option.meta}
                             </p>
                           </div>
@@ -1063,7 +1063,7 @@ export default function NewStudentHomeConfigPage() {
             </div>
 
             <label className="block">
-              <span className="mb-2 block text-sm font-semibold text-[#3b4151]">
+              <span className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                 Título alternativo
               </span>
               <input
@@ -1073,12 +1073,12 @@ export default function NewStudentHomeConfigPage() {
                   updateItemField("title_override", event.target.value)
                 }
                 placeholder="Opcional. Se vazio, usa o título original."
-                className="h-12 w-full rounded-[14px] border border-[#dfe3ec] bg-white px-4 text-[15px] text-[#202431] outline-none transition placeholder:text-[#9aa1b2] focus:border-[#DBC094]"
+                className="h-12 w-full rounded-[14px] border border-[#e5e5e5] bg-white px-4 text-[15px] text-[#141414] outline-none transition placeholder:text-[#8a8f9d] focus:border-[#DBC094]"
               />
             </label>
 
             <label className="block">
-              <span className="mb-2 block text-sm font-semibold text-[#3b4151]">
+              <span className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                 Descrição alternativa
               </span>
               <textarea
@@ -1088,12 +1088,12 @@ export default function NewStudentHomeConfigPage() {
                 }
                 rows={4}
                 placeholder="Opcional. Se vazio, usa a descrição original."
-                className="w-full resize-none rounded-[14px] border border-[#dfe3ec] bg-white px-4 py-3 text-[15px] leading-6 text-[#202431] outline-none transition placeholder:text-[#9aa1b2] focus:border-[#DBC094]"
+                className="w-full resize-none rounded-[14px] border border-[#e5e5e5] bg-white px-4 py-3 text-[15px] leading-6 text-[#141414] outline-none transition placeholder:text-[#8a8f9d] focus:border-[#DBC094]"
               />
             </label>
 
             <label className="block">
-              <span className="mb-2 block text-sm font-semibold text-[#3b4151]">
+              <span className="mb-2 block text-[14px] font-semibold text-[#52525b]">
                 Selo alternativo
               </span>
               <input
@@ -1103,16 +1103,16 @@ export default function NewStudentHomeConfigPage() {
                   updateItemField("badge_override", event.target.value)
                 }
                 placeholder="Ex: Novo, Premium, Ao vivo"
-                className="h-12 w-full rounded-[14px] border border-[#dfe3ec] bg-white px-4 text-[15px] text-[#202431] outline-none transition placeholder:text-[#9aa1b2] focus:border-[#DBC094]"
+                className="h-12 w-full rounded-[14px] border border-[#e5e5e5] bg-white px-4 text-[15px] text-[#141414] outline-none transition placeholder:text-[#8a8f9d] focus:border-[#DBC094]"
               />
             </label>
 
-            <label className="flex cursor-pointer items-center justify-between rounded-[16px] border border-[#e4e7ef] bg-[#fafbfe] px-4 py-3">
+            <label className="flex cursor-pointer items-center justify-between rounded-[12px] border border-[#e5e5e5] bg-white px-4 py-3">
               <div>
-                <span className="block text-sm font-semibold text-[#3b4151]">
+                <span className="block text-[14px] font-semibold text-[#52525b]">
                   Card ativo
                 </span>
-                <span className="mt-1 block text-xs text-[#8a91a3]">
+                <span className="mt-1 block text-[12px] text-[#8a8f9d]">
                   Cards inativos não aparecem na home do aluno.
                 </span>
               </div>
@@ -1130,7 +1130,7 @@ export default function NewStudentHomeConfigPage() {
             <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
               <Link
                 href="/admin/home-aluno"
-                className="inline-flex h-[52px] items-center justify-center rounded-[15px] border border-[#e4e7ef] bg-white px-5 text-[15px] font-bold text-[#343a49] transition hover:bg-[#f6f7fb]"
+                className="inline-flex h-[52px] items-center justify-center rounded-[15px] border border-[#e5e5e5] bg-white px-5 text-[15px] font-bold text-[#52525b] transition hover:bg-[#f7f7f7]"
               >
                 Cancelar
               </Link>
@@ -1138,7 +1138,7 @@ export default function NewStudentHomeConfigPage() {
               <button
                 type="submit"
                 disabled={saving}
-                className="inline-flex h-[52px] items-center justify-center gap-2 rounded-[15px] bg-[#202431] px-5 text-[15px] font-bold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex h-[52px] items-center justify-center gap-2 rounded-[15px] bg-[#141414] px-5 text-[15px] font-bold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {saving ? (
                   <Loader2 size={18} className="animate-spin" />

@@ -433,26 +433,26 @@ export default function AdminStudentHomePage() {
 
   return (
     <div className="mx-auto max-w-[1440px]">
-      <section className="mb-8 overflow-hidden rounded-[30px] border border-[#e7e9f0] bg-white shadow-[0_20px_60px_rgba(31,34,48,0.06)]">
+      <section className="mb-8 overflow-hidden rounded-[18px] border border-[#e5e5e5] bg-white ">
         <div className="grid gap-6 p-6 sm:p-7 xl:grid-cols-[1fr_auto] xl:items-end">
           <div className="min-w-0">
             <div className="mb-5 flex flex-wrap items-center gap-3">
-              <span className="inline-flex items-center rounded-full border border-[#DBC094]/40 bg-[#DBC094]/12 px-4 py-2 text-sm font-semibold text-[#8b6b35]">
+              <span className="inline-flex items-center rounded-full border border-[#DBC094]/40 bg-[#DBC094]/12 px-4 py-2 text-[14px] font-semibold text-[#8a6836]">
                 Área do aluno
               </span>
 
               <span className="hidden h-px w-14 bg-[#e4e7ef] sm:block" />
 
-              <span className="text-sm font-semibold text-[#8a91a3]">
+              <span className="text-[14px] font-semibold text-[#8a8f9d]">
                 Home / Vitrine de conteúdos
               </span>
             </div>
 
-            <h1 className="text-[34px] font-semibold leading-none tracking-[-0.05em] text-[#202431] sm:text-[46px]">
+            <h1 className="text-[34px] font-semibold leading-none tracking-[-0.05em] text-[#141414] sm:text-[46px]">
               Categorias/Cards
             </h1>
 
-            <p className="mt-4 max-w-[800px] text-[16px] leading-7 text-[#667085]">
+            <p className="mt-4 max-w-[800px] text-[16px] leading-7 text-[#666b76]">
               Organize as categorias da home do aluno e escolha quais cursos,
               aulas ou lives aparecem em cada fileira.
             </p>
@@ -460,23 +460,23 @@ export default function AdminStudentHomePage() {
 
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end xl:justify-end">
             <div className="grid grid-cols-3 gap-3">
-              <div className="min-w-[96px] rounded-[18px] border border-[#e8eaf0] bg-[#fafbfe] px-5 py-4">
-                <p className="text-sm font-medium text-[#7a8090]">Categorias</p>
-                <strong className="mt-2 block text-[30px] leading-none tracking-[-0.04em] text-[#202431]">
+              <div className="min-w-[96px] rounded-[18px] border border-[#e5e5e5] bg-white px-5 py-4">
+                <p className="text-[14px] font-medium text-[#666b76]">Categorias</p>
+                <strong className="mt-2 block text-[30px] leading-none tracking-[-0.04em] text-[#141414]">
                   {sections.length}
                 </strong>
               </div>
 
-              <div className="min-w-[96px] rounded-[18px] border border-[#e8eaf0] bg-[#fafbfe] px-5 py-4">
-                <p className="text-sm font-medium text-[#7a8090]">Ativas</p>
-                <strong className="mt-2 block text-[30px] leading-none tracking-[-0.04em] text-[#202431]">
+              <div className="min-w-[96px] rounded-[18px] border border-[#e5e5e5] bg-white px-5 py-4">
+                <p className="text-[14px] font-medium text-[#666b76]">Ativas</p>
+                <strong className="mt-2 block text-[30px] leading-none tracking-[-0.04em] text-[#141414]">
                   {activeSectionsCount}
                 </strong>
               </div>
 
-              <div className="min-w-[96px] rounded-[18px] border border-[#e8eaf0] bg-[#fafbfe] px-5 py-4">
-                <p className="text-sm font-medium text-[#7a8090]">Cards</p>
-                <strong className="mt-2 block text-[30px] leading-none tracking-[-0.04em] text-[#202431]">
+              <div className="min-w-[96px] rounded-[18px] border border-[#e5e5e5] bg-white px-5 py-4">
+                <p className="text-[14px] font-medium text-[#666b76]">Cards</p>
+                <strong className="mt-2 block text-[30px] leading-none tracking-[-0.04em] text-[#141414]">
                   {activeItemsCount}
                 </strong>
               </div>
@@ -485,7 +485,7 @@ export default function AdminStudentHomePage() {
             <div className="flex flex-col gap-3 sm:flex-row">
               <Link
                 href="/admin/home-aluno/novo?tipo=categoria"
-                className="inline-flex h-[56px] items-center justify-center gap-2 rounded-[18px] bg-[#DBC094] px-6 text-sm font-bold text-black transition hover:bg-[#cfb27a]"
+                className="inline-flex h-[56px] items-center justify-center gap-2 rounded-[18px] bg-[#DBC094] px-6 text-[14px] font-bold text-black transition hover:bg-[#cfb27a]"
               >
                 <Plus size={18} />
                 Nova categoria
@@ -493,7 +493,7 @@ export default function AdminStudentHomePage() {
 
               <Link
                 href="/admin/home-aluno/novo?tipo=card"
-                className="inline-flex h-[56px] items-center justify-center gap-2 rounded-[18px] bg-[#202431] px-6 text-sm font-bold text-white transition hover:bg-black"
+                className="inline-flex h-[56px] items-center justify-center gap-2 rounded-[18px] bg-[#141414] px-6 text-[14px] font-bold text-white transition hover:bg-black"
               >
                 <Plus size={18} />
                 Inserir card
@@ -504,25 +504,25 @@ export default function AdminStudentHomePage() {
       </section>
 
       {message ? (
-        <div className="mb-5 flex items-center gap-3 rounded-[18px] border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm font-semibold text-emerald-700">
+        <div className="mb-5 flex items-center gap-3 rounded-[18px] border border-emerald-200 bg-emerald-50 px-5 py-4 text-[14px] font-semibold text-emerald-700">
           <CheckCircle2 size={20} />
           {message}
         </div>
       ) : null}
 
       {errorMessage ? (
-        <div className="mb-5 rounded-[18px] border border-red-200 bg-red-50 px-5 py-4 text-sm font-semibold text-red-700">
+        <div className="mb-5 rounded-[18px] border border-red-200 bg-red-50 px-5 py-4 text-[14px] font-semibold text-red-700">
           {errorMessage}
         </div>
       ) : null}
 
-      <section className="rounded-[26px] border border-[#e7e9f0] bg-white p-5 shadow-[0_20px_60px_rgba(31,34,48,0.06)] sm:p-6">
+      <section className="rounded-[18px] border border-[#e5e5e5] bg-white p-5  sm:p-6">
         <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="text-[22px] font-semibold tracking-[-0.03em] text-[#202431]">
+            <h2 className="text-[22px] font-semibold tracking-[-0.03em] text-[#141414]">
               Categorias cadastradas
             </h2>
-            <p className="mt-1 text-sm text-[#7a8090]">
+            <p className="mt-1 text-[14px] text-[#666b76]">
               Edite categorias, remova cards e controle o que aparece na home do
               aluno.
             </p>
@@ -530,31 +530,31 @@ export default function AdminStudentHomePage() {
         </div>
 
         {loading ? (
-          <div className="flex min-h-[460px] items-center justify-center rounded-[22px] border border-[#eef0f5] bg-[#fafbfe]">
-            <div className="flex items-center gap-3 text-sm font-semibold text-[#667085]">
+          <div className="flex min-h-[460px] items-center justify-center rounded-[18px] border border-[#e5e5e5] bg-white">
+            <div className="flex items-center gap-3 text-[14px] font-semibold text-[#666b76]">
               <Loader2 size={18} className="animate-spin" />
               Carregando categorias e cards...
             </div>
           </div>
         ) : sections.length === 0 ? (
-          <div className="flex min-h-[460px] items-center justify-center rounded-[22px] border border-dashed border-[#d8dde8] bg-[#fafbfe] px-6 text-center">
+          <div className="flex min-h-[460px] items-center justify-center rounded-[18px] border border-dashed border-[#e5e5e5] bg-white px-6 text-center">
             <div>
-              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#f1eadf] text-[#8b6b35]">
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#f3eee5] text-[#8a6836]">
                 <Layers3 size={24} />
               </div>
 
-              <h3 className="text-[20px] font-semibold text-[#202431]">
+              <h3 className="text-[20px] font-semibold text-[#141414]">
                 Nenhuma categoria cadastrada
               </h3>
 
-              <p className="mx-auto mt-2 max-w-[360px] text-sm leading-6 text-[#7a8090]">
+              <p className="mx-auto mt-2 max-w-[360px] text-[14px] leading-6 text-[#666b76]">
                 Crie a primeira categoria para organizar os cards da home do
                 aluno.
               </p>
 
               <Link
                 href="/admin/home-aluno/novo?tipo=categoria"
-                className="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-[14px] bg-[#DBC094] px-5 text-sm font-bold text-black transition hover:bg-[#cfb27a]"
+                className="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-[14px] bg-[#DBC094] px-5 text-[14px] font-bold text-black transition hover:bg-[#cfb27a]"
               >
                 <Plus size={17} />
                 Nova categoria
@@ -571,15 +571,15 @@ export default function AdminStudentHomePage() {
               return (
                 <article
                   key={section.id}
-                  className="overflow-hidden rounded-[24px] border border-[#e8eaf0] bg-[#fafbfe]"
+                  className="overflow-hidden rounded-[18px] border border-[#e5e5e5] bg-white"
                 >
-                  <div className="border-b border-[#e8eaf0] bg-white p-5">
+                  <div className="border-b border-[#e5e5e5] bg-white p-5">
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                       <div>
                         <div className="mb-3 flex flex-wrap items-center gap-2">
                           <span
                             className={[
-                              "rounded-full px-3 py-1 text-xs font-bold",
+                              "rounded-full px-3 py-1 text-[12px] font-bold",
                               section.is_active
                                 ? "bg-emerald-100 text-emerald-700"
                                 : "bg-red-100 text-red-700",
@@ -588,29 +588,29 @@ export default function AdminStudentHomePage() {
                             {section.is_active ? "Ativa" : "Inativa"}
                           </span>
 
-                          <span className="rounded-full bg-[#f1eadf] px-3 py-1 text-xs font-bold text-[#8b6b35]">
+                          <span className="rounded-full bg-[#f3eee5] px-3 py-1 text-[12px] font-bold text-[#8a6836]">
                             {getLayoutLabel(section.layout_variant)}
                           </span>
 
-                          <span className="rounded-full bg-[#eef1f7] px-3 py-1 text-xs font-bold text-[#596174]">
+                          <span className="rounded-full bg-[#f4f4f5] px-3 py-1 text-[12px] font-bold text-[#596174]">
                             Ordem {section.sort_order}
                           </span>
 
-                          <span className="rounded-full bg-[#202431] px-3 py-1 text-xs font-bold text-white">
+                          <span className="rounded-full bg-[#141414] px-3 py-1 text-[12px] font-bold text-white">
                             {sectionItems.length} card(s)
                           </span>
                         </div>
 
-                        <h3 className="text-[25px] font-semibold tracking-[-0.04em] text-[#202431]">
+                        <h3 className="text-[25px] font-semibold tracking-[-0.04em] text-[#141414]">
                           {section.title}
                         </h3>
 
-                        <p className="mt-1 text-sm font-medium text-[#8a91a3]">
+                        <p className="mt-1 text-[14px] font-medium text-[#8a8f9d]">
                           /{section.slug}
                         </p>
 
                         {section.description ? (
-                          <p className="mt-3 max-w-[760px] text-sm leading-6 text-[#667085]">
+                          <p className="mt-3 max-w-[760px] text-[14px] leading-6 text-[#666b76]">
                             {section.description}
                           </p>
                         ) : null}
@@ -619,7 +619,7 @@ export default function AdminStudentHomePage() {
                       <div className="flex flex-wrap gap-2">
                         <Link
                           href={`/admin/home-aluno/novo?tipo=categoria&id=${section.id}`}
-                          className="inline-flex h-10 items-center gap-2 rounded-[12px] bg-[#202431] px-4 text-sm font-semibold text-white transition hover:bg-black"
+                          className="inline-flex h-10 items-center gap-2 rounded-[12px] bg-[#141414] px-4 text-[14px] font-semibold text-white transition hover:bg-black"
                         >
                           <Pencil size={16} />
                           Editar
@@ -628,7 +628,7 @@ export default function AdminStudentHomePage() {
                         <button
                           type="button"
                           onClick={() => toggleSectionStatus(section)}
-                          className="inline-flex h-10 items-center gap-2 rounded-[12px] bg-[#eef1f7] px-4 text-sm font-semibold text-[#343a49] transition hover:bg-[#e2e6ef]"
+                          className="inline-flex h-10 items-center gap-2 rounded-[12px] bg-[#f4f4f5] px-4 text-[14px] font-semibold text-[#52525b] transition hover:bg-[#e2e6ef]"
                         >
                           {section.is_active ? (
                             <EyeOff size={16} />
@@ -641,7 +641,7 @@ export default function AdminStudentHomePage() {
                         <button
                           type="button"
                           onClick={() => deleteSection(section)}
-                          className="inline-flex h-10 items-center gap-2 rounded-[12px] bg-red-50 px-4 text-sm font-semibold text-red-700 transition hover:bg-red-100"
+                          className="inline-flex h-10 items-center gap-2 rounded-[12px] bg-red-50 px-4 text-[14px] font-semibold text-red-700 transition hover:bg-red-100"
                         >
                           <Trash2 size={16} />
                           Excluir
@@ -652,14 +652,14 @@ export default function AdminStudentHomePage() {
 
                   <div className="p-5">
                     {sectionItems.length === 0 ? (
-                      <div className="rounded-[18px] border border-dashed border-[#d8dde8] bg-white px-5 py-8 text-center">
-                        <p className="text-sm font-semibold text-[#667085]">
+                      <div className="rounded-[18px] border border-dashed border-[#e5e5e5] bg-white px-5 py-8 text-center">
+                        <p className="text-[14px] font-semibold text-[#666b76]">
                           Nenhum card inserido nesta categoria.
                         </p>
 
                         <Link
                           href={`/admin/home-aluno/novo?tipo=card&section=${section.id}`}
-                          className="mt-4 inline-flex h-10 items-center justify-center gap-2 rounded-[12px] bg-[#202431] px-4 text-sm font-semibold text-white transition hover:bg-black"
+                          className="mt-4 inline-flex h-10 items-center justify-center gap-2 rounded-[12px] bg-[#141414] px-4 text-[14px] font-semibold text-white transition hover:bg-black"
                         >
                           <Plus size={16} />
                           Inserir card
@@ -673,7 +673,7 @@ export default function AdminStudentHomePage() {
                           return (
                             <div
                               key={item.id}
-                              className="grid gap-4 rounded-[18px] border border-[#e8eaf0] bg-white p-4 lg:grid-cols-[120px_1fr_auto]"
+                              className="grid gap-4 rounded-[18px] border border-[#e5e5e5] bg-white p-4 lg:grid-cols-[120px_1fr_auto]"
                             >
                               <div className="h-[82px] overflow-hidden rounded-[14px] bg-[#171a24]">
                                 {imageUrl ? (
@@ -693,7 +693,7 @@ export default function AdminStudentHomePage() {
                                 <div className="mb-2 flex flex-wrap items-center gap-2">
                                   <span
                                     className={[
-                                      "rounded-full px-3 py-1 text-xs font-bold",
+                                      "rounded-full px-3 py-1 text-[12px] font-bold",
                                       item.is_active
                                         ? "bg-emerald-100 text-emerald-700"
                                         : "bg-red-100 text-red-700",
@@ -702,30 +702,30 @@ export default function AdminStudentHomePage() {
                                     {item.is_active ? "Ativo" : "Inativo"}
                                   </span>
 
-                                  <span className="rounded-full bg-[#eef1f7] px-3 py-1 text-xs font-bold text-[#596174]">
+                                  <span className="rounded-full bg-[#f4f4f5] px-3 py-1 text-[12px] font-bold text-[#596174]">
                                     {getContentTypeLabel(item.content_type)}
                                   </span>
 
-                                  <span className="rounded-full bg-[#f1eadf] px-3 py-1 text-xs font-bold text-[#8b6b35]">
+                                  <span className="rounded-full bg-[#f3eee5] px-3 py-1 text-[12px] font-bold text-[#8a6836]">
                                     Ordem {item.sort_order}
                                   </span>
 
                                   {item.badge_override ? (
-                                    <span className="rounded-full bg-[#202431] px-3 py-1 text-xs font-bold text-white">
+                                    <span className="rounded-full bg-[#141414] px-3 py-1 text-[12px] font-bold text-white">
                                       {item.badge_override}
                                     </span>
                                   ) : null}
                                 </div>
 
-                                <h4 className="text-[18px] font-semibold tracking-[-0.03em] text-[#202431]">
+                                <h4 className="text-[18px] font-semibold tracking-[-0.03em] text-[#141414]">
                                   {getItemTitle(item)}
                                 </h4>
 
-                                <p className="mt-1 line-clamp-2 max-w-[760px] text-sm leading-6 text-[#667085]">
+                                <p className="mt-1 line-clamp-2 max-w-[760px] text-[14px] leading-6 text-[#666b76]">
                                   {getItemSubtitle(item)}
                                 </p>
 
-                                <p className="mt-2 text-xs font-semibold text-[#8a91a3]">
+                                <p className="mt-2 text-[12px] font-semibold text-[#8a8f9d]">
                                   {getItemMeta(item)}
                                 </p>
                               </div>
@@ -733,7 +733,7 @@ export default function AdminStudentHomePage() {
                               <div className="flex flex-wrap items-start gap-2 lg:justify-end">
                                 <Link
                                   href={`/admin/home-aluno/novo?tipo=card&id=${item.id}`}
-                                  className="inline-flex h-10 items-center gap-2 rounded-[12px] bg-[#202431] px-4 text-sm font-semibold text-white transition hover:bg-black"
+                                  className="inline-flex h-10 items-center gap-2 rounded-[12px] bg-[#141414] px-4 text-[14px] font-semibold text-white transition hover:bg-black"
                                 >
                                   <Pencil size={16} />
                                   Editar
@@ -742,7 +742,7 @@ export default function AdminStudentHomePage() {
                                 <button
                                   type="button"
                                   onClick={() => toggleItemStatus(item)}
-                                  className="inline-flex h-10 items-center gap-2 rounded-[12px] bg-[#eef1f7] px-4 text-sm font-semibold text-[#343a49] transition hover:bg-[#e2e6ef]"
+                                  className="inline-flex h-10 items-center gap-2 rounded-[12px] bg-[#f4f4f5] px-4 text-[14px] font-semibold text-[#52525b] transition hover:bg-[#e2e6ef]"
                                 >
                                   {item.is_active ? (
                                     <EyeOff size={16} />
@@ -755,7 +755,7 @@ export default function AdminStudentHomePage() {
                                 <button
                                   type="button"
                                   onClick={() => deleteItem(item)}
-                                  className="inline-flex h-10 items-center gap-2 rounded-[12px] bg-red-50 px-4 text-sm font-semibold text-red-700 transition hover:bg-red-100"
+                                  className="inline-flex h-10 items-center gap-2 rounded-[12px] bg-red-50 px-4 text-[14px] font-semibold text-red-700 transition hover:bg-red-100"
                                 >
                                   <Trash2 size={16} />
                                   Remover

@@ -1573,10 +1573,10 @@ type MetricCardProps = {
 
 function MetricCard({ title, value, icon, iconTone }: MetricCardProps) {
   const tones = {
-    gold: "bg-[#F8EFE0] text-[#8a6836]",
-    violet: "bg-[#EFE9FB] text-[#6F4AA7]",
-    blue: "bg-[#EAF3FB] text-[#4C84B8]",
-    goldSoft: "bg-[#F5EEDC] text-[#9F7A28]",
+    gold: "bg-[#f3eee5] text-[#8a6836]",
+    violet: "bg-[#f3eee5] text-[#6F4AA7]",
+    blue: "bg-[#f3eee5] text-[#4C84B8]",
+    goldSoft: "bg-[#f3eee5] text-[#9F7A28]",
   };
 
   return (
