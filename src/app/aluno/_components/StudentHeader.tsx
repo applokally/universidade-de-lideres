@@ -127,10 +127,11 @@ const headerNotifications: HeaderNotification[] = [
 
 const menuItems = [
   { label: "Início", href: "/aluno" },
-  { label: "Trilhas", href: "/aluno/trilhas" },
-  { label: "Cursos", href: "/aluno/cursos" },
+  { label: "Minhas trilhas", href: "/aluno/trilhas" },
+  { label: "Meus cursos", href: "/aluno/cursos" },
   { label: "Ao vivo", href: "/aluno/ao-vivo" },
   { label: "Certificados", href: "/aluno/area/certificados" },
+  { label: "Gamificação", href: "/aluno/gamificacao" },
 ];
 
 const categoryGroups = [
@@ -138,13 +139,13 @@ const categoryGroups = [
     title: "Conteúdos",
     items: [
       {
-        label: "Trilhas",
+        label: "Minhas trilhas",
         description: "Jornadas completas por nível e objetivo.",
         href: "/aluno/trilhas",
         icon: GraduationCap,
       },
       {
-        label: "Cursos",
+        label: "Meus cursos",
         description: "Cursos independentes publicados pelo ADM.",
         href: "/aluno/cursos",
         icon: BookOpen,
@@ -177,6 +178,12 @@ const categoryGroups = [
         description: "Conteúdos indicados para seu nível atual.",
         href: "/aluno/recomendados",
         icon: Compass,
+      },
+      {
+        label: "Gamificação",
+        description: "Acompanhe pontos, evolução e conquistas.",
+        href: "/aluno/gamificacao",
+        icon: Star,
       },
     ],
   },
@@ -618,7 +625,7 @@ export function StudentHeader() {
           : "bg-gradient-to-b from-black/80 via-black/35 to-transparent",
       ].join(" ")}
     >
-      <div className="flex h-[74px] items-center justify-between px-5 sm:px-8 lg:px-10">
+      <div className="flex h-[84px] items-center justify-between px-5 sm:px-8 lg:px-10">
         <div className="flex min-w-0 items-center gap-7">
           <Link href="/aluno" className="shrink-0" aria-label="Área do aluno">
             <Image
