@@ -444,33 +444,40 @@ export default function AdminCertificadoEditarPage() {
   }
 
   useEffect(() => {
-    if (!draggingLayer) return;
+  const layerBeingDragged = draggingLayer;
 
-    function handlePointerMove(event: PointerEvent) {
-      event.preventDefault();
-      updateLayerFromClientPosition(
-        event.clientX,
-        event.clientY,
-        draggingLayer,
-      );
-    }
+  if (!layerBeingDragged) return;
 
-    function handlePointerUp() {
-      setDraggingLayer(null);
-    }
+  function handlePointerMove(event: PointerEvent) {
+    const activeDraggedLayer = layerBeingDragged;
 
-    window.addEventListener("pointermove", handlePointerMove, {
-      passive: false,
-    });
-    window.addEventListener("pointerup", handlePointerUp);
-    window.addEventListener("pointercancel", handlePointerUp);
+    if (activeDraggedLayer === null) return;
 
-    return () => {
-      window.removeEventListener("pointermove", handlePointerMove);
-      window.removeEventListener("pointerup", handlePointerUp);
-      window.removeEventListener("pointercancel", handlePointerUp);
-    };
-  }, [draggingLayer]);
+    event.preventDefault();
+
+    updateLayerFromClientPosition(
+      event.clientX,
+      event.clientY,
+      activeDraggedLayer,
+    );
+  }
+
+  function handlePointerUp() {
+    setDraggingLayer(null);
+  }
+
+  window.addEventListener("pointermove", handlePointerMove, {
+    passive: false,
+  });
+  window.addEventListener("pointerup", handlePointerUp);
+  window.addEventListener("pointercancel", handlePointerUp);
+
+  return () => {
+    window.removeEventListener("pointermove", handlePointerMove);
+    window.removeEventListener("pointerup", handlePointerUp);
+    window.removeEventListener("pointercancel", handlePointerUp);
+  };
+}, [draggingLayer]);
 
   function updateActiveLayer(partial: Partial<PositionNode>) {
     if (!activeLayer) return;

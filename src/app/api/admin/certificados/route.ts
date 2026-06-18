@@ -15,6 +15,13 @@ const CERTIFICATE_BUCKET = "certificate-templates";
 
 type CertificateScope = "general" | "course" | "trail";
 
+type CertificateTemplateRecord = Record<string, unknown> & {
+  id: string;
+  image_path: string;
+  image_url: string | null;
+  is_active: boolean;
+};
+
 function createStudentSupabaseClient(
   cookieStore: Awaited<ReturnType<typeof cookies>>,
 ) {
@@ -228,7 +235,9 @@ export async function GET() {
       );
     }
 
-    const templates = (templatesResponse.data ?? []).map((template) => {
+    const templates = (
+      (templatesResponse.data ?? []) as unknown as CertificateTemplateRecord[]
+    ).map((template) => {
       const imageUrl =
         template.image_url ||
         adminSupabase.storage
@@ -376,10 +385,12 @@ export async function POST(request: Request) {
       );
     }
 
+    const createdTemplate = data as unknown as CertificateTemplateRecord;
+
     return NextResponse.json({
       ok: true,
       template: {
-        ...data,
+        ...createdTemplate,
         image_url: publicUrl,
       },
       message: "Modelo de certificado cadastrado.",
@@ -462,9 +473,11 @@ export async function PATCH(request: Request) {
         );
       }
 
+      const savedTemplate = data as unknown as CertificateTemplateRecord;
+
       return NextResponse.json({
         ok: true,
-        template: data,
+        template: savedTemplate,
         message: "Posicionamento do certificado salvo.",
       });
     }
@@ -504,10 +517,14 @@ export async function PATCH(request: Request) {
       );
     }
 
+    const updatedTemplate = data as unknown as CertificateTemplateRecord;
+
     return NextResponse.json({
       ok: true,
-      template: data,
-      message: data.is_active ? "Modelo ativado." : "Modelo desativado.",
+      template: updatedTemplate,
+      message: updatedTemplate.is_active
+        ? "Modelo ativado."
+        : "Modelo desativado.",
     });
   } catch (error) {
     console.error("Erro ao atualizar modelo de certificado:", error);
@@ -567,9 +584,11 @@ export async function DELETE(request: Request) {
       );
     }
 
+    const deletedTemplate = data as unknown as { id: string };
+
     return NextResponse.json({
       ok: true,
-      deleted_id: data.id,
+      deleted_id: deletedTemplate.id,
       message: "Modelo de certificado excluído.",
     });
   } catch (error) {
