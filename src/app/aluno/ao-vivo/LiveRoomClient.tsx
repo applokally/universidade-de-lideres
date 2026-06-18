@@ -70,6 +70,7 @@ declare global {
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const ZOOM_MEETING_SDK_VERSION = "6.1.0";
+const EARLY_JOIN_WINDOW_MS = 5 * 60 * 1000;
 
 // ─── Aspect ratio widescreen 16:9 ────────────────────────────────────────────
 // O SDK usa viewSizes.default para controlar apenas o CANVAS de vídeo.
@@ -181,6 +182,92 @@ function getStatusClass(status: string | null | undefined) {
   if (status === "scheduled") return "bg-white text-black";
   if (status === "ended") return "bg-white/10 text-white/64";
   return "bg-[#DBC094] text-black";
+}
+
+function getLivePhase(live: LiveRow, nowMs: number) {
+  const startsAt = new Date(live.starts_at).getTime();
+  const endsAt = getLiveAutomaticEndAt(live);
+
+  if (Number.isFinite(startsAt) && nowMs < startsAt) {
+    return "scheduled";
+  }
+
+  if (endsAt && nowMs > endsAt) {
+    return "ended";
+  }
+
+  if (live.status === "cancelled") {
+    return "cancelled";
+  }
+
+  return "live";
+}
+
+function formatCountdownToStart(value: string | null | undefined, nowMs: number) {
+  if (!value) return "data a definir";
+
+  const startsAt = new Date(value).getTime();
+
+  if (!Number.isFinite(startsAt)) return "data a definir";
+
+  const diffMs = Math.max(0, startsAt - nowMs);
+  const totalMinutes = Math.ceil(diffMs / 60000);
+  const days = Math.floor(totalMinutes / 1440);
+  const hours = Math.floor((totalMinutes % 1440) / 60);
+  const minutes = totalMinutes % 60;
+
+  const parts: string[] = [];
+
+  if (days > 0) {
+    parts.push(`${days} ${days === 1 ? "dia" : "dias"}`);
+  }
+
+  if (hours > 0 || days > 0) {
+    parts.push(`${hours} ${hours === 1 ? "hora" : "horas"}`);
+  }
+
+  parts.push(`${minutes} ${minutes === 1 ? "minuto" : "minutos"}`);
+
+  return parts.join(" • ");
+}
+
+function getLiveDisplayStatus(live: LiveRow, nowMs: number) {
+  const phase = getLivePhase(live, nowMs);
+
+  if (phase === "scheduled") {
+    return `Começa em ${formatCountdownToStart(live.starts_at, nowMs)}`;
+  }
+
+  if (phase === "live") return "Ao vivo agora";
+  if (phase === "ended") return "Encerrada";
+  if (phase === "cancelled") return "Cancelada";
+
+  return translateLiveStatus(live.status);
+}
+
+function getLiveDisplayStatusClass(live: LiveRow, nowMs: number) {
+  const phase = getLivePhase(live, nowMs);
+
+  if (phase === "scheduled") return "bg-[#DBC094] text-[#141414]";
+  if (phase === "live") return "bg-emerald-500 text-white";
+  if (phase === "ended") return "bg-white/10 text-white/64";
+  if (phase === "cancelled") return "bg-red-500 text-white";
+
+  return getStatusClass(live.status);
+}
+
+function canJoinZoomLive(live: LiveRow, nowMs: number) {
+  if (!isZoomSdkLive(live)) return false;
+
+  const phase = getLivePhase(live, nowMs);
+
+  if (phase === "ended" || phase === "cancelled") return false;
+
+  const startsAt = new Date(live.starts_at).getTime();
+
+  if (!Number.isFinite(startsAt)) return phase === "live";
+
+  return nowMs >= startsAt - EARLY_JOIN_WINDOW_MS;
 }
 
 function extractYouTubeId(url: string) {
@@ -618,35 +705,49 @@ function ZoomMeetingPlayer({ live }: { live: LiveRow }) {
 function ZoomJoinGate({
   live,
   hydrated,
+  nowMs,
   onJoin,
 }: {
   live: LiveRow;
   hydrated: boolean;
+  nowMs: number;
   onJoin: () => void;
 }) {
+  const phase = getLivePhase(live, nowMs);
+  const countdown = formatCountdownToStart(live.starts_at, nowMs);
+  const canJoin = canJoinZoomLive(live, nowMs);
   const roomMessage =
-    live.status === "live"
+    phase === "live"
       ? {
-          title: "Transmissão disponível",
+          title: "Ao vivo agora",
           description:
             "Clique em participar para entrar na sala ao vivo.",
         }
-      : getRoomMessage(live);
+      : canJoin
+        ? {
+            title: "Sala liberada",
+            description: `A live começa em ${countdown}. Você já pode entrar na sala.`,
+          }
+        : phase === "scheduled"
+          ? {
+              title: "Transmissão agendada",
+              description: `Faltam ${countdown} para o início da live.`,
+            }
+          : getRoomMessage(live);
 
   const coverUrl = resolvePublicAssetUrl(live.cover_path);
-  const canJoin = live.status === "live" && isZoomSdkLive(live);
 
   return (
-    <div className="relative flex h-full min-h-[420px] items-center justify-center overflow-hidden bg-[#0b0d12] p-8 text-center">
+    <div className="relative flex h-full min-h-[540px] items-center justify-center overflow-hidden p-8 text-center">
       {coverUrl && (
         <img
           src={coverUrl}
           alt={live.title}
-          className="absolute inset-0 h-full w-full object-cover opacity-24"
+          className="absolute inset-0 h-full w-full object-cover object-[center_28%] opacity-42"
         />
       )}
 
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(219,192,148,0.18),transparent_34%),linear-gradient(180deg,rgba(5,6,9,0.42),rgba(5,6,9,0.96))]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(219,192,148,0.18),transparent_34%),linear-gradient(90deg,rgba(5,6,9,0.84),rgba(5,6,9,0.52)_48%,rgba(5,6,9,0.88)),linear-gradient(180deg,rgba(5,6,9,0.18),rgba(5,6,9,0.92))]" />
 
       <div className="relative z-10 max-w-[680px]">
         <Radio className="mx-auto h-14 w-14 text-[#DBC094]" />
@@ -680,10 +781,10 @@ function ZoomJoinGate({
             <Play className="h-4 w-4 fill-current" />
             Participar
           </button>
-        ) : live.status === "scheduled" ? (
+        ) : phase === "scheduled" && !canJoin ? (
           <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-[#DBC094]/24 bg-[#DBC094]/10 px-4 py-2 text-[12px] font-black text-[#DBC094]">
             <Loader2 className="h-4 w-4 animate-spin" />
-            Aguardando início
+            Começa em {countdown}
           </div>
         ) : null}
       </div>
@@ -694,24 +795,43 @@ function ZoomJoinGate({
 function LivePlayer({
   live,
   hydrated,
+  nowMs,
   joinRequested,
   onJoin,
 }: {
   live: LiveRow;
   hydrated: boolean;
+  nowMs: number;
   joinRequested: boolean;
   onJoin: () => void;
 }) {
-  const player = getPlayerData(live);
-  const roomMessage = getRoomMessage(live);
+  const phase = getLivePhase(live, nowMs);
+  const player = phase === "scheduled" ? null : getPlayerData(live);
+  const roomMessage =
+    phase === "scheduled"
+      ? {
+          title: "Transmissão agendada",
+          description: `Faltam ${formatCountdownToStart(
+            live.starts_at,
+            nowMs
+          )} para o início da live.`,
+        }
+      : getRoomMessage(live);
   const coverUrl = resolvePublicAssetUrl(live.cover_path);
 
   if (isZoomSdkLive(live)) {
-    if (joinRequested) {
+    if (phase === "live" && joinRequested) {
       return <ZoomMeetingPlayer live={live} />;
     }
 
-    return <ZoomJoinGate live={live} hydrated={hydrated} onJoin={onJoin} />;
+    return (
+      <ZoomJoinGate
+        live={live}
+        hydrated={hydrated}
+        nowMs={nowMs}
+        onJoin={onJoin}
+      />
+    );
   }
 
   if (player?.kind === "srcdoc") {
@@ -732,9 +852,11 @@ function LivePlayer({
   }
 
   return (
-    <div className="relative flex h-full min-h-[420px] items-center justify-center overflow-hidden bg-[#0b0d12] p-8 text-center">
-      {coverUrl && <img src={coverUrl} alt={live.title} className="absolute inset-0 h-full w-full object-cover opacity-28" />}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(219,192,148,0.20),transparent_34%),linear-gradient(180deg,rgba(5,6,9,0.34),rgba(5,6,9,0.94))]" />
+    <div className="relative flex h-full min-h-[540px] items-center justify-center overflow-hidden p-8 text-center">
+      {coverUrl && (
+        <img src={coverUrl} alt={live.title} className="absolute inset-0 h-full w-full object-cover object-[center_28%] opacity-42" />
+      )}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(219,192,148,0.18),transparent_34%),linear-gradient(90deg,rgba(5,6,9,0.84),rgba(5,6,9,0.52)_48%,rgba(5,6,9,0.88)),linear-gradient(180deg,rgba(5,6,9,0.18),rgba(5,6,9,0.92))]" />
       <div className="relative z-10 max-w-[680px]">
         <Radio className="mx-auto h-12 w-12 text-[#DBC094]" />
         <h2 className="mt-5 text-[30px] font-black tracking-[-0.055em] text-white sm:text-[42px]">{roomMessage.title}</h2>
@@ -747,9 +869,10 @@ function LivePlayer({
             <Clock3 className="h-4 w-4 text-[#DBC094]" />{formatLiveTime(live.starts_at, hydrated)}
           </span>
         </div>
-        {live.status === "scheduled" && (
+        {phase === "scheduled" && (
           <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-[#DBC094]/24 bg-[#DBC094]/10 px-4 py-2 text-[12px] font-black text-[#DBC094]">
-            <Loader2 className="h-4 w-4 animate-spin" />Aguardando início
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Começa em {formatCountdownToStart(live.starts_at, nowMs)}
           </div>
         )}
       </div>
@@ -789,7 +912,7 @@ export function LiveRoomClient({ initialLives, initialSelectedLiveId }: LiveRoom
 
     const interval = window.setInterval(() => {
       setCurrentTimeMs(Date.now());
-    }, 30000);
+    }, 10000);
 
     return () => window.clearInterval(interval);
   }, []);
@@ -804,7 +927,7 @@ export function LiveRoomClient({ initialLives, initialSelectedLiveId }: LiveRoom
     const nowMs = currentTimeMs ?? Date.now();
 
     if (
-      selectedLive.status !== "live" ||
+      getLivePhase(selectedLive, nowMs) !== "live" ||
       isLiveExpiredForStudent(selectedLive, nowMs)
     ) {
       setPlayerLocked(false);
@@ -831,7 +954,7 @@ export function LiveRoomClient({ initialLives, initialSelectedLiveId }: LiveRoom
       const nowMs = Date.now();
 
       if (
-        updated.status !== "live" ||
+        getLivePhase(updated, nowMs) !== "live" ||
         isLiveExpiredForStudent(updated, nowMs)
       ) {
         setPlayerLocked(false);
@@ -873,7 +996,7 @@ export function LiveRoomClient({ initialLives, initialSelectedLiveId }: LiveRoom
     const nowMs = currentTimeMs ?? Date.now();
 
     if (
-      selectedLive.status !== "live" ||
+      !canJoinZoomLive(selectedLive, nowMs) ||
       isLiveExpiredForStudent(selectedLive, nowMs)
     ) {
       setJoinRequestedLiveId("");
@@ -886,21 +1009,15 @@ export function LiveRoomClient({ initialLives, initialSelectedLiveId }: LiveRoom
   }
 
   return (
-    <section className="px-[14px] pb-14 pt-[96px]">
+    <section className="px-[14px] pb-14 pt-[92px]">
       <div className="w-full max-w-none">
-        <div className="mb-4 flex flex-wrap items-end justify-between gap-5">
-          <div>
-            <h1 className="text-[36px] font-black leading-none tracking-[-0.06em] text-white sm:text-[46px]">Ao vivo</h1>
+        {!selectedLive ? (
+          <div className="mb-4 flex flex-wrap items-end justify-between gap-5">
+            <div>
+              <h1 className="text-[36px] font-black leading-none tracking-[-0.06em] text-white sm:text-[46px]">Ao vivo</h1>
+            </div>
           </div>
-          <div className="flex flex-wrap items-center gap-3">
-            {selectedLive && !playerLocked && (
-              <button type="button" onClick={() => void refreshSelectedLive({ manual: true })} disabled={refreshing}
-                className="inline-flex h-10 items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 text-[12px] font-black text-white/58 transition hover:border-[#DBC094]/42 hover:text-[#DBC094] disabled:cursor-not-allowed disabled:opacity-60">
-                {refreshing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}Atualizar
-              </button>
-            )}
-          </div>
-        </div>
+        ) : null}
 
         {!selectedLive ? (
           <section className="flex min-h-[360px] flex-col items-center justify-center rounded-[28px] border border-white/10 bg-[#101116] p-8 text-center">
@@ -911,23 +1028,36 @@ export function LiveRoomClient({ initialLives, initialSelectedLiveId }: LiveRoom
         ) : (
           <div className="grid gap-5">
             <section className="grid gap-4">
-              <div className="w-full overflow-visible">
+              <div className="relative w-full overflow-visible">
+                {!playerLocked && (
+                  <button
+                    type="button"
+                    onClick={() => void refreshSelectedLive({ manual: true })}
+                    disabled={refreshing}
+                    className="absolute right-4 top-4 z-30 inline-flex h-10 items-center gap-2 rounded-full border border-white/10 bg-black/35 px-4 text-[12px] font-black text-white/72 backdrop-blur-md transition hover:border-[#DBC094]/42 hover:text-[#DBC094] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {refreshing ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <RefreshCcw className="h-4 w-4" />
+                    )}
+                    Atualizar
+                  </button>
+                )}
+
                 <LivePlayer
                   live={selectedLive}
                   hydrated={hydrated}
+                  nowMs={currentTimeMs ?? Date.now()}
                   joinRequested={joinRequestedLiveId === selectedLive.id}
                   onJoin={handleJoinSelectedLive}
                 />
               </div>
 
-              <aside className="mx-auto w-full max-w-[1200px] rounded-[22px] border border-white/10 bg-[#101116] px-4 py-3">
+              <aside className="mx-auto mt-8 w-full max-w-[1200px] rounded-[22px] border border-white/10 bg-[#101116] px-4 py-3">
                 <div className="grid gap-3 xl:grid-cols-[minmax(280px,1fr)_minmax(520px,0.9fr)] xl:items-center">
                   <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className={`rounded-full px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.1em] ${getStatusClass(selectedLive.status)}`}>{translateLiveStatus(selectedLive.status)}</span>
-                    </div>
-
-                    <h2 className="mt-2 truncate text-[22px] font-black leading-[1.05] tracking-[-0.05em] text-white">{selectedLive.title}</h2>
+                    <h2 className="truncate text-[22px] font-black leading-[1.05] tracking-[-0.05em] text-white">{selectedLive.title}</h2>
                     <p className="mt-1 line-clamp-1 text-[12px] font-medium leading-5 text-white/50">{selectedLive.description || selectedLive.short_description || "Transmissão disponível na área do aluno."}</p>
                   </div>
 

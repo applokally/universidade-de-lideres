@@ -2,28 +2,29 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import {
-  createClient,
-  type SupabaseClient,
-  type User,
-} from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
+import type { SupabaseClient, User } from "@supabase/supabase-js";
 import {
   ArrowLeft,
   CheckCircle2,
+  ClipboardCheck,
   ChevronLeft,
   ChevronRight,
+  Clock3,
   Download,
   ExternalLink,
   FileText,
   Headphones,
   ImageIcon,
   Loader2,
+  LockKeyhole,
   MessageCircle,
   Play,
   Presentation,
   Send,
   Star,
   Video,
+  XCircle,
 } from "lucide-react";
 import { StudentHeader } from "../../_components/StudentHeader";
 
@@ -156,16 +157,93 @@ type LessonBundle = {
   ratings: RatingRow[];
 };
 
+type Assessment = {
+  id: string;
+  title: string;
+  description: string | null;
+  instructions: string | null;
+  scope_type: "course" | "trail" | "lesson";
+  course_id: string | null;
+  trail_id: string | null;
+  lesson_id: string | null;
+  trail_evaluation_mode: "per_course" | "general";
+  access_condition:
+    | "after_all_lessons"
+    | "after_course_completion"
+    | "after_trail_completion"
+    | "after_lesson_completion"
+    | "manual_release";
+  min_correct_percentage: number;
+  certificate_required: boolean;
+  attempts_allowed: number;
+  time_limit_minutes: number | null;
+  question_order: "fixed" | "random";
+  status: "draft" | "published" | "paused" | "archived" | string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+type AssessmentAttempt = {
+  id: string;
+  assessment_id: string;
+  user_id: string;
+  status: string;
+  correct_percentage: number;
+  created_at: string;
+};
+
+type StudentAssessment = Assessment & {
+  available: boolean;
+  availabilityReason: string;
+  lastAttempt?: AssessmentAttempt | null;
+  questions?: AssessmentQuestion[];
+  options?: AssessmentOption[];
+};
+
+type AssessmentQuestion = {
+  id: string;
+  assessment_id: string;
+  question_type:
+    | "single_choice"
+    | "multiple_choice"
+    | "short_text"
+    | "long_text"
+    | "true_false"
+    | "scale";
+  prompt: string;
+  help_text: string | null;
+  points: number;
+  required: boolean;
+  sort_order: number;
+};
+
+type AssessmentOption = {
+  id: string;
+  question_id: string;
+  label: string;
+  sort_order: number;
+};
+
+type AssessmentAnswerState = {
+  selectedOptionIds: string[];
+  textAnswer: string;
+  numericAnswer: string;
+};
+
+type AssessmentSubmitResult = {
+  attempt_id: string;
+  status: string;
+  score_points: number;
+  max_points: number;
+  correct_percentage: number;
+};
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
 
 function getSupabaseClient() {
-  return createClient(supabaseUrl, supabaseAnonKey, {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-    },
-  });
+  return createBrowserClient(supabaseUrl, supabaseAnonKey);
 }
 
 function normalizeStoragePath(path: string) {
@@ -690,6 +768,136 @@ async function loadLessonBundle(
   };
 }
 
+function formatQuestionType(type: AssessmentQuestion["question_type"]) {
+  if (type === "single_choice") return "Escolha única";
+  if (type === "multiple_choice") return "Múltipla escolha";
+  if (type === "short_text") return "Resposta curta";
+  if (type === "long_text") return "Resposta aberta";
+  if (type === "true_false") return "Verdadeiro/Falso";
+  return "Escala";
+}
+
+function getAnswerCompletion(
+  question: AssessmentQuestion,
+  answer: AssessmentAnswerState | undefined,
+) {
+  if (!answer) return false;
+
+  if (
+    question.question_type === "single_choice" ||
+    question.question_type === "multiple_choice" ||
+    question.question_type === "true_false"
+  ) {
+    return answer.selectedOptionIds.length > 0;
+  }
+
+  if (question.question_type === "scale") {
+    return answer.numericAnswer.trim().length > 0;
+  }
+
+  return answer.textAnswer.trim().length > 0;
+}
+
+function getAssessmentAvailability(
+  assessment: Assessment,
+  bundle: LessonBundle,
+  progressMap: Record<string, ProgressRow>,
+) {
+  const allLessonsCompleted = bundle.lessons.every((lesson) =>
+    Boolean(progressMap[lesson.id]?.completed_at),
+  );
+
+  if (
+    assessment.access_condition === "after_all_lessons" ||
+    assessment.access_condition === "after_course_completion"
+  ) {
+    return {
+      available: allLessonsCompleted,
+      reason: allLessonsCompleted
+        ? "Liberada após a conclusão das aulas."
+        : "Conclua todas as aulas do curso para liberar esta avaliação.",
+    };
+  }
+
+  if (assessment.access_condition === "after_lesson_completion") {
+    const completed = assessment.lesson_id
+      ? Boolean(progressMap[assessment.lesson_id]?.completed_at)
+      : allLessonsCompleted;
+
+    return {
+      available: completed,
+      reason: completed
+        ? "Liberada após a conclusão da aula vinculada."
+        : "Conclua a aula vinculada para liberar esta avaliação.",
+    };
+  }
+
+  if (assessment.access_condition === "after_trail_completion") {
+    return {
+      available: allLessonsCompleted,
+      reason: allLessonsCompleted
+        ? "Liberada para esta etapa da trilha."
+        : "Conclua as aulas desta etapa para liberar esta avaliação.",
+    };
+  }
+
+  return {
+    available: false,
+    reason: "Aguardando liberação da administração.",
+  };
+}
+
+async function loadCourseAssessments(
+  _supabase: SupabaseClient,
+  bundle: LessonBundle,
+  _userId: string | null,
+  _progressMap: Record<string, ProgressRow>,
+) {
+  const lessonIds = bundle.lessons.map((lesson) => lesson.id);
+  const params = new URLSearchParams();
+  params.set("courseId", bundle.course.id);
+
+  if (lessonIds.length > 0) {
+    params.set("lessonIds", lessonIds.join(","));
+  }
+
+  const response = await fetch(`/api/student/course-assessments?${params}`, {
+    method: "GET",
+    cache: "no-store",
+  });
+
+  const data = (await response.json().catch(() => null)) as {
+    items?: StudentAssessment[];
+    error?: string;
+  } | null;
+
+  if (!response.ok) {
+    throw new Error(
+      data?.error || "Não foi possível carregar as avaliações deste curso.",
+    );
+  }
+
+  return data?.items ?? [];
+}
+
+async function loadAssessmentQuestionsAndOptions(
+  _supabase: SupabaseClient,
+  assessment: StudentAssessment,
+) {
+  const questions = [...(assessment.questions ?? [])].sort(
+    (a, b) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0),
+  );
+  const questionIds = new Set(questions.map((question) => question.id));
+  const options = [...(assessment.options ?? [])]
+    .filter((option) => questionIds.has(option.question_id))
+    .sort((a, b) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0));
+
+  return {
+    questions,
+    options,
+  };
+}
+
 function LessonContentShell({
   lesson,
   children,
@@ -697,21 +905,9 @@ function LessonContentShell({
   lesson: LessonRow;
   children: React.ReactNode;
 }) {
-  const Icon = getContentIcon(lesson.content_type);
-
   return (
-    <div className="overflow-hidden rounded-[22px] border border-white/10 bg-black">
-      <div className="flex items-center gap-3 border-b border-white/10 bg-[#101116] px-4 py-3">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#DBC094] text-black">
-          <Icon className="h-4 w-4" />
-        </div>
-
-        <p className="text-[14px] font-black text-white">
-          {getLessonDisplayLabel(lesson)}
-        </p>
-      </div>
-
-      <div className="bg-black">{children}</div>
+    <div className="overflow-hidden rounded-[12px] border border-[#6f5b2f] bg-black">
+      {children}
     </div>
   );
 }
@@ -786,7 +982,7 @@ function LessonPlayer({
       <LessonContentShell lesson={lesson}>
         <div className="flex aspect-video flex-col items-center justify-center p-6 text-center">
           <Loader2 className="h-8 w-8 animate-spin text-[#DBC094]" />
-          <h2 className="mt-4 text-[22px] font-black tracking-[-0.04em]">
+          <h2 className="mt-3 text-sm font-semibold uppercase tracking-[0.08em] text-white">
             Carregando vídeo...
           </h2>
           <p className="mt-2 max-w-[560px] text-[14px] leading-6 text-white/50">
@@ -802,13 +998,13 @@ function LessonPlayer({
     return (
       <LessonContentShell lesson={lesson}>
         <div className="flex aspect-video flex-col items-center justify-center p-6 text-center">
-          <Video className="h-12 w-12 text-[#DBC094]" />
+          <Video className="h-7 w-7 text-[#DBC094]/75" />
 
-          <h2 className="mt-4 text-[26px] font-black tracking-[-0.045em]">
+          <h2 className="mt-3 text-sm font-semibold uppercase tracking-[0.08em] text-white">
             Vídeo ainda não enviado
           </h2>
 
-          <p className="mt-3 max-w-[620px] text-[14px] leading-6 text-white/58">
+          <p className="mt-2 max-w-[560px] text-xs leading-6 text-white/50">
             Esta aula ainda está cadastrada como gravação do Zoom. Para usar o
             player interno da plataforma, edite a aula no ADM, selecione Upload
             de vídeo e envie o arquivo da aula.
@@ -822,13 +1018,13 @@ function LessonPlayer({
     return (
       <LessonContentShell lesson={lesson}>
         <div className="flex aspect-video flex-col items-center justify-center p-6 text-center">
-          <Video className="h-12 w-12 text-[#DBC094]" />
+          <Video className="h-7 w-7 text-[#DBC094]/75" />
 
-          <h2 className="mt-4 text-[26px] font-black tracking-[-0.045em]">
+          <h2 className="mt-3 text-sm font-semibold uppercase tracking-[0.08em] text-white">
             Vídeo externo
           </h2>
 
-          <p className="mt-3 max-w-[620px] text-[14px] leading-6 text-white/58">
+          <p className="mt-2 max-w-[560px] text-xs leading-6 text-white/50">
             O link cadastrado não é um arquivo de vídeo direto. Para usar o
             player interno, envie o vídeo por upload no ADM.
           </p>
@@ -841,8 +1037,8 @@ function LessonPlayer({
     return (
       <LessonContentShell lesson={lesson}>
         <div className="flex aspect-video flex-col items-center justify-center p-6 text-center">
-          <Headphones className="h-12 w-12 text-[#DBC094]" />
-          <h2 className="mt-4 text-[26px] font-black tracking-[-0.045em]">
+          <Headphones className="h-7 w-7 text-[#DBC094]/75" />
+          <h2 className="mt-3 text-sm font-semibold uppercase tracking-[0.08em] text-white">
             Aula em Áudio
           </h2>
           <audio
@@ -860,8 +1056,8 @@ function LessonPlayer({
     return (
       <LessonContentShell lesson={lesson}>
         <div className="flex aspect-video flex-col items-center justify-center p-6 text-center">
-          <Headphones className="h-12 w-12 text-[#DBC094]" />
-          <h2 className="mt-4 text-[26px] font-black tracking-[-0.045em]">
+          <Headphones className="h-7 w-7 text-[#DBC094]/75" />
+          <h2 className="mt-3 text-sm font-semibold uppercase tracking-[0.08em] text-white">
             Aula em Áudio
           </h2>
           <audio
@@ -931,15 +1127,15 @@ function LessonPlayer({
     return (
       <LessonContentShell lesson={lesson}>
         <div className="flex aspect-video flex-col items-center justify-center p-6 text-center">
-          <Presentation className="h-12 w-12 text-[#DBC094]" />
-          <h2 className="mt-4 text-[26px] font-black tracking-[-0.045em]">
+          <Presentation className="h-7 w-7 text-[#DBC094]/75" />
+          <h2 className="mt-3 text-sm font-semibold uppercase tracking-[0.08em] text-white">
             Aula em Slides
           </h2>
           <a
             href={uploadedContentUrl}
             target="_blank"
             rel="noreferrer"
-            className="mt-6 inline-flex h-11 items-center gap-2 rounded-[10px] bg-white px-5 text-[14px] font-black text-black transition hover:bg-[#DBC094]"
+            className="mt-5 inline-flex h-9 items-center gap-2 rounded-md bg-white px-4 text-xs font-semibold text-black transition hover:bg-[#DBC094]"
           >
             Abrir slides
             <ExternalLink className="h-4 w-4" />
@@ -953,15 +1149,15 @@ function LessonPlayer({
     return (
       <LessonContentShell lesson={lesson}>
         <div className="flex aspect-video flex-col items-center justify-center p-6 text-center">
-          <Presentation className="h-12 w-12 text-[#DBC094]" />
-          <h2 className="mt-4 text-[26px] font-black tracking-[-0.045em]">
+          <Presentation className="h-7 w-7 text-[#DBC094]/75" />
+          <h2 className="mt-3 text-sm font-semibold uppercase tracking-[0.08em] text-white">
             Aula em Slides
           </h2>
           <a
             href={primaryUrl}
             target="_blank"
             rel="noreferrer"
-            className="mt-6 inline-flex h-11 items-center gap-2 rounded-[10px] bg-white px-5 text-[14px] font-black text-black transition hover:bg-[#DBC094]"
+            className="mt-5 inline-flex h-9 items-center gap-2 rounded-md bg-white px-4 text-xs font-semibold text-black transition hover:bg-[#DBC094]"
           >
             Abrir slides
             <ExternalLink className="h-4 w-4" />
@@ -975,15 +1171,15 @@ function LessonPlayer({
     return (
       <LessonContentShell lesson={lesson}>
         <div className="flex aspect-video flex-col items-center justify-center p-6 text-center">
-          <ExternalLink className="h-12 w-12 text-[#DBC094]" />
-          <h2 className="mt-4 text-[26px] font-black tracking-[-0.045em]">
+          <ExternalLink className="h-7 w-7 text-[#DBC094]/75" />
+          <h2 className="mt-3 text-sm font-semibold uppercase tracking-[0.08em] text-white">
             Conteúdo externo
           </h2>
           <a
             href={lesson.external_url}
             target="_blank"
             rel="noreferrer"
-            className="mt-6 inline-flex h-11 items-center gap-2 rounded-[10px] bg-white px-5 text-[14px] font-black text-black transition hover:bg-[#DBC094]"
+            className="mt-5 inline-flex h-9 items-center gap-2 rounded-md bg-white px-4 text-xs font-semibold text-black transition hover:bg-[#DBC094]"
           >
             Acessar conteúdo
             <ExternalLink className="h-4 w-4" />
@@ -1014,13 +1210,13 @@ function LessonPlayer({
   return (
     <LessonContentShell lesson={lesson}>
       <div className="flex aspect-video flex-col items-center justify-center p-6 text-center">
-        <FileText className="h-12 w-12 text-[#DBC094]" />
+        <FileText className="h-7 w-7 text-[#DBC094]/75" />
 
-        <h2 className="mt-4 text-[26px] font-black tracking-[-0.045em]">
+        <h2 className="mt-3 text-sm font-semibold uppercase tracking-[0.08em] text-white">
           Conteúdo da aula
         </h2>
 
-        <p className="mt-3 max-w-[620px] text-[14px] leading-6 text-white/58">
+        <p className="mt-2 max-w-[560px] text-xs leading-6 text-white/50">
           Esta aula ainda não possui conteúdo principal publicado.
         </p>
       </div>
@@ -1048,6 +1244,28 @@ export default function Page() {
   const [completionFlow, setCompletionFlow] = useState<CompletionFlow | null>(
     null,
   );
+
+  const [assessments, setAssessments] = useState<StudentAssessment[]>([]);
+  const [selectedAssessmentId, setSelectedAssessmentId] = useState<
+    string | null
+  >(null);
+  const [assessmentQuestions, setAssessmentQuestions] = useState<
+    AssessmentQuestion[]
+  >([]);
+  const [assessmentOptions, setAssessmentOptions] = useState<
+    AssessmentOption[]
+  >([]);
+  const [assessmentAnswers, setAssessmentAnswers] = useState<
+    Record<string, AssessmentAnswerState>
+  >({});
+  const [assessmentQuestionIndex, setAssessmentQuestionIndex] = useState(0);
+  const [loadingAssessment, setLoadingAssessment] = useState(false);
+  const [submittingAssessment, setSubmittingAssessment] = useState(false);
+  const [assessmentMessage, setAssessmentMessage] = useState("");
+  const [assessmentResult, setAssessmentResult] =
+    useState<AssessmentSubmitResult | null>(null);
+  const [issuingCertificate, setIssuingCertificate] = useState(false);
+  const [certificateMessage, setCertificateMessage] = useState("");
 
   useEffect(() => {
     const parts = window.location.pathname.split("/").filter(Boolean);
@@ -1093,6 +1311,24 @@ export default function Page() {
         return map;
       }, {});
       const loadedProgress = progressMap[lessonId] ?? studentContext.progress;
+      let loadedAssessments: StudentAssessment[] = [];
+
+      if (loadedBundle) {
+        try {
+          loadedAssessments = await loadCourseAssessments(
+            supabase,
+            loadedBundle,
+            currentUser?.id ?? null,
+            progressMap,
+          );
+        } catch (assessmentError) {
+          console.error(
+            "Erro ao carregar avaliações reais do curso:",
+            assessmentError,
+          );
+          loadedAssessments = [];
+        }
+      }
 
       if (!mounted) return;
 
@@ -1101,6 +1337,7 @@ export default function Page() {
       setProgress(loadedProgress);
       setProgressByLessonId(progressMap);
       setBundle(loadedBundle);
+      setAssessments(loadedAssessments);
       setLoading(false);
     }
 
@@ -1196,12 +1433,584 @@ export default function Page() {
           Math.round((completedLessonsCount / totalLessonsCount) * 100),
         )
       : 0;
+  const currentAssessment = selectedAssessmentId
+    ? (assessments.find(
+        (assessment) => assessment.id === selectedAssessmentId,
+      ) ?? null)
+    : null;
+  const currentAssessmentQuestion =
+    assessmentQuestions[assessmentQuestionIndex] ?? null;
+  const assessmentOptionsByQuestion = useMemo(() => {
+    return assessmentOptions.reduce((map, option) => {
+      const current = map.get(option.question_id) ?? [];
+      current.push(option);
+      map.set(option.question_id, current);
+      return map;
+    }, new Map<string, AssessmentOption[]>());
+  }, [assessmentOptions]);
+  const completedAssessmentRequired = assessmentQuestions.filter((question) =>
+    question.required
+      ? getAnswerCompletion(question, assessmentAnswers[question.id])
+      : true,
+  ).length;
+  const assessmentProgress = assessmentQuestions.length
+    ? Math.round(
+        (completedAssessmentRequired / assessmentQuestions.length) * 100,
+      )
+    : 0;
+  const canSubmitAssessment =
+    assessmentQuestions.length > 0 &&
+    assessmentQuestions.every((question) =>
+      question.required
+        ? getAnswerCompletion(question, assessmentAnswers[question.id])
+        : true,
+    );
 
   async function refreshBundle() {
     if (!lessonId) return;
 
     const loadedBundle = await loadLessonBundle(supabase, lessonId);
     setBundle(loadedBundle);
+  }
+
+  function closeAssessment() {
+    setSelectedAssessmentId(null);
+    setAssessmentQuestions([]);
+    setAssessmentOptions([]);
+    setAssessmentAnswers({});
+    setAssessmentQuestionIndex(0);
+    setAssessmentMessage("");
+    setAssessmentResult(null);
+
+    if (typeof window !== "undefined") {
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+  }
+
+  async function loadSelectedAssessmentContent(assessment: StudentAssessment) {
+    setLoadingAssessment(true);
+    setAssessmentMessage("");
+    setAssessmentQuestions([]);
+    setAssessmentOptions([]);
+    setAssessmentAnswers({});
+    setAssessmentQuestionIndex(0);
+    setAssessmentResult(null);
+
+    try {
+      const content = await loadAssessmentQuestionsAndOptions(
+        supabase,
+        assessment,
+      );
+
+      setAssessmentQuestions(content.questions);
+      setAssessmentOptions(content.options);
+    } catch (error) {
+      setAssessmentMessage(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível carregar esta avaliação.",
+      );
+    } finally {
+      setLoadingAssessment(false);
+    }
+  }
+
+  async function openAssessment(assessment: StudentAssessment) {
+    setSelectedAssessmentId(assessment.id);
+    setAssessmentMessage("");
+    setAssessmentResult(null);
+
+    if (typeof window !== "undefined") {
+      window.history.replaceState(
+        null,
+        "",
+        `${window.location.pathname}?avaliacao=${assessment.id}`,
+      );
+    }
+
+    if (!assessment.available) {
+      setAssessmentQuestions([]);
+      setAssessmentOptions([]);
+      setAssessmentAnswers({});
+      setAssessmentQuestionIndex(0);
+      setAssessmentMessage(assessment.availabilityReason);
+      return;
+    }
+
+    await loadSelectedAssessmentContent(assessment);
+  }
+
+  function updateAssessmentAnswer(
+    questionId: string,
+    values: Partial<AssessmentAnswerState>,
+  ) {
+    setAssessmentAnswers((current) => ({
+      ...current,
+      [questionId]: {
+        selectedOptionIds: current[questionId]?.selectedOptionIds ?? [],
+        textAnswer: current[questionId]?.textAnswer ?? "",
+        numericAnswer: current[questionId]?.numericAnswer ?? "",
+        ...values,
+      },
+    }));
+  }
+
+  function toggleAssessmentOption(
+    question: AssessmentQuestion,
+    optionId: string,
+  ) {
+    const current = assessmentAnswers[question.id]?.selectedOptionIds ?? [];
+
+    if (question.question_type === "multiple_choice") {
+      updateAssessmentAnswer(question.id, {
+        selectedOptionIds: current.includes(optionId)
+          ? current.filter((id) => id !== optionId)
+          : [...current, optionId],
+      });
+      return;
+    }
+
+    updateAssessmentAnswer(question.id, {
+      selectedOptionIds: [optionId],
+    });
+  }
+
+  function renderAssessmentAnswer(question: AssessmentQuestion) {
+    const answer = assessmentAnswers[question.id];
+    const questionOptions = assessmentOptionsByQuestion.get(question.id) ?? [];
+
+    if (
+      question.question_type === "single_choice" ||
+      question.question_type === "multiple_choice" ||
+      question.question_type === "true_false"
+    ) {
+      return (
+        <div className="mt-7 space-y-2.5">
+          {questionOptions.map((option) => {
+            const selected = answer?.selectedOptionIds.includes(option.id);
+
+            return (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => toggleAssessmentOption(question, option.id)}
+                className={
+                  selected
+                    ? "flex w-full items-center gap-3 rounded-md border border-[#DBC094] bg-[#DBC094]/12 px-4 py-3.5 text-left text-[15px] leading-6 text-white transition"
+                    : "flex w-full items-center gap-3 rounded-md border border-white/10 bg-white/[0.025] px-4 py-3.5 text-left text-[15px] leading-6 text-white/62 transition hover:border-[#DBC094]/42 hover:text-white"
+                }
+              >
+                <span
+                  className={
+                    selected
+                      ? "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-[#DBC094] bg-[#DBC094]"
+                      : "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-white/20"
+                  }
+                >
+                  {selected ? (
+                    <span className="h-2 w-2 rounded-full bg-black" />
+                  ) : null}
+                </span>
+                {option.label}
+              </button>
+            );
+          })}
+
+          {!questionOptions.length ? (
+            <p className="text-[14px] leading-6 text-[#DBC094]">
+              Esta questão ainda não possui alternativas cadastradas no ADM.
+            </p>
+          ) : null}
+        </div>
+      );
+    }
+
+    if (question.question_type === "scale") {
+      return (
+        <div className="mt-7 flex flex-wrap gap-3">
+          {[1, 2, 3, 4, 5].map((value) => {
+            const selected = answer?.numericAnswer === String(value);
+
+            return (
+              <button
+                key={value}
+                type="button"
+                onClick={() =>
+                  updateAssessmentAnswer(question.id, {
+                    numericAnswer: String(value),
+                  })
+                }
+                className={
+                  selected
+                    ? "flex h-12 w-12 items-center justify-center rounded-full border border-[#DBC094] bg-[#DBC094] text-[15px] font-semibold text-black transition"
+                    : "flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/[0.025] text-[15px] font-semibold text-white/52 transition hover:border-[#DBC094]/42 hover:text-white"
+                }
+              >
+                {value}
+              </button>
+            );
+          })}
+        </div>
+      );
+    }
+
+    return (
+      <textarea
+        value={answer?.textAnswer ?? ""}
+        onChange={(event) =>
+          updateAssessmentAnswer(question.id, {
+            textAnswer: event.target.value,
+          })
+        }
+        rows={question.question_type === "short_text" ? 4 : 7}
+        placeholder="Digite sua resposta..."
+        className="mt-7 w-full resize-none rounded-md border border-white/10 bg-white/[0.025] px-5 py-4 text-[15px] leading-7 text-white outline-none transition placeholder:text-white/30 focus:border-[#DBC094]/60"
+      />
+    );
+  }
+
+  async function submitAssessment() {
+    if (!currentAssessment || submittingAssessment || !canSubmitAssessment) {
+      return;
+    }
+
+    setSubmittingAssessment(true);
+    setAssessmentMessage("");
+    setCertificateMessage("");
+
+    const payload = assessmentQuestions.map((question) => {
+      const answer = assessmentAnswers[question.id] ?? {
+        selectedOptionIds: [],
+        textAnswer: "",
+        numericAnswer: "",
+      };
+
+      return {
+        question_id: question.id,
+        selected_option_ids: answer.selectedOptionIds,
+        text_answer: answer.textAnswer,
+        numeric_answer: answer.numericAnswer,
+      };
+    });
+
+    const { data, error } = await supabase.rpc("assessment_submit_attempt", {
+      p_assessment_id: currentAssessment.id,
+      p_answers: payload,
+    });
+
+    setSubmittingAssessment(false);
+
+    if (error) {
+      setAssessmentMessage(error.message);
+      return;
+    }
+
+    const firstResult = Array.isArray(data)
+      ? (data[0] as AssessmentSubmitResult | undefined)
+      : null;
+
+    if (firstResult) {
+      setAssessmentResult(firstResult);
+
+      if (user?.id) {
+        setAssessments((current) =>
+          current.map((assessment) =>
+            assessment.id === currentAssessment.id
+              ? {
+                  ...assessment,
+                  lastAttempt: {
+                    id: firstResult.attempt_id,
+                    assessment_id: currentAssessment.id,
+                    user_id: user.id,
+                    status: firstResult.status,
+                    correct_percentage: firstResult.correct_percentage,
+                    created_at: new Date().toISOString(),
+                  },
+                }
+              : assessment,
+          ),
+        );
+      }
+    }
+  }
+
+  async function issueCertificateAfterApproval() {
+    if (!bundle?.course?.id || issuingCertificate) {
+      return;
+    }
+
+    setIssuingCertificate(true);
+    setCertificateMessage("");
+
+    try {
+      const response = await fetch(
+        `/api/student/certificados?courseId=${bundle.course.id}`,
+        {
+          method: "GET",
+          cache: "no-store",
+        },
+      );
+
+      const data = (await response.json().catch(() => null)) as {
+        eligible?: boolean;
+        reason?: string;
+        error?: string;
+        certificate?: { id?: string; certificate_url?: string | null } | null;
+      } | null;
+
+      if (!response.ok) {
+        setCertificateMessage(
+          data?.error || "Não foi possível emitir o certificado.",
+        );
+        return;
+      }
+
+      if (!data?.eligible) {
+        setCertificateMessage(
+          data?.reason ||
+            "O certificado ainda não está liberado para este curso.",
+        );
+        return;
+      }
+
+      setCertificateMessage(data.reason || "Certificado emitido com sucesso.");
+      window.location.href = "/aluno/area/certificados";
+    } catch (error) {
+      console.error("Erro ao emitir certificado:", error);
+      setCertificateMessage("Não foi possível emitir o certificado.");
+    } finally {
+      setIssuingCertificate(false);
+    }
+  }
+
+  function renderAssessmentContent() {
+    if (!currentAssessment || !bundle) return null;
+
+    if (!currentAssessment.available) {
+      return (
+        <div className="overflow-hidden rounded-[12px] border border-[#6f5b2f] bg-black">
+          <div className="flex aspect-video flex-col items-center justify-center p-6 text-center">
+            <LockKeyhole className="h-8 w-8 text-[#DBC094]" />
+            <p className="mt-4 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#DBC094]">
+              Avaliação bloqueada
+            </p>
+            <h2 className="mt-3 max-w-[620px] text-[25px] font-semibold leading-tight text-white">
+              {currentAssessment.title}
+            </h2>
+            <p className="mt-3 max-w-[620px] text-[15px] leading-7 text-white/52">
+              {assessmentMessage || currentAssessment.availabilityReason}
+            </p>
+            <button
+              type="button"
+              onClick={closeAssessment}
+              className="mt-6 inline-flex h-10 items-center justify-center rounded-md border border-white/10 px-5 text-[14px] font-semibold text-white/62 transition hover:border-[#DBC094]/40 hover:text-[#DBC094]"
+            >
+              Voltar para a aula
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    if (loadingAssessment) {
+      return (
+        <div className="overflow-hidden rounded-[12px] border border-[#6f5b2f] bg-black">
+          <div className="flex aspect-video flex-col items-center justify-center p-6 text-center">
+            <Loader2 className="h-8 w-8 animate-spin text-[#DBC094]" />
+            <p className="mt-4 text-[14px] font-semibold uppercase tracking-[0.14em] text-white/55">
+              Carregando avaliação
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    if (assessmentResult) {
+      const passed = assessmentResult.status === "passed";
+
+      return (
+        <div className="overflow-hidden rounded-[12px] border border-[#6f5b2f] bg-black">
+          <div className="flex aspect-video flex-col items-center justify-center p-6 text-center">
+            {passed ? (
+              <CheckCircle2 className="h-12 w-12 text-emerald-300" />
+            ) : (
+              <XCircle className="h-12 w-12 text-red-300" />
+            )}
+            <p className="mt-5 text-[12px] font-semibold uppercase tracking-[0.16em] text-[#DBC094]">
+              Resultado da avaliação
+            </p>
+            <h2 className="mt-3 text-[32px] font-semibold tracking-tight text-white">
+              {passed ? "Aprovado" : "Tente novamente"}
+            </h2>
+            <p className="mt-3 max-w-[620px] text-[16px] leading-7 text-white/58">
+              Você alcançou{" "}
+              {Number(assessmentResult.correct_percentage).toFixed(0)}%. O
+              mínimo desta avaliação é{" "}
+              {currentAssessment.min_correct_percentage}%.
+            </p>
+            <div className="mt-6 h-2 w-full max-w-[420px] overflow-hidden rounded-full bg-white/10">
+              <div
+                className={
+                  passed ? "h-full bg-emerald-300" : "h-full bg-[#DBC094]"
+                }
+                style={{
+                  width: `${Math.min(
+                    100,
+                    Number(assessmentResult.correct_percentage),
+                  )}%`,
+                }}
+              />
+            </div>
+            {certificateMessage ? (
+              <div className="mt-5 max-w-[520px] rounded-md border border-[#6f5b2f] bg-[#17130d] px-4 py-3 text-[14px] font-semibold text-[#DBC094]">
+                {certificateMessage}
+              </div>
+            ) : null}
+
+            <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">
+              {passed ? (
+                <button
+                  type="button"
+                  onClick={() => void issueCertificateAfterApproval()}
+                  disabled={issuingCertificate}
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[#DBC094] px-5 text-[14px] font-semibold text-black transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {issuingCertificate ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Download className="h-4 w-4" />
+                  )}
+                  Emitir certificado
+                </button>
+              ) : null}
+
+              <button
+                type="button"
+                onClick={closeAssessment}
+                className={
+                  passed
+                    ? "inline-flex h-10 items-center justify-center rounded-md border border-white/10 px-5 text-[14px] font-semibold text-white/62 transition hover:border-[#DBC094]/40 hover:text-[#DBC094]"
+                    : "inline-flex h-10 items-center justify-center rounded-md bg-[#DBC094] px-5 text-[14px] font-semibold text-black transition hover:bg-white"
+                }
+              >
+                Voltar para o curso
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (!currentAssessmentQuestion) {
+      return (
+        <div className="overflow-hidden rounded-[12px] border border-[#6f5b2f] bg-black">
+          <div className="flex aspect-video flex-col items-center justify-center p-6 text-center">
+            <ClipboardCheck className="h-8 w-8 text-[#DBC094]" />
+            <h2 className="mt-4 text-[24px] font-semibold text-white">
+              Avaliação indisponível
+            </h2>
+            <p className="mt-3 max-w-[620px] text-[15px] leading-7 text-white/52">
+              Esta avaliação ainda não possui questões cadastradas no ADM.
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="overflow-hidden rounded-[12px] border border-[#6f5b2f] bg-black">
+        <div className="min-h-[610px] px-5 py-6 sm:px-8 sm:py-8">
+          <header className="border-b border-white/10 pb-5">
+            <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+              <div className="min-w-0">
+                <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#DBC094]">
+                  Avaliação Final
+                </p>
+                <h2 className="mt-2 line-clamp-2 text-[24px] font-semibold leading-tight tracking-tight text-white md:text-[29px]">
+                  {currentAssessment.title}
+                </h2>
+              </div>
+
+              <div className="shrink-0 text-left md:text-right">
+                <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-white/38">
+                  Progresso da prova
+                </p>
+                <p className="mt-1 text-[15px] font-semibold text-[#DBC094]">
+                  {assessmentProgress}% • {completedAssessmentRequired}/
+                  {assessmentQuestions.length} respondidas
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-5 h-1.5 overflow-hidden rounded-full bg-white/10">
+              <div
+                className="h-full rounded-full bg-[#DBC094] transition-all"
+                style={{ width: `${assessmentProgress}%` }}
+              />
+            </div>
+          </header>
+
+          {assessmentMessage ? (
+            <div className="mt-5 rounded-md border border-[#DBC094]/20 bg-[#DBC094]/8 px-4 py-3 text-[14px] text-[#DBC094]">
+              {assessmentMessage}
+            </div>
+          ) : null}
+
+          <article className="mx-auto max-w-[880px] pt-8">
+            <h3 className="text-[29px] font-semibold leading-tight tracking-tight text-white md:text-[34px]">
+              {currentAssessmentQuestion.prompt}
+            </h3>
+
+            {renderAssessmentAnswer(currentAssessmentQuestion)}
+
+            <footer className="mt-10 flex flex-col justify-between gap-3 border-t border-white/10 pt-6 sm:flex-row">
+              <button
+                type="button"
+                onClick={() =>
+                  setAssessmentQuestionIndex((current) =>
+                    Math.max(0, current - 1),
+                  )
+                }
+                disabled={assessmentQuestionIndex === 0}
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-white/10 px-5 text-[14px] font-semibold text-white/58 transition hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Anterior
+              </button>
+
+              {assessmentQuestionIndex < assessmentQuestions.length - 1 ? (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setAssessmentQuestionIndex((current) =>
+                      Math.min(assessmentQuestions.length - 1, current + 1),
+                    )
+                  }
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[#DBC094] px-5 text-[14px] font-semibold text-black transition hover:bg-white"
+                >
+                  Próxima
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={submitAssessment}
+                  disabled={!canSubmitAssessment || submittingAssessment}
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[#DBC094] px-5 text-[14px] font-semibold text-black transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {submittingAssessment ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                  Finalizar avaliação
+                </button>
+              )}
+            </footer>
+          </article>
+        </div>
+      </div>
+    );
   }
 
   async function hasApprovedFinalQuizForCurrentCourse() {
@@ -1303,6 +2112,7 @@ export default function Page() {
 
   async function resolveCompletionFlowAfterProgressSave(
     updatedProgressMap: Record<string, ProgressRow>,
+    currentAssessments: StudentAssessment[] = assessments,
   ): Promise<CompletionFlow | null> {
     if (!bundle) return null;
 
@@ -1320,6 +2130,62 @@ export default function Page() {
       return null;
     }
 
+    const courseAssessments = currentAssessments;
+
+    if (courseAssessments.length === 0) {
+      return {
+        kind: "track_completed_quiz_required",
+        message:
+          "Você concluiu as aulas deste curso. A avaliação final ainda não foi localizada no ADM para este curso, por isso a plataforma não vai redirecionar para a home.",
+        redirect_url: null,
+        redirect_delay_ms: 0,
+      };
+    }
+
+    const pendingAssessment = courseAssessments.find((assessment) => {
+      const availability = getAssessmentAvailability(
+        assessment,
+        bundle,
+        updatedProgressMap,
+      );
+
+      return (
+        availability.available && assessment.lastAttempt?.status !== "passed"
+      );
+    });
+
+    if (pendingAssessment) {
+      return {
+        kind: "track_completed_quiz_required",
+        message:
+          "Você concluiu as aulas deste curso. A avaliação final foi liberada no menu do curso para concluir esta etapa.",
+        redirect_url: null,
+        redirect_delay_ms: 0,
+      };
+    }
+
+    const hasUnreleasedAssessment = courseAssessments.some((assessment) => {
+      const availability = getAssessmentAvailability(
+        assessment,
+        bundle,
+        updatedProgressMap,
+      );
+
+      return (
+        !availability.available && assessment.lastAttempt?.status !== "passed"
+      );
+    });
+
+    if (hasUnreleasedAssessment) {
+      return {
+        kind: "track_completed_quiz_required",
+        message:
+          "Você concluiu as aulas deste curso. A avaliação final permanece aguardando a regra de liberação configurada no ADM.",
+        redirect_url: null,
+        redirect_delay_ms: 0,
+      };
+    }
+
     const nextCourse = await findNextCourseInCurrentTrack();
 
     if (nextCourse?.slug) {
@@ -1332,24 +2198,12 @@ export default function Page() {
       };
     }
 
-    const finalQuizApproved = await hasApprovedFinalQuizForCurrentCourse();
-
-    if (!finalQuizApproved) {
-      return {
-        kind: "track_completed_quiz_required",
-        message:
-          "Você concluiu as aulas desta trilha. Para liberar a conclusão final e o certificado, realize a prova final e atinja no mínimo 80% de acertos.",
-        redirect_url: null,
-        redirect_delay_ms: 0,
-      };
-    }
-
     return {
       kind: "track_completed_certificate",
       message:
-        "Você concluiu com sucesso esta trilha, parabéns. Você está sendo direcionado para a área do aluno, para acessar o seu certificado de conclusão.",
-      redirect_url: "/aluno",
-      redirect_delay_ms: 3600,
+        "Você concluiu com sucesso esta etapa, parabéns. A avaliação final já foi concluída e a etapa está liberada para emissão de certificado quando aplicável.",
+      redirect_url: null,
+      redirect_delay_ms: 0,
     };
   }
 
@@ -1407,6 +2261,37 @@ export default function Page() {
       setProgress(data.progress);
       setProgressByLessonId(updatedProgressMap);
 
+      const effectiveUserId = data.user?.id ?? user?.id ?? null;
+      let updatedAssessments = assessments.map((assessment) => {
+        const availability = getAssessmentAvailability(
+          assessment,
+          bundle,
+          updatedProgressMap,
+        );
+
+        return {
+          ...assessment,
+          available: availability.available,
+          availabilityReason: availability.reason,
+        };
+      });
+
+      try {
+        updatedAssessments = await loadCourseAssessments(
+          supabase,
+          bundle,
+          effectiveUserId,
+          updatedProgressMap,
+        );
+      } catch (assessmentError) {
+        console.error(
+          "Erro ao recarregar avaliações do curso:",
+          assessmentError,
+        );
+      }
+
+      setAssessments(updatedAssessments);
+
       if (data.user) {
         setUser(data.user);
       }
@@ -1415,8 +2300,10 @@ export default function Page() {
         setProfile(data.profile);
       }
 
-      const completion =
-        await resolveCompletionFlowAfterProgressSave(updatedProgressMap);
+      const completion = await resolveCompletionFlowAfterProgressSave(
+        updatedProgressMap,
+        updatedAssessments,
+      );
 
       if (completion && completion.kind !== "none") {
         setCompletionFlow(completion);
@@ -1442,27 +2329,37 @@ export default function Page() {
     setSendingComment(true);
     setFeedback("");
 
-    const studentName = getStudentName(user, profile);
+    try {
+      const response = await fetch("/api/student/lesson-progress", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "comment",
+          lesson_id: bundle.lesson.id,
+          comment: comment.trim(),
+        }),
+      });
 
-    const { error } = await supabase.from("lesson_comments").insert({
-      lesson_id: bundle.lesson.id,
-      student_id: user?.id ?? null,
-      student_name: studentName,
-      student_avatar_url: profile?.avatar_url ?? null,
-      comment: comment.trim(),
-      status: "pending",
-      updated_at: new Date().toISOString(),
-    });
+      const data = (await response.json().catch(() => null)) as {
+        error?: string;
+        message?: string;
+      } | null;
 
-    setSendingComment(false);
+      if (!response.ok) {
+        setFeedback(data?.error || "Não foi possível enviar o comentário.");
+        return;
+      }
 
-    if (error) {
+      setComment("");
+      setFeedback(data?.message || "Comentário enviado para análise.");
+    } catch (error) {
+      console.error("Erro inesperado ao enviar comentário da aula:", error);
       setFeedback("Não foi possível enviar o comentário.");
-      return;
+    } finally {
+      setSendingComment(false);
     }
-
-    setComment("");
-    setFeedback("Comentário enviado.");
   }
 
   async function submitRating(rating: number) {
@@ -1472,38 +2369,47 @@ export default function Page() {
     setSendingRating(true);
     setFeedback("");
 
-    const studentName = getStudentName(user, profile);
+    try {
+      const response = await fetch("/api/student/lesson-progress", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "rating",
+          lesson_id: bundle.lesson.id,
+          rating,
+        }),
+      });
 
-    const { error } = await supabase.from("lesson_ratings").insert({
-      lesson_id: bundle.lesson.id,
-      student_id: user?.id ?? null,
-      student_name: studentName,
-      student_avatar_url: profile?.avatar_url ?? null,
-      rating,
-      review: null,
-      status: "pending",
-      updated_at: new Date().toISOString(),
-    });
+      const data = (await response.json().catch(() => null)) as {
+        error?: string;
+        message?: string;
+      } | null;
 
-    setSendingRating(false);
+      if (!response.ok) {
+        setFeedback(data?.error || "Não foi possível enviar a avaliação.");
+        return;
+      }
 
-    if (error) {
+      setFeedback(data?.message || "Avaliação enviada para análise.");
+      await refreshBundle();
+    } catch (error) {
+      console.error("Erro inesperado ao enviar avaliação da aula:", error);
       setFeedback("Não foi possível enviar a avaliação.");
-      return;
+    } finally {
+      setSendingRating(false);
     }
-
-    setFeedback("Avaliação enviada.");
-    await refreshBundle();
   }
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#050609] text-white">
+      <main className="min-h-screen bg-[#020304] text-white">
         <StudentHeader />
-        <section className="flex min-h-screen items-center justify-center px-6 pt-[90px]">
-          <div className="flex items-center gap-3 text-white/70">
-            <Loader2 className="h-5 w-5 animate-spin text-[#DBC094]" />
-            Carregando aula...
+        <section className="flex min-h-screen items-center justify-center px-6 pt-[78px]">
+          <div className="flex items-center gap-3 text-[15px] font-medium uppercase tracking-[0.14em] text-white/55">
+            <Loader2 className="h-4 w-4 animate-spin text-[#DBC094]" />
+            Carregando aula
           </div>
         </section>
       </main>
@@ -1512,19 +2418,19 @@ export default function Page() {
 
   if (!bundle) {
     return (
-      <main className="min-h-screen bg-[#050609] text-white">
+      <main className="min-h-screen bg-[#020304] text-white">
         <StudentHeader />
-        <section className="flex min-h-screen items-center justify-center px-6 pt-[90px] text-center">
-          <div className="max-w-[560px]">
-            <p className="text-sm font-black uppercase tracking-[0.22em] text-[#DBC094]">
+        <section className="flex min-h-screen items-center justify-center px-6 pt-[78px] text-center">
+          <div className="max-w-[460px]">
+            <p className="text-[13px] font-semibold uppercase tracking-[0.2em] text-[#DBC094]">
               Aula não encontrada
             </p>
-            <h1 className="mt-4 text-[36px] font-black tracking-[-0.05em] text-white sm:text-[46px]">
+            <h1 className="mt-3 text-[27px] font-semibold tracking-tight text-white">
               Este conteúdo não está disponível.
             </h1>
             <Link
               href="/aluno"
-              className="mt-8 inline-flex h-11 items-center gap-2 rounded-[10px] bg-white px-5 text-[14px] font-black text-black transition hover:bg-white/86"
+              className="mt-7 inline-flex h-9 items-center gap-2 rounded-md bg-white px-5 text-[15px] font-semibold text-black transition hover:bg-[#DBC094]"
             >
               <ArrowLeft className="h-4 w-4" />
               Voltar para a home
@@ -1535,448 +2441,576 @@ export default function Page() {
     );
   }
 
-  const ContentIcon = getContentIcon(bundle.lesson.content_type);
-
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[#050609] text-white">
+    <main className="min-h-screen overflow-x-hidden bg-[#020304] text-white">
       <StudentHeader />
 
-      <section className="px-5 pb-16 pt-[92px] sm:px-8 lg:px-10">
-        <div className="mx-auto max-w-[1720px]">
-          <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-            <Link
-              href="/aluno"
-              className="inline-flex items-center gap-2 text-[13px] font-black text-white/58 transition hover:text-[#DBC094]"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Voltar para a home
-            </Link>
+      <section className="pt-[56px]">
+        <aside className="fixed bottom-0 left-0 top-[56px] z-30 hidden w-[300px] border-r border-white/10 bg-[#030406] lg:block">
+          <div className="flex h-full flex-col">
+            <div className="flex-1 overflow-y-auto px-5 py-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <Link
+                href="/aluno"
+                className="inline-flex items-center gap-1.5 text-[13px] font-medium text-white/55 transition hover:text-[#DBC094]"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" />
+                Voltar
+              </Link>
 
-            <div className="flex flex-wrap items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-white/42">
-              <span>{bundle.course.title}</span>
-              <span className="text-[#DBC094]">/</span>
-              <span>{bundle.currentModule.title}</span>
-            </div>
-          </div>
+              <div className="mt-7 border-b border-white/10 pb-4">
+                <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#DBC094]">
+                  Curso
+                </p>
+                <h2 className="mt-1 line-clamp-2 text-[17px] font-semibold leading-5 text-white">
+                  {bundle.course.title}
+                </h2>
 
-          <div className="grid items-start gap-6 xl:block xl:pl-[390px]">
-            <aside className="xl:fixed xl:left-10 xl:top-[148px] xl:z-20 xl:w-[360px] xl:max-h-[calc(100vh-168px)] xl:overflow-y-auto xl:pr-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              <div className="overflow-hidden rounded-[22px] border border-white/10 bg-[#101116]">
-                <div className="border-b border-white/10 p-4">
-                  <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[#DBC094]">
-                    Curso
-                  </p>
-                  <h2 className="mt-2 text-[22px] font-black leading-tight tracking-[-0.045em]">
-                    {bundle.course.title}
-                  </h2>
-                  <p className="mt-2 text-[13px] leading-5 text-white/45">
-                    {orderedLessons.length} aula(s)
-                  </p>
-                </div>
-
-                <div className="p-3">
-                  {bundle.modules.map((module) => {
-                    const moduleLessons = lessonsByModule.get(module.id) ?? [];
-
-                    return (
-                      <div key={module.id} className="mb-4 last:mb-0">
-                        <h3 className="mb-2 px-2 text-[13px] font-black tracking-[-0.02em] text-white">
-                          {module.title}
-                        </h3>
-
-                        <div className="grid gap-2">
-                          {moduleLessons.map((lesson) => {
-                            const Icon = getContentIcon(lesson.content_type);
-                            const isActive = lesson.id === bundle.lesson.id;
-
-                            return (
-                              <Link
-                                key={lesson.id}
-                                href={`/aluno/aulas/${lesson.id}`}
-                                className={
-                                  isActive
-                                    ? "flex items-center gap-3 rounded-[14px] border border-[#DBC094]/40 bg-[#DBC094]/12 p-3"
-                                    : "flex items-center gap-3 rounded-[14px] border border-white/8 bg-white/[0.025] p-3 transition hover:border-[#DBC094]/35 hover:bg-white/[0.055]"
-                                }
-                              >
-                                <div
-                                  className={
-                                    isActive
-                                      ? "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#DBC094] text-black"
-                                      : "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/10 text-white/70"
-                                  }
-                                >
-                                  <Icon className="h-4 w-4" />
-                                </div>
-
-                                <div className="min-w-0">
-                                  <p className="line-clamp-2 text-[13px] font-black leading-5 text-white">
-                                    {lesson.title}
-                                  </p>
-                                  <p className="mt-0.5 text-[11px] font-bold text-white/36">
-                                    {getLessonDisplayLabel(lesson)} •{" "}
-                                    {formatDuration(lesson.duration_sec)}
-                                  </p>
-                                </div>
-                              </Link>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </aside>
-
-            <div className="min-w-0">
-              <div>
-                <LessonPlayer
-                  lesson={bundle.lesson}
-                  onLessonCompleted={() =>
-                    void markAsCompleted({ silent: true })
-                  }
-                />
-              </div>
-
-              <div className="mt-5 rounded-[20px] border border-white/10 bg-white/[0.035] p-4">
-                <div className="mb-3 flex flex-wrap items-center gap-2">
-                  <span className="inline-flex items-center gap-2 rounded-full bg-[#DBC094] px-3 py-1.5 text-[12px] font-black text-black">
-                    <ContentIcon className="h-3.5 w-3.5" />
-                    {getLessonDisplayLabel(bundle.lesson)}
-                  </span>
-
-                  <span className="rounded-full bg-white/12 px-3 py-1.5 text-[12px] font-bold text-white/68">
-                    {formatDuration(bundle.lesson.duration_sec)}
-                  </span>
-
-                  {averageRating > 0 ? (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-white/12 px-3 py-1.5 text-[12px] font-bold text-white/68">
-                      <Star className="h-3.5 w-3.5 fill-[#DBC094] text-[#DBC094]" />
-                      {averageRating.toFixed(1)}
-                    </span>
-                  ) : null}
-                </div>
-
-                <h1 className="max-w-[900px] text-[26px] font-black leading-[1.06] tracking-[-0.045em] text-white sm:text-[34px] lg:text-[40px]">
-                  {bundle.lesson.title}
-                </h1>
-
-                {bundle.lesson.description ? (
-                  <p className="mt-3 max-w-[820px] text-[15px] leading-7 text-white/58">
-                    {bundle.lesson.description}
-                  </p>
-                ) : null}
-              </div>
-
-              <div className="mt-5 rounded-[20px] border border-white/10 bg-white/[0.04] p-4">
-                <div className="grid gap-4 lg:grid-cols-[minmax(260px,1fr)_auto] lg:items-center">
-                  <div>
-                    <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#DBC094]">
-                      Progresso
-                    </p>
-                    <p className="mt-1 text-[13px] text-white/52">
-                      {currentLessonCompleted
-                        ? `Aula concluída • ${completedLessonsCount} de ${totalLessonsCount} aulas concluídas`
-                        : `${completedLessonsCount} de ${totalLessonsCount} aulas concluídas • ${progressPercent}% do curso`}
-                    </p>
-
-                    <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10">
-                      <div
-                        className="h-full rounded-full bg-[#DBC094] transition-all"
-                        style={{ width: `${progressPercent}%` }}
-                      />
-                    </div>
+                <div className="mt-3">
+                  <div className="flex items-center justify-between text-[12px] font-semibold uppercase tracking-[0.1em] text-white/45">
+                    <span>Progresso</span>
+                    <span>{progressPercent}%</span>
                   </div>
-
-                  <div className="flex flex-nowrap items-center gap-2 overflow-x-auto lg:justify-end [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                    {previousLesson ? (
-                      <Link
-                        href={`/aluno/aulas/${previousLesson.id}`}
-                        className="inline-flex h-10 shrink-0 items-center gap-2 rounded-[10px] border border-white/10 bg-white/[0.04] px-4 text-[13px] font-black text-white transition hover:border-[#DBC094]/45 hover:text-[#DBC094]"
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                        Anterior
-                      </Link>
-                    ) : null}
-
-                    <button
-                      type="button"
-                      onClick={() => void markAsCompleted()}
-                      disabled={savingProgress}
-                      className={
-                        currentLessonCompleted
-                          ? "inline-flex h-10 shrink-0 items-center gap-2 rounded-[10px] bg-[#16a34a] px-4 text-[13px] font-black text-white transition hover:bg-[#15803d] disabled:cursor-not-allowed disabled:opacity-55"
-                          : "inline-flex h-10 shrink-0 items-center gap-2 rounded-[10px] bg-white px-4 text-[13px] font-black text-black transition hover:bg-[#DBC094] disabled:cursor-not-allowed disabled:opacity-55"
-                      }
-                    >
-                      {savingProgress ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <CheckCircle2 className="h-4 w-4" />
-                      )}
-                      {currentLessonCompleted ? "Concluída" : "Concluir"}
-                    </button>
-
-                    {nextLesson ? (
-                      <Link
-                        href={`/aluno/aulas/${nextLesson.id}`}
-                        className="inline-flex h-10 shrink-0 items-center gap-2 rounded-[10px] bg-white px-4 text-[13px] font-black text-black transition hover:bg-[#DBC094]"
-                      >
-                        Próxima aula
-                        <ChevronRight className="h-4 w-4" />
-                      </Link>
-                    ) : null}
-                  </div>
-                </div>
-              </div>
-
-              {bundle.assets.length > 0 ? (
-                <div className="mt-5 rounded-[20px] border border-white/10 bg-[#101116] p-5">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <h2 className="text-[22px] font-black tracking-[-0.045em]">
-                      Materiais da aula
-                    </h2>
-
-                    <span className="rounded-full bg-white/10 px-3 py-1 text-[12px] font-bold text-white/56">
-                      {bundle.assets.length} arquivo(s)
-                    </span>
-                  </div>
-
-                  <div className="mt-4 grid gap-2">
-                    {bundle.assets.map((asset) => {
-                      const assetUrl =
-                        asset.signed_url ||
-                        resolveLessonMaterialUrl(asset.storage_path);
-
-                      return (
-                        <a
-                          key={asset.id}
-                          href={assetUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-white/10 bg-white/[0.035] p-3 transition hover:border-[#DBC094]/45 hover:bg-white/[0.065]"
-                        >
-                          <div className="flex min-w-0 items-center gap-3">
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#DBC094] text-black">
-                              <FileText className="h-4 w-4" />
-                            </div>
-
-                            <div className="min-w-0">
-                              <p className="truncate text-[14px] font-black text-white">
-                                {asset.title ||
-                                  asset.file_name ||
-                                  "Material da aula"}
-                              </p>
-                              <p className="mt-0.5 text-[12px] text-white/42">
-                                {asset.asset_type} •{" "}
-                                {formatFileSize(asset.size_bytes)}
-                              </p>
-                            </div>
-                          </div>
-
-                          <span className="inline-flex h-9 items-center gap-2 rounded-[10px] bg-white px-3 text-[12px] font-black text-black">
-                            Acessar
-                            <Download className="h-3.5 w-3.5" />
-                          </span>
-                        </a>
-                      );
-                    })}
-                  </div>
-                </div>
-              ) : null}
-
-              <div className="mt-5 rounded-[20px] border border-white/10 bg-[#101116] p-5">
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div>
-                    <h2 className="text-[22px] font-black tracking-[-0.045em]">
-                      Avaliação e comentários
-                    </h2>
-
-                    <div className="mt-3 flex items-center gap-1.5">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <button
-                          key={star}
-                          type="button"
-                          onClick={() => submitRating(star)}
-                          disabled={sendingRating}
-                          className="transition hover:scale-110 disabled:cursor-not-allowed disabled:opacity-60"
-                          aria-label={`Avaliar com ${star} estrela(s)`}
-                        >
-                          <Star
-                            className={
-                              star <= selectedRating
-                                ? "h-7 w-7 fill-[#DBC094] text-[#DBC094]"
-                                : "h-7 w-7 text-white/24"
-                            }
-                          />
-                        </button>
-                      ))}
-
-                      {sendingRating ? (
-                        <Loader2 className="ml-2 h-4 w-4 animate-spin text-[#DBC094]" />
-                      ) : null}
-                    </div>
-                  </div>
-
-                  {averageRating > 0 ? (
-                    <div className="rounded-[14px] bg-white/[0.045] px-4 py-3 text-right">
-                      <p className="text-[22px] font-black text-white">
-                        {averageRating.toFixed(1)}
-                      </p>
-                      <p className="text-[12px] font-bold text-white/42">
-                        média da aula
-                      </p>
-                    </div>
-                  ) : null}
-                </div>
-
-                <div className="mt-5 flex gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#DBC094] text-[13px] font-black text-black">
-                    {profile?.avatar_url ? (
-                      <img
-                        src={profile.avatar_url}
-                        alt={getStudentName(user, profile)}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      getInitials(getStudentName(user, profile))
-                    )}
-                  </div>
-
-                  <div className="min-w-0 flex-1">
-                    <textarea
-                      value={comment}
-                      onChange={(event) => setComment(event.target.value)}
-                      placeholder="Escreva seu comentário ou dúvida..."
-                      className="min-h-[96px] w-full resize-none rounded-[16px] border border-white/10 bg-black/24 px-4 py-3 text-[14px] text-white outline-none placeholder:text-white/34 focus:border-[#DBC094]/60"
+                  <div className="mt-1.5 h-[4px] overflow-hidden rounded-full bg-white/15">
+                    <div
+                      className="h-full rounded-full bg-[#DBC094]"
+                      style={{ width: `${progressPercent}%` }}
                     />
-
-                    <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-                      <button
-                        type="button"
-                        onClick={submitComment}
-                        disabled={sendingComment || !comment.trim()}
-                        className="inline-flex h-10 items-center gap-2 rounded-[10px] bg-white px-4 text-[13px] font-black text-black transition hover:bg-[#DBC094] disabled:cursor-not-allowed disabled:opacity-55"
-                      >
-                        {sendingComment ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Send className="h-4 w-4" />
-                        )}
-                        Enviar
-                      </button>
-
-                      {feedback ? (
-                        <p className="text-[13px] font-bold text-[#DBC094]">
-                          {feedback}
-                        </p>
-                      ) : null}
-                    </div>
                   </div>
                 </div>
+              </div>
 
-                {bundle.comments.length > 0 ? (
-                  <div className="mt-6 grid gap-3">
-                    {bundle.comments.map((item) => {
-                      const itemRating = item.student_id
-                        ? ratingByStudentId.get(item.student_id)
-                        : null;
-                      const studentAvatar = item.student_avatar_url;
-                      const studentName = item.student_name || "Aluno";
+              <div className="mt-4 space-y-1">
+                {bundle.modules.map((module, moduleIndex) => {
+                  const moduleLessons = lessonsByModule.get(module.id) ?? [];
+                  const isCurrentModule = module.id === bundle.currentModule.id;
 
-                      return (
-                        <article
-                          key={item.id}
-                          className="rounded-[16px] border border-white/10 bg-white/[0.035] p-4"
-                        >
-                          <div className="flex gap-3">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#DBC094] text-[13px] font-black text-black">
-                              {studentAvatar ? (
-                                <img
-                                  src={studentAvatar}
-                                  alt={studentName}
-                                  className="h-full w-full object-cover"
-                                />
-                              ) : (
-                                getInitials(studentName)
-                              )}
-                            </div>
+                  return (
+                    <details
+                      key={module.id}
+                      open={isCurrentModule}
+                      className="group border-b border-white/10 py-3.5"
+                    >
+                      <summary className="flex cursor-pointer list-none items-start justify-between gap-4">
+                        <div className="min-w-0">
+                          <p className="text-[12px] font-medium text-white/45">
+                            Módulo {String(moduleIndex + 1).padStart(2, "0")}
+                          </p>
+                          <p className="mt-0.5 line-clamp-2 text-[16px] font-semibold leading-4 text-white">
+                            {module.title}
+                          </p>
+                        </div>
+                        <ChevronRight className="mt-1 h-3.5 w-3.5 shrink-0 text-white/45 transition group-open:rotate-90 group-open:text-[#DBC094]" />
+                      </summary>
 
-                            <div className="min-w-0 flex-1">
-                              <div className="flex flex-wrap items-center justify-between gap-2">
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <p className="text-[14px] font-black text-white">
-                                    {studentName}
-                                  </p>
+                      <div className="mt-3 space-y-1">
+                        {moduleLessons.map((lesson, lessonIndex) => {
+                          const isActive = lesson.id === bundle.lesson.id;
+                          const isCompleted = Boolean(
+                            progressByLessonId[lesson.id]?.completed_at,
+                          );
 
-                                  {itemRating ? (
-                                    <span className="inline-flex items-center gap-1 rounded-full bg-[#DBC094]/14 px-2 py-1 text-[11px] font-black text-[#DBC094]">
-                                      <Star className="h-3 w-3 fill-[#DBC094]" />
-                                      {itemRating.rating}/5
-                                    </span>
-                                  ) : null}
-                                </div>
-
-                                <p className="text-[11px] font-bold text-white/32">
-                                  {new Date(item.created_at).toLocaleDateString(
-                                    "pt-BR",
-                                  )}
+                          return (
+                            <Link
+                              key={lesson.id}
+                              href={`/aluno/aulas/${lesson.id}`}
+                              className={
+                                isActive
+                                  ? "flex items-center justify-between gap-2 border-t border-[#DBC094]/40 bg-[#DBC094]/10 px-3 py-2.5 text-[#DBC094]"
+                                  : "flex items-center justify-between gap-2 border-t border-white/10 px-3 py-2.5 text-white/75 transition hover:bg-white/[0.03] hover:text-white"
+                              }
+                            >
+                              <div className="min-w-0">
+                                <p className="text-[12px] font-medium text-white/40">
+                                  Aula{" "}
+                                  {String(lessonIndex + 1).padStart(2, "0")}
+                                </p>
+                                <p className="mt-0.5 line-clamp-2 text-[15px] font-medium leading-4">
+                                  {lesson.title}
                                 </p>
                               </div>
 
-                              <p className="mt-2 text-[14px] leading-6 text-white/68">
-                                {item.comment}
-                              </p>
+                              {isCompleted ? (
+                                <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-[#DBC094]" />
+                              ) : (
+                                <ChevronRight className="h-3.5 w-3.5 shrink-0 text-white/40" />
+                              )}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </details>
+                  );
+                })}
 
-                              {item.admin_note ? (
-                                <details className="mt-3 rounded-[12px] border border-[#DBC094]/20 bg-[#DBC094]/10 px-3 py-2">
-                                  <summary className="cursor-pointer text-[12px] font-black uppercase tracking-[0.16em] text-[#DBC094]">
-                                    Resposta do ADM
-                                  </summary>
-                                  <p className="mt-2 text-[13px] leading-6 text-white/72">
-                                    {item.admin_note}
+                {assessments.length > 0 ? (
+                  <details
+                    open={Boolean(selectedAssessmentId)}
+                    className="group border-b border-white/10 py-3.5"
+                  >
+                    <summary className="flex cursor-pointer list-none items-start justify-between gap-4">
+                      <div className="min-w-0">
+                        <p className="text-[12px] font-medium text-white/45">
+                          Avaliações
+                        </p>
+                        <p className="mt-0.5 line-clamp-2 text-[16px] font-semibold leading-4 text-white">
+                          Avaliação Final
+                        </p>
+                      </div>
+                      <ChevronRight className="mt-1 h-3.5 w-3.5 shrink-0 text-white/45 transition group-open:rotate-90 group-open:text-[#DBC094]" />
+                    </summary>
+
+                    <div className="mt-3 space-y-1">
+                      {assessments.slice(0, 1).map((assessment) => {
+                        const questionsForMenu =
+                          assessment.id === selectedAssessmentId &&
+                          assessmentQuestions.length > 0
+                            ? assessmentQuestions
+                            : (assessment.questions ?? []);
+                        const isPassed =
+                          assessment.lastAttempt?.status === "passed";
+
+                        if (questionsForMenu.length === 0) {
+                          return (
+                            <button
+                              key={assessment.id}
+                              type="button"
+                              onClick={() => void openAssessment(assessment)}
+                              className="flex w-full items-center justify-between gap-2 border-t border-white/10 px-3 py-2.5 text-left text-white/75 transition hover:bg-white/[0.03] hover:text-white"
+                            >
+                              <div className="min-w-0">
+                                <p className="text-[12px] font-medium text-white/40">
+                                  Avaliação final
+                                </p>
+                                <p className="mt-0.5 line-clamp-2 text-[15px] font-medium leading-4">
+                                  {assessment.available
+                                    ? "Iniciar avaliação"
+                                    : "Avaliação bloqueada"}
+                                </p>
+                              </div>
+
+                              {assessment.available ? (
+                                <ClipboardCheck className="h-3.5 w-3.5 shrink-0 text-[#DBC094]" />
+                              ) : (
+                                <LockKeyhole className="h-3.5 w-3.5 shrink-0 text-white/35" />
+                              )}
+                            </button>
+                          );
+                        }
+
+                        return questionsForMenu.map(
+                          (question, questionIndex) => {
+                            const isActive =
+                              assessment.id === selectedAssessmentId &&
+                              questionIndex === assessmentQuestionIndex;
+                            const answered = getAnswerCompletion(
+                              question,
+                              assessmentAnswers[question.id],
+                            );
+
+                            return (
+                              <button
+                                key={`${assessment.id}-${question.id}`}
+                                type="button"
+                                onClick={async () => {
+                                  if (assessment.id !== selectedAssessmentId) {
+                                    await openAssessment(assessment);
+                                  }
+
+                                  setAssessmentQuestionIndex(questionIndex);
+                                }}
+                                className={
+                                  isActive
+                                    ? "flex w-full items-center justify-between gap-2 border-t border-[#DBC094]/40 bg-[#DBC094]/10 px-3 py-2.5 text-left text-[#DBC094]"
+                                    : "flex w-full items-center justify-between gap-2 border-t border-white/10 px-3 py-2.5 text-left text-white/75 transition hover:bg-white/[0.03] hover:text-white"
+                                }
+                              >
+                                <div className="min-w-0">
+                                  <p className="text-[12px] font-medium text-white/40">
+                                    Questão{" "}
+                                    {String(questionIndex + 1).padStart(2, "0")}
                                   </p>
-                                </details>
-                              ) : null}
-                            </div>
-                          </div>
-                        </article>
-                      );
-                    })}
-                  </div>
+                                  <p className="mt-0.5 line-clamp-2 text-[15px] font-medium leading-4">
+                                    Questão{" "}
+                                    {String(questionIndex + 1).padStart(2, "0")}
+                                  </p>
+                                </div>
+
+                                {isPassed || answered ? (
+                                  <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-[#DBC094]" />
+                                ) : assessment.available ? (
+                                  <ClipboardCheck className="h-3.5 w-3.5 shrink-0 text-[#DBC094]" />
+                                ) : (
+                                  <LockKeyhole className="h-3.5 w-3.5 shrink-0 text-white/35" />
+                                )}
+                              </button>
+                            );
+                          },
+                        );
+                      })}
+                    </div>
+                  </details>
                 ) : null}
               </div>
+            </div>
+
+            <div className="border-t border-white/10 px-5 py-4 text-[12px] leading-5 text-white/35">
+              <p className="font-semibold text-[#DBC094]">UNL</p>
+              <p>Universidade de Líderes.</p>
+            </div>
+          </div>
+        </aside>
+
+        <div className="lg:pl-[300px]">
+          <div className="border-b border-white/10 bg-[#020304] px-4 py-3 lg:hidden">
+            <Link
+              href="/aluno"
+              className="inline-flex items-center gap-1.5 text-[14px] font-medium text-white/60"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              Voltar
+            </Link>
+            <h2 className="mt-2 line-clamp-2 text-[17px] font-semibold text-white">
+              {bundle.course.title}
+            </h2>
+          </div>
+
+          <div className="min-h-[calc(100vh-56px)] px-4 pb-14 pt-7 sm:px-6 lg:px-8 lg:pt-8 xl:px-10">
+            <div className="mx-auto w-full max-w-[1088px]">
+              <div className="mb-5 flex items-start justify-end text-right">
+                <div className="max-w-[680px] text-[12px] font-semibold uppercase tracking-[0.16em] text-white/35">
+                  <span>{bundle.course.title}</span>
+                  <span className="mx-2 text-[#DBC094]">/</span>
+                  <span>{bundle.currentModule.title}</span>
+                  <span className="mx-2 text-[#DBC094]">/</span>
+                  <span>
+                    {currentAssessment
+                      ? currentAssessment.title
+                      : bundle.lesson.title}
+                  </span>
+                </div>
+              </div>
+
+              {currentAssessment ? (
+                renderAssessmentContent()
+              ) : (
+                <>
+                  <LessonPlayer
+                    lesson={bundle.lesson}
+                    onLessonCompleted={() =>
+                      void markAsCompleted({ silent: true })
+                    }
+                  />
+
+                  <div className="mt-5 border-b border-white/10 pb-5">
+                    <div className="flex items-center justify-center gap-3 sm:gap-4">
+                      {previousLesson ? (
+                        <Link
+                          href={`/aluno/aulas/${previousLesson.id}`}
+                          className="inline-flex h-11 items-center gap-2 rounded-md border border-white/10 bg-white/[0.025] px-5 text-[15px] font-semibold text-white transition hover:border-[#DBC094]/40 hover:text-[#DBC094]"
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                          Voltar
+                        </Link>
+                      ) : (
+                        <span className="inline-flex h-11 items-center gap-2 rounded-md border border-white/5 bg-white/[0.015] px-5 text-[15px] font-semibold text-white/25">
+                          <ChevronLeft className="h-4 w-4" />
+                          Voltar
+                        </span>
+                      )}
+
+                      {nextLesson ? (
+                        <Link
+                          href={`/aluno/aulas/${nextLesson.id}`}
+                          className="inline-flex h-11 items-center gap-2 rounded-md border border-white/10 bg-white/[0.025] px-5 text-[15px] font-semibold text-white transition hover:border-[#DBC094]/40 hover:text-[#DBC094]"
+                        >
+                          Próxima
+                          <ChevronRight className="h-4 w-4" />
+                        </Link>
+                      ) : (
+                        <span className="inline-flex h-11 items-center gap-2 rounded-md border border-white/5 bg-white/[0.015] px-5 text-[15px] font-semibold text-white/25">
+                          Próxima
+                          <ChevronRight className="h-4 w-4" />
+                        </span>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => void markAsCompleted()}
+                        disabled={savingProgress}
+                        className={
+                          currentLessonCompleted
+                            ? "inline-flex h-11 items-center gap-2 rounded-md border border-[#DBC094]/25 bg-[#DBC094]/10 px-5 text-[15px] font-semibold text-[#DBC094] transition hover:bg-[#DBC094]/15 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                            : "inline-flex h-11 items-center gap-2 rounded-md bg-[#DBC094] px-5 text-[15px] font-semibold text-black transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+                        }
+                      >
+                        {savingProgress ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <CheckCircle2 className="h-4 w-4" />
+                        )}
+                        {currentLessonCompleted ? "Concluída" : "Concluir"}
+                      </button>
+                    </div>
+
+                    {feedback ? (
+                      <p className="mt-3 text-center text-[14px] font-medium text-[#DBC094]">
+                        {feedback}
+                      </p>
+                    ) : null}
+                  </div>
+
+                  {bundle.assets.length > 0 ? (
+                    <section className="mt-7 border-b border-white/10 pb-6">
+                      <div className="mb-3 flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#DBC094]">
+                            Materiais
+                          </p>
+                          <h2 className="mt-1 text-[17px] font-semibold text-white">
+                            Arquivos da aula
+                          </h2>
+                        </div>
+                        <span className="text-[13px] font-medium text-white/40">
+                          {bundle.assets.length} arquivo(s)
+                        </span>
+                      </div>
+
+                      <div className="grid gap-2 md:grid-cols-2">
+                        {bundle.assets.map((asset) => {
+                          const assetUrl =
+                            asset.signed_url ||
+                            resolveLessonMaterialUrl(asset.storage_path);
+
+                          return (
+                            <a
+                              key={asset.id}
+                              href={assetUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="flex items-center justify-between gap-3 border border-white/10 bg-white/[0.015] px-3 py-2.5 transition hover:border-[#DBC094]/40 hover:bg-white/[0.03]"
+                            >
+                              <div className="min-w-0">
+                                <p className="truncate text-[15px] font-medium text-white/85">
+                                  {asset.title ||
+                                    asset.file_name ||
+                                    "Material da aula"}
+                                </p>
+                                <p className="mt-0.5 text-[13px] text-white/35">
+                                  {asset.asset_type} •{" "}
+                                  {formatFileSize(asset.size_bytes)}
+                                </p>
+                              </div>
+                              <span className="inline-flex items-center gap-1.5 text-[13px] font-semibold uppercase tracking-[0.08em] text-[#DBC094]">
+                                Acessar
+                                <Download className="h-3 w-3" />
+                              </span>
+                            </a>
+                          );
+                        })}
+                      </div>
+                    </section>
+                  ) : null}
+
+                  <section className="mt-7">
+                    <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
+                      <div>
+                        <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#DBC094]">
+                          Comunidade da aula
+                        </p>
+                        <h2 className="mt-1 text-[17px] font-semibold text-white">
+                          Compartilhe sua dúvida ou experiência
+                        </h2>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-1">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <button
+                              key={star}
+                              type="button"
+                              onClick={() => submitRating(star)}
+                              disabled={sendingRating}
+                              className="transition hover:scale-110 disabled:cursor-not-allowed disabled:opacity-60"
+                              aria-label={`Avaliar com ${star} estrela(s)`}
+                            >
+                              <Star
+                                className={
+                                  star <= selectedRating
+                                    ? "h-4 w-4 fill-[#DBC094] text-[#DBC094]"
+                                    : "h-4 w-4 text-white/25"
+                                }
+                              />
+                            </button>
+                          ))}
+                          {sendingRating ? (
+                            <Loader2 className="ml-1 h-3.5 w-3.5 animate-spin text-[#DBC094]" />
+                          ) : null}
+                        </div>
+
+                        {averageRating > 0 ? (
+                          <span className="text-[13px] font-medium text-white/45">
+                            média {averageRating.toFixed(1)}
+                          </span>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    <div className="w-full">
+                      <div className="min-w-0">
+                        <div className="flex gap-3 border-b border-white/10 pb-5">
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#DBC094] text-[14px] font-semibold text-black">
+                            {profile?.avatar_url ? (
+                              <img
+                                src={profile.avatar_url}
+                                alt={getStudentName(user, profile)}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              getInitials(getStudentName(user, profile))
+                            )}
+                          </div>
+
+                          <div className="min-w-0 flex-1">
+                            <textarea
+                              value={comment}
+                              onChange={(event) =>
+                                setComment(event.target.value)
+                              }
+                              placeholder="Compartilhe uma dúvida ou experiência"
+                              className="min-h-[86px] w-full resize-none border-0 bg-transparent text-[15px] leading-6 text-white outline-none placeholder:text-white/32"
+                            />
+
+                            <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                              <p className="text-[13px] leading-5 text-white/35">
+                                Seu comentário será enviado para análise antes
+                                de aparecer na comunidade.
+                              </p>
+
+                              <button
+                                type="button"
+                                onClick={submitComment}
+                                disabled={sendingComment || !comment.trim()}
+                                className="inline-flex h-8 items-center gap-1.5 rounded-md bg-[#DBC094] px-3 text-[14px] font-semibold text-black transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+                              >
+                                {sendingComment ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                ) : (
+                                  <Send className="h-3.5 w-3.5" />
+                                )}
+                                Enviar
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        {bundle.comments.length > 0 ? (
+                          <div className="divide-y divide-white/10">
+                            {bundle.comments.map((item) => {
+                              const itemRating = item.student_id
+                                ? ratingByStudentId.get(item.student_id)
+                                : null;
+                              const studentAvatar = item.student_avatar_url;
+                              const studentName = item.student_name || "Aluno";
+
+                              return (
+                                <article key={item.id} className="py-4">
+                                  <div className="flex gap-3">
+                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#DBC094] text-[14px] font-semibold text-black">
+                                      {studentAvatar ? (
+                                        <img
+                                          src={studentAvatar}
+                                          alt={studentName}
+                                          className="h-full w-full object-cover"
+                                        />
+                                      ) : (
+                                        getInitials(studentName)
+                                      )}
+                                    </div>
+
+                                    <div className="min-w-0 flex-1">
+                                      <div className="flex flex-wrap items-center gap-2">
+                                        <p className="text-[15px] font-semibold text-white">
+                                          {studentName}
+                                        </p>
+                                        <p className="text-[13px] text-white/35">
+                                          {new Date(
+                                            item.created_at,
+                                          ).toLocaleDateString("pt-BR")}
+                                        </p>
+                                        {itemRating ? (
+                                          <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-[#DBC094]">
+                                            <Star className="h-3 w-3 fill-[#DBC094]" />
+                                            {itemRating.rating}/5
+                                          </span>
+                                        ) : null}
+                                      </div>
+
+                                      <p className="mt-2 text-[15px] leading-6 text-white/65">
+                                        {item.comment}
+                                      </p>
+
+                                      {item.admin_note ? (
+                                        <details className="mt-3 border-l border-[#DBC094]/40 pl-3">
+                                          <summary className="cursor-pointer text-[13px] font-semibold uppercase tracking-[0.12em] text-[#DBC094]">
+                                            Resposta do ADM
+                                          </summary>
+                                          <p className="mt-2 text-[15px] leading-6 text-white/65">
+                                            {item.admin_note}
+                                          </p>
+                                        </details>
+                                      ) : null}
+                                    </div>
+                                  </div>
+                                </article>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <div className="py-8 text-center">
+                            <MessageCircle className="mx-auto h-6 w-6 text-[#DBC094]/80" />
+                            <p className="mt-3 text-[15px] font-semibold text-white">
+                              Nenhum comentário publicado ainda
+                            </p>
+                            <p className="mt-1 text-[15px] leading-6 text-white/40">
+                              Seja o primeiro a comentar esta aula.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </section>
+                </>
+              )}
             </div>
           </div>
         </div>
       </section>
 
       {completionFlow ? (
-        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/72 px-5 backdrop-blur-sm">
-          <div className="w-full max-w-[520px] rounded-[28px] border border-[#DBC094]/35 bg-[#101116] p-6 text-center shadow-[0_24px_80px_rgba(0,0,0,0.55)]">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#16a34a] text-white">
-              <CheckCircle2 className="h-7 w-7" />
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/75 px-5 backdrop-blur-sm">
+          <div className="w-full max-w-[440px] border border-[#DBC094]/35 bg-[#050608] p-6 text-center shadow-[0_24px_80px_rgba(0,0,0,0.55)]">
+            <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-[#16a34a] text-white">
+              <CheckCircle2 className="h-5 w-5" />
             </div>
 
-            <h2 className="mt-5 text-[26px] font-black leading-tight tracking-[-0.045em] text-white">
+            <h2 className="mt-4 text-[21px] font-semibold leading-tight text-white">
               Conclusão registrada
             </h2>
 
-            <p className="mt-3 text-[15px] leading-7 text-white/68">
+            <p className="mt-3 text-[17px] leading-7 text-white/65">
               {completionFlow.message}
             </p>
 
             {completionFlow.redirect_url ? (
-              <div className="mt-6 flex items-center justify-center gap-2 text-[12px] font-black uppercase tracking-[0.18em] text-[#DBC094]">
-                <Loader2 className="h-4 w-4 animate-spin" />
+              <div className="mt-5 flex items-center justify-center gap-2 text-[13px] font-semibold uppercase tracking-[0.16em] text-[#DBC094]">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 Redirecionando automaticamente
               </div>
             ) : (
               <button
                 type="button"
                 onClick={() => setCompletionFlow(null)}
-                className="mt-6 inline-flex h-11 items-center justify-center rounded-[10px] bg-white px-5 text-[13px] font-black text-black transition hover:bg-[#DBC094]"
+                className="mt-5 inline-flex h-9 items-center justify-center rounded-md bg-white px-5 text-[15px] font-semibold text-black transition hover:bg-[#DBC094]"
               >
                 Entendi
               </button>

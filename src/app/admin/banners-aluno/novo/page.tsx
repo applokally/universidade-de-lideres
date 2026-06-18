@@ -3,6 +3,7 @@
 import { createClient } from "@supabase/supabase-js";
 import {
   ArrowLeft,
+  BookOpen,
   CheckCircle2,
   ImagePlus,
   Loader2,
@@ -28,6 +29,13 @@ type StudentBanner = {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+};
+
+type CourseOption = {
+  id: string;
+  title: string | null;
+  slug: string | null;
+  status: string | null;
 };
 
 type BannerFormState = {
@@ -81,10 +89,56 @@ function getBannerIdFromUrl() {
   return new URLSearchParams(window.location.search).get("id") ?? "";
 }
 
+function getCourseLabel(course: CourseOption) {
+  return course.title?.trim() || course.slug?.trim() || "Curso sem título";
+}
+
+function getCourseRouteKey(course: CourseOption) {
+  return course.slug?.trim() || course.id;
+}
+
+function buildCourseTargetUrl(course: CourseOption) {
+  return `/aluno/trilhas/${getCourseRouteKey(course)}`;
+}
+
+function findCourseByTargetUrl(courses: CourseOption[], targetUrl: string) {
+  const cleanTarget = targetUrl.trim();
+
+  if (!cleanTarget) return null;
+
+  return (
+    courses.find((course) => {
+      const routeKey = getCourseRouteKey(course);
+      const trailUrl = `/aluno/trilhas/${routeKey}`;
+      const courseUrl = `/aluno/cursos/${routeKey}`;
+
+      return (
+        cleanTarget === trailUrl ||
+        cleanTarget === courseUrl ||
+        cleanTarget === course.id ||
+        cleanTarget === routeKey
+      );
+    }) ?? null
+  );
+}
+
+function formatCourseStatus(status: string | null) {
+  if (!status) return "status não informado";
+
+  if (status === "published") return "publicado";
+  if (status === "draft") return "rascunho";
+  if (status === "archived") return "arquivado";
+
+  return status;
+}
+
 export default function NewStudentBannerPage() {
   const [bannerId, setBannerId] = useState("");
   const [form, setForm] = useState<BannerFormState>(initialFormState);
+  const [courses, setCourses] = useState<CourseOption[]>([]);
+  const [selectedCourseId, setSelectedCourseId] = useState("");
   const [loadingBanner, setLoadingBanner] = useState(false);
+  const [loadingCourses, setLoadingCourses] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingDesktop, setUploadingDesktop] = useState(false);
   const [uploadingMobile, setUploadingMobile] = useState(false);
@@ -93,9 +147,38 @@ export default function NewStudentBannerPage() {
 
   const isEditing = useMemo(() => Boolean(bannerId), [bannerId]);
 
+  const selectedCourse = useMemo(
+    () => courses.find((course) => course.id === selectedCourseId) ?? null,
+    [courses, selectedCourseId]
+  );
+
   useEffect(() => {
     const id = getBannerIdFromUrl();
     setBannerId(id);
+  }, []);
+
+  useEffect(() => {
+    async function loadCourses() {
+      setLoadingCourses(true);
+      setErrorMessage("");
+
+      const { data, error } = await supabase
+        .from("courses")
+        .select("id,title,slug,status")
+        .order("title", { ascending: true });
+
+      if (error) {
+        setErrorMessage(`Erro ao carregar cursos: ${error.message}`);
+        setCourses([]);
+        setLoadingCourses(false);
+        return;
+      }
+
+      setCourses((data ?? []) as CourseOption[]);
+      setLoadingCourses(false);
+    }
+
+    void loadCourses();
   }, []);
 
   useEffect(() => {
@@ -143,8 +226,21 @@ export default function NewStudentBannerPage() {
       setLoadingBanner(false);
     }
 
-    loadBanner();
+    void loadBanner();
   }, [bannerId]);
+
+  useEffect(() => {
+    const matchedCourse = findCourseByTargetUrl(courses, form.target_url);
+
+    if (matchedCourse) {
+      setSelectedCourseId(matchedCourse.id);
+      return;
+    }
+
+    if (!form.target_url.trim()) {
+      setSelectedCourseId("");
+    }
+  }, [courses, form.target_url]);
 
   function updateFormField<K extends keyof BannerFormState>(
     field: K,
@@ -154,6 +250,14 @@ export default function NewStudentBannerPage() {
       ...current,
       [field]: value,
     }));
+  }
+
+  function handleCourseChange(courseId: string) {
+    setSelectedCourseId(courseId);
+
+    const course = courses.find((item) => item.id === courseId);
+
+    updateFormField("target_url", course ? buildCourseTargetUrl(course) : "");
   }
 
   async function uploadImage(
@@ -227,6 +331,12 @@ export default function NewStudentBannerPage() {
       return;
     }
 
+    if (!form.target_url.trim()) {
+      setErrorMessage("Selecione o curso que será aberto pelo botão do banner.");
+      setSaving(false);
+      return;
+    }
+
     const payload = {
       title: form.title.trim(),
       subtitle: normalizeNullable(form.subtitle),
@@ -269,6 +379,7 @@ export default function NewStudentBannerPage() {
 
     setMessage("Banner cadastrado com sucesso.");
     setForm(initialFormState);
+    setSelectedCourseId("");
     setSaving(false);
   }
 
@@ -446,20 +557,50 @@ export default function NewStudentBannerPage() {
               </label>
             </div>
 
-            <label className="block">
-              <span className="mb-2 block text-[14px] font-semibold text-[#52525b]">
-                Link de destino
-              </span>
-              <input
-                type="text"
-                value={form.target_url}
-                onChange={(event) =>
-                  updateFormField("target_url", event.target.value)
-                }
-                placeholder="/aluno/trilhas/lideranca-essencial"
-                className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#27272a] outline-none transition placeholder:text-[#8a8f9d] focus:border-[#DBC094]"
-              />
-            </label>
+            <div className="rounded-[16px] border border-[#e5e5e5] bg-[#fbfbfb] p-4">
+              <div className="mb-3 flex items-start gap-3">
+                <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-[#f3eee5] text-[#8a6836]">
+                  <BookOpen size={18} />
+                </div>
+
+                <div className="min-w-0">
+                  <p className="text-[14px] font-semibold text-[#52525b]">
+                    Conteúdo aberto pelo botão
+                  </p>
+                  <p className="mt-1 text-[12px] leading-5 text-[#8a8f9d]">
+                    Selecione o curso que será aberto quando o aluno clicar no
+                    botão do banner. Não é mais necessário digitar link manual.
+                  </p>
+                </div>
+              </div>
+
+              <select
+                value={selectedCourseId}
+                onChange={(event) => handleCourseChange(event.target.value)}
+                disabled={loadingCourses}
+                className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#27272a] outline-none transition focus:border-[#DBC094] disabled:cursor-not-allowed disabled:bg-[#f4f4f5] disabled:text-[#8a8f9d]"
+              >
+                <option value="">
+                  {loadingCourses ? "Carregando cursos..." : "Selecione um curso"}
+                </option>
+                {courses.map((course) => (
+                  <option key={course.id} value={course.id}>
+                    {getCourseLabel(course)} · {formatCourseStatus(course.status)}
+                  </option>
+                ))}
+              </select>
+
+              {selectedCourse ? (
+                <p className="mt-3 text-[12px] font-medium text-[#666b76]">
+                  Destino salvo automaticamente: {buildCourseTargetUrl(selectedCourse)}
+                </p>
+              ) : form.target_url ? (
+                <p className="mt-3 text-[12px] font-medium text-amber-700">
+                  Este banner possui um destino antigo salvo: {form.target_url}. Selecione
+                  um curso para atualizar o botão.
+                </p>
+              ) : null}
+            </div>
 
             <div className="grid gap-4 lg:grid-cols-2">
               <ImageUploadBox
@@ -509,7 +650,9 @@ export default function NewStudentBannerPage() {
 
               <button
                 type="submit"
-                disabled={saving || uploadingDesktop || uploadingMobile}
+                disabled={
+                  saving || uploadingDesktop || uploadingMobile || loadingCourses
+                }
                 className="inline-flex h-12 items-center justify-center gap-2 rounded-[12px] bg-[#DBC094] px-5 text-[14px] font-semibold text-black transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {saving ? (

@@ -111,6 +111,11 @@ const navGroups: NavGroup[] = [
         icon: MessageCircle,
       },
       {
+        label: "Comentários das aulas",
+        href: "/admin/comentarios-aulas",
+        icon: MessageCircle,
+      },
+      {
         label: "Gamificação",
         href: "/admin/gamificacao",
         icon: Trophy,
@@ -376,7 +381,6 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               </div>
 
               <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-
                 <HeaderIconButton title="Notificações" href="/admin/cadastros">
                   <Bell className="h-5 w-5" />
                 </HeaderIconButton>

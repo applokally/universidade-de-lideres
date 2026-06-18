@@ -1,9 +1,15 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
+import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
+const supabaseServiceRoleKey =
+  process.env.SUPABASE_SERVICE_ROLE_KEY ??
+  process.env.SUPABASE_SERVICE_KEY ??
+  process.env.SUPABASE_SERVICE_ROLE ??
+  "";
 
 const COURSE_COVERS_BUCKET = "covers";
 
@@ -47,8 +53,18 @@ type CourseRow = {
   preferred_card_format: string | null;
 };
 
+type LessonProgressPostBody = {
+  action?: string;
+  lesson_id?: string;
+  progress_seconds?: number;
+  completed?: boolean;
+  completed_at?: string;
+  comment?: string;
+  rating?: number;
+};
+
 function createStudentSupabaseClient(
-  cookieStore: Awaited<ReturnType<typeof cookies>>
+  cookieStore: Awaited<ReturnType<typeof cookies>>,
 ) {
   return createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
@@ -62,6 +78,23 @@ function createStudentSupabaseClient(
       },
     },
   });
+}
+
+function createAdminSupabaseClient() {
+  if (!supabaseUrl || !supabaseServiceRoleKey) {
+    throw new Error("SUPABASE_SERVICE_ROLE_KEY não configurada no servidor.");
+  }
+
+  return createClient(supabaseUrl, supabaseServiceRoleKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  });
+}
+
+function cleanText(value: unknown) {
+  return typeof value === "string" ? value.trim() : "";
 }
 
 function getPublicCoverUrl(path: string | null) {
@@ -128,6 +161,18 @@ function selectCourseCover(course: CourseRow) {
   );
 }
 
+function getStudentDisplayName(
+  user: Awaited<ReturnType<typeof getStudentContext>>["user"],
+  profile: Awaited<ReturnType<typeof getStudentContext>>["profile"],
+) {
+  return (
+    cleanText(profile?.full_name) ||
+    cleanText(user?.user_metadata?.full_name) ||
+    cleanText(user?.email) ||
+    "Aluno"
+  );
+}
+
 async function getStudentContext(lessonId?: string, lessonIds: string[] = []) {
   const cookieStore = await cookies();
   const supabase = createStudentSupabaseClient(cookieStore);
@@ -160,7 +205,7 @@ async function getStudentContext(lessonId?: string, lessonIds: string[] = []) {
     const { data: progressData } = await supabase
       .from("lesson_progress")
       .select(
-        "id,lesson_id,student_id,progress_seconds,completed_at,last_watched_at,updated_at"
+        "id,lesson_id,student_id,progress_seconds,completed_at,last_watched_at,updated_at",
       )
       .eq("lesson_id", lessonId)
       .eq("student_id", user.id)
@@ -173,7 +218,7 @@ async function getStudentContext(lessonId?: string, lessonIds: string[] = []) {
     const { data: progressesData } = await supabase
       .from("lesson_progress")
       .select(
-        "id,lesson_id,student_id,progress_seconds,completed_at,last_watched_at,updated_at"
+        "id,lesson_id,student_id,progress_seconds,completed_at,last_watched_at,updated_at",
       )
       .eq("student_id", user.id)
       .in("lesson_id", lessonIds);
@@ -192,12 +237,12 @@ async function getStudentContext(lessonId?: string, lessonIds: string[] = []) {
 
 async function getContinueWatchingItems(
   supabase: Awaited<ReturnType<typeof getStudentContext>>["supabase"],
-  studentId: string
+  studentId: string,
 ) {
   const { data: progressData } = await supabase
     .from("lesson_progress")
     .select(
-      "id,lesson_id,student_id,progress_seconds,completed_at,last_watched_at,updated_at"
+      "id,lesson_id,student_id,progress_seconds,completed_at,last_watched_at,updated_at",
     )
     .eq("student_id", studentId)
     .not("last_watched_at", "is", null)
@@ -214,7 +259,7 @@ async function getContinueWatchingItems(
     });
 
   const lessonIds = Array.from(
-    new Set(progresses.map((item) => item.lesson_id).filter(Boolean))
+    new Set(progresses.map((item) => item.lesson_id).filter(Boolean)),
   );
 
   if (lessonIds.length === 0) return [];
@@ -226,12 +271,12 @@ async function getContinueWatchingItems(
     .eq("status", "published");
 
   const lessons = ((lessonsData ?? []) as unknown as LessonRow[]).filter(
-    (lesson) => lesson.id
+    (lesson) => lesson.id,
   );
   const lessonById = new Map(lessons.map((lesson) => [lesson.id, lesson]));
 
   const moduleIds = Array.from(
-    new Set(lessons.map((lesson) => lesson.module_id).filter(Boolean))
+    new Set(lessons.map((lesson) => lesson.module_id).filter(Boolean)),
   ) as string[];
 
   if (moduleIds.length === 0) return [];
@@ -242,12 +287,12 @@ async function getContinueWatchingItems(
     .in("id", moduleIds);
 
   const modules = ((modulesData ?? []) as unknown as ModuleRow[]).filter(
-    (module) => module.id
+    (module) => module.id,
   );
   const moduleById = new Map(modules.map((module) => [module.id, module]));
 
   const courseIds = Array.from(
-    new Set(modules.map((module) => module.course_id).filter(Boolean))
+    new Set(modules.map((module) => module.course_id).filter(Boolean)),
   ) as string[];
 
   if (courseIds.length === 0) return [];
@@ -266,12 +311,12 @@ async function getContinueWatchingItems(
         "cover_horizontal_path",
         "cover_featured_path",
         "preferred_card_format",
-      ].join(",")
+      ].join(","),
     )
     .in("id", courseIds);
 
   const courses = ((coursesData ?? []) as unknown as CourseRow[]).filter(
-    (course) => course.id
+    (course) => course.id,
   );
   const courseById = new Map(courses.map((course) => [course.id, course]));
 
@@ -313,6 +358,108 @@ async function getContinueWatchingItems(
   return continueWatching;
 }
 
+async function handleLessonInteraction({
+  action,
+  body,
+  lessonId,
+  context,
+}: {
+  action: string;
+  body: LessonProgressPostBody;
+  lessonId: string;
+  context: Awaited<ReturnType<typeof getStudentContext>>;
+}) {
+  if (!context.user?.id) {
+    return NextResponse.json(
+      { error: "student_session_not_found" },
+      { status: 401 },
+    );
+  }
+
+  const adminSupabase = createAdminSupabaseClient();
+  const studentName = getStudentDisplayName(context.user, context.profile);
+  const studentAvatarUrl = context.profile?.avatar_url ?? null;
+
+  if (action === "comment") {
+    const comment = cleanText(body.comment);
+
+    if (!comment) {
+      return NextResponse.json(
+        { error: "Digite um comentário antes de enviar." },
+        { status: 400 },
+      );
+    }
+
+    const { error } = await adminSupabase.from("lesson_comments").insert({
+      lesson_id: lessonId,
+      student_id: context.user.id,
+      student_name: studentName,
+      student_avatar_url: studentAvatarUrl,
+      comment,
+      status: "pending",
+    });
+
+    if (error) {
+      console.error("Erro ao inserir comentário da aula:", error);
+
+      return NextResponse.json(
+        {
+          error:
+            error.message ||
+            "Não foi possível enviar o comentário. Verifique a tabela lesson_comments.",
+        },
+        { status: 500 },
+      );
+    }
+
+    return NextResponse.json({
+      ok: true,
+      message: "Comentário enviado para análise.",
+    });
+  }
+
+  if (action === "rating") {
+    const rating = Number(body.rating ?? 0);
+
+    if (!Number.isFinite(rating) || rating < 1 || rating > 5) {
+      return NextResponse.json(
+        { error: "Avaliação inválida." },
+        { status: 400 },
+      );
+    }
+
+    const { error } = await adminSupabase.from("lesson_ratings").insert({
+      lesson_id: lessonId,
+      student_id: context.user.id,
+      student_name: studentName,
+      student_avatar_url: studentAvatarUrl,
+      rating,
+      review: null,
+      status: "pending",
+    });
+
+    if (error) {
+      console.error("Erro ao inserir avaliação da aula:", error);
+
+      return NextResponse.json(
+        {
+          error:
+            error.message ||
+            "Não foi possível enviar a avaliação. Verifique a tabela lesson_ratings.",
+        },
+        { status: 500 },
+      );
+    }
+
+    return NextResponse.json({
+      ok: true,
+      message: "Avaliação enviada para análise.",
+    });
+  }
+
+  return NextResponse.json({ error: "Ação inválida." }, { status: 400 });
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const lessonId = searchParams.get("lessonId") ?? "";
@@ -333,14 +480,14 @@ export async function GET(request: Request) {
         progresses: [],
         continueWatching: [],
       },
-      { status: 200 }
+      { status: 200 },
     );
   }
 
   if (mode === "continue-watching" || !lessonId) {
     const continueWatching = await getContinueWatchingItems(
       context.supabase,
-      context.user.id
+      context.user.id,
     );
 
     return NextResponse.json({
@@ -359,28 +506,44 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const body = (await request.json().catch(() => null)) as {
-    lesson_id?: string;
-    progress_seconds?: number;
-    completed?: boolean;
-    completed_at?: string;
-  } | null;
+  const body = (await request.json().catch(() => null)) as
+    | LessonProgressPostBody
+    | null;
 
   const lessonId = body?.lesson_id?.trim() ?? "";
 
   if (!lessonId) {
     return NextResponse.json(
       { error: "lesson_id é obrigatório." },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
   const context = await getStudentContext(lessonId);
+  const action = cleanText(body?.action);
+
+  if (action === "comment" || action === "rating") {
+    try {
+      return await handleLessonInteraction({
+        action,
+        body: body ?? {},
+        lessonId,
+        context,
+      });
+    } catch (error) {
+      console.error("Erro inesperado na interação da aula:", error);
+
+      return NextResponse.json(
+        { error: "Não foi possível processar a interação da aula." },
+        { status: 500 },
+      );
+    }
+  }
 
   if (!context.user?.id) {
     return NextResponse.json(
       { error: "student_session_not_found" },
-      { status: 401 }
+      { status: 401 },
     );
   }
 
@@ -391,7 +554,7 @@ export async function POST(request: Request) {
     : 0;
   const progressSeconds = Math.max(
     Number(existingProgress?.progress_seconds ?? 0),
-    requestedProgressSeconds
+    requestedProgressSeconds,
   );
   const shouldComplete = Boolean(body?.completed_at || body?.completed);
   const completedAt = shouldComplete
@@ -411,17 +574,17 @@ export async function POST(request: Request) {
       },
       {
         onConflict: "lesson_id,student_id",
-      }
+      },
     )
     .select(
-      "id,lesson_id,student_id,progress_seconds,completed_at,last_watched_at,updated_at"
+      "id,lesson_id,student_id,progress_seconds,completed_at,last_watched_at,updated_at",
     )
     .maybeSingle();
 
   if (error || !progress) {
     return NextResponse.json(
       { error: "progress_save_failed" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 

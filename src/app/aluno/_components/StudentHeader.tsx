@@ -53,7 +53,8 @@ type HeaderNotification = {
   description: string;
   href: string;
   unread?: boolean;
-  type: "system" | "course" | "certificate";
+  type: "system" | "course" | "certificate" | "community";
+  notificationId?: string;
 };
 
 
@@ -132,6 +133,7 @@ const menuItems = [
   { label: "Ao vivo", href: "/aluno/ao-vivo" },
   { label: "Certificados", href: "/aluno/area/certificados" },
   { label: "Gamificação", href: "/aluno/gamificacao" },
+  { label: "Comunidade UNL", href: "/aluno/comunidade" },
 ];
 
 const categoryGroups = [
@@ -184,6 +186,12 @@ const categoryGroups = [
         description: "Acompanhe pontos, evolução e conquistas.",
         href: "/aluno/gamificacao",
         icon: Star,
+      },
+      {
+        label: "Comunidade UNL",
+        description: "Participe de conversas, avisos, dúvidas e networking.",
+        href: "/aluno/comunidade",
+        icon: MessageCircle,
       },
     ],
   },
@@ -311,6 +319,7 @@ export function StudentHeader() {
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [favorites, setFavorites] = useState<StudentFavorite[]>([]);
   const [loadingFavorites, setLoadingFavorites] = useState(false);
+  const [communityHeaderNotifications, setCommunityHeaderNotifications] = useState<HeaderNotification[]>([]);
 
   useEffect(() => {
     function handleScroll() {
@@ -376,6 +385,103 @@ export function StudentHeader() {
     return () => {
       active = false;
       window.removeEventListener("student-profile-updated", handleProfileUpdated);
+    };
+  }, []);
+
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadCommunityHeaderNotifications() {
+      try {
+        const supabase = supabaseBrowser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        const notificationsResponse = await supabase
+          .from("community_notifications")
+          .select("id,title,body,status,sent_at,created_at")
+          .eq("status", "sent")
+          .order("sent_at", { ascending: false, nullsFirst: false })
+          .order("created_at", { ascending: false })
+          .limit(8);
+
+        if (notificationsResponse.error) throw notificationsResponse.error;
+
+        const notificationRows = (notificationsResponse.data ?? []) as Array<{
+          id: string;
+          title: string | null;
+          body: string | null;
+        }>;
+
+        let readNotificationIds = new Set<string>();
+
+        if (user && notificationRows.length > 0) {
+          const deliveriesResponse = await supabase
+            .from("community_notification_deliveries")
+            .select("notification_id,read_at,clicked_at")
+            .eq("user_id", user.id)
+            .in(
+              "notification_id",
+              notificationRows.map((item) => item.id),
+            );
+
+          if (!deliveriesResponse.error) {
+            readNotificationIds = new Set(
+              ((deliveriesResponse.data ?? []) as Array<{
+                notification_id: string;
+                read_at: string | null;
+                clicked_at: string | null;
+              }>)
+                .filter((item) => item.read_at || item.clicked_at)
+                .map((item) => item.notification_id),
+            );
+          }
+        }
+
+        if (!active) return;
+
+        const notificationItems: HeaderNotification[] = notificationRows
+          .filter((item) => !readNotificationIds.has(item.id))
+          .map((item) => ({
+            id: `community-notification-${item.id}`,
+            notificationId: item.id,
+            title: item.title || "Comunidade UNL",
+            description: item.body || "Nova atualização da comunidade.",
+            href: `/aluno/comunidade?notificacao=${item.id}`,
+            unread: true,
+            type: "community",
+          }));
+
+        setCommunityHeaderNotifications(notificationItems.slice(0, 5));
+      } catch {
+        if (!active) return;
+
+        setCommunityHeaderNotifications([]);
+      }
+    }
+
+    void loadCommunityHeaderNotifications();
+
+    const interval = window.setInterval(loadCommunityHeaderNotifications, 60_000);
+
+    function handleCommunityNotificationsUpdated() {
+      void loadCommunityHeaderNotifications();
+    }
+
+    window.addEventListener(
+      "community-notifications-updated",
+      handleCommunityNotificationsUpdated,
+    );
+
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+      window.removeEventListener(
+        "community-notifications-updated",
+        handleCommunityNotificationsUpdated,
+      );
     };
   }, []);
 
@@ -613,6 +719,51 @@ export function StudentHeader() {
     setProfileMenuOpen(false);
     setNotificationMenuOpen(false);
   }
+
+  async function handleHeaderNotificationClick(item: HeaderNotification) {
+    setNotificationMenuOpen(false);
+
+    if (item.type !== "community" || !item.notificationId) return;
+
+    try {
+      const supabase = supabaseBrowser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) return;
+
+      const now = new Date().toISOString();
+
+      await supabase.from("community_notification_deliveries").upsert(
+        {
+          notification_id: item.notificationId,
+          user_id: user.id,
+          delivered_at: now,
+          read_at: now,
+          clicked_at: now,
+        },
+        {
+          onConflict: "notification_id,user_id",
+        },
+      );
+
+      setCommunityHeaderNotifications((current) =>
+        current.filter((notification) => notification.id !== item.id),
+      );
+
+      window.dispatchEvent(new Event("community-notifications-updated"));
+    } catch {
+      setCommunityHeaderNotifications((current) =>
+        current.filter((notification) => notification.id !== item.id),
+      );
+    }
+  }
+
+  const allHeaderNotifications = [
+    ...communityHeaderNotifications,
+    ...headerNotifications,
+  ];
 
   const initials = getProfileInitials(profile);
 
@@ -1033,7 +1184,7 @@ export function StudentHeader() {
             >
               <Bell size={20} strokeWidth={2.3} />
 
-              {headerNotifications.some((item) => item.unread) ? (
+              {allHeaderNotifications.some((item) => item.unread) ? (
                 <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-[#DBC094] shadow-[0_0_14px_rgba(219,192,148,0.85)]" />
               ) : null}
             </button>
@@ -1049,19 +1200,19 @@ export function StudentHeader() {
                       Notificações
                     </p>
                     <p className="mt-1.5 text-[13px] leading-5 text-white/52">
-                      Atualizações importantes da sua área do aluno.
+                      Atualizações da Comunidade UNL e da área do aluno.
                     </p>
                   </div>
 
                   <span className="rounded-full bg-[#DBC094]/13 px-3 py-2 text-[12px] font-black leading-none text-[#DBC094]">
-                    {headerNotifications.filter((item) => item.unread).length} nova(s)
+                    {allHeaderNotifications.filter((item) => item.unread).length} nova(s)
                   </span>
                 </div>
 
                 <div className="max-h-[440px] overflow-y-auto p-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                  {headerNotifications.length > 0 ? (
+                  {allHeaderNotifications.length > 0 ? (
                     <div className="grid gap-1">
-                      {headerNotifications.map((item) => {
+                      {allHeaderNotifications.map((item) => {
                         const Icon =
                           item.type === "certificate"
                             ? CheckCircle2
@@ -1073,7 +1224,7 @@ export function StudentHeader() {
                           <Link
                             key={item.id}
                             href={item.href}
-                            onClick={() => setNotificationMenuOpen(false)}
+                            onClick={() => void handleHeaderNotificationClick(item)}
                             className="group flex items-start gap-4 rounded-[18px] px-4 py-4 transition hover:bg-white/9"
                           >
                             <span

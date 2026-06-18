@@ -1,6 +1,6 @@
 "use client";
 
-import { createClient } from "@supabase/supabase-js";
+import { supabaseBrowser } from "@/lib/supabase/browser";
 import {
   CheckCircle2,
   Eye,
@@ -10,12 +10,18 @@ import {
   Pencil,
   Plus,
   Trash2,
+  ChevronRight,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
+
+function cx(...classes: Array<string | false | null | undefined>) {
+  return classes.filter(Boolean).join(" ");
+}
+
 type LayoutVariant = "horizontal" | "vertical" | "featured";
-type ContentType = "course" | "lesson" | "live";
+type ContentType = "trail" | "course" | "lesson" | "live";
 
 type HomeSection = {
   id: string;
@@ -43,6 +49,18 @@ type HomeSectionItem = {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+};
+
+type TrailOption = {
+  id: string;
+  title: string;
+  slug: string | null;
+  description: string | null;
+  cover_path: string | null;
+  preferred_card_format: LayoutVariant | null;
+  required_rank: number | null;
+  status: string | null;
+  is_featured: boolean | null;
 };
 
 type CourseOption = {
@@ -74,9 +92,22 @@ type LessonOption = {
   scheduled_start_at: string | null;
 };
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+type LiveOption = {
+  id: string;
+  slug: string | null;
+  title: string;
+  short_description: string | null;
+  description: string | null;
+  cover_path: string | null;
+  starts_at: string | null;
+  ends_at: string | null;
+  presenter_name: string | null;
+  status: string | null;
+  is_featured: boolean | null;
+  is_active: boolean | null;
+};
+
+const supabase = supabaseBrowser();
 
 function getLayoutLabel(variant: LayoutVariant) {
   if (variant === "horizontal") return "Horizontal";
@@ -85,7 +116,8 @@ function getLayoutLabel(variant: LayoutVariant) {
 }
 
 function getContentTypeLabel(type: ContentType) {
-  if (type === "course") return "Curso / Trilha";
+  if (type === "trail") return "Trilha";
+  if (type === "course") return "Curso";
   if (type === "live") return "Live";
   return "Aula";
 }
@@ -118,7 +150,11 @@ function resolvePublicAssetUrl(path: string | null) {
     return `/${cleanPath.replace(/^public\//, "")}`;
   }
 
-  if (cleanPath.startsWith("courses/") || cleanPath.startsWith("trilhas/")) {
+  if (
+    cleanPath.startsWith("courses/") ||
+    cleanPath.startsWith("trilhas/") ||
+    cleanPath.startsWith("lives/")
+  ) {
     const { data } = supabase.storage.from("covers").getPublicUrl(cleanPath);
     return data.publicUrl;
   }
@@ -148,9 +184,11 @@ function resolvePublicAssetUrl(path: string | null) {
 export default function AdminStudentHomePage() {
   const [sections, setSections] = useState<HomeSection[]>([]);
   const [items, setItems] = useState<HomeSectionItem[]>([]);
+  const [trails, setTrails] = useState<TrailOption[]>([]);
   const [courses, setCourses] = useState<CourseOption[]>([]);
   const [modules, setModules] = useState<ModuleOption[]>([]);
   const [lessons, setLessons] = useState<LessonOption[]>([]);
+  const [lives, setLives] = useState<LiveOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -183,9 +221,11 @@ export default function AdminStudentHomePage() {
     const [
       sectionsResponse,
       itemsResponse,
+      trailsResponse,
       coursesResponse,
       modulesResponse,
       lessonsResponse,
+      livesResponse,
     ] = await Promise.all([
       supabase
         .from("student_home_sections")
@@ -197,6 +237,12 @@ export default function AdminStudentHomePage() {
         .select("*")
         .order("sort_order", { ascending: true })
         .order("created_at", { ascending: true }),
+      supabase
+        .from("course_categories")
+        .select(
+          "id,title,slug,description,cover_path,preferred_card_format,required_rank,status,is_featured"
+        )
+        .order("created_at", { ascending: false }),
       supabase
         .from("courses")
         .select(
@@ -213,6 +259,12 @@ export default function AdminStudentHomePage() {
           "id,module_id,title,description,status,content_type,duration_sec,primary_asset_path,scheduled_start_at"
         )
         .order("created_at", { ascending: false }),
+      supabase
+        .from("lives")
+        .select(
+          "id,slug,title,short_description,description,cover_path,starts_at,ends_at,presenter_name,status,is_featured,is_active"
+        )
+        .order("starts_at", { ascending: false }),
     ]);
 
     if (sectionsResponse.error) {
@@ -225,6 +277,14 @@ export default function AdminStudentHomePage() {
 
     if (itemsResponse.error) {
       setErrorMessage(`Erro ao carregar cards: ${itemsResponse.error.message}`);
+      setLoading(false);
+      return;
+    }
+
+    if (trailsResponse.error) {
+      setErrorMessage(
+        `Erro ao carregar trilhas: ${trailsResponse.error.message}`
+      );
       setLoading(false);
       return;
     }
@@ -253,16 +313,25 @@ export default function AdminStudentHomePage() {
       return;
     }
 
+    if (livesResponse.error) {
+      setErrorMessage(`Erro ao carregar lives: ${livesResponse.error.message}`);
+      setLoading(false);
+      return;
+    }
+
     setSections((sectionsResponse.data ?? []) as HomeSection[]);
     setItems((itemsResponse.data ?? []) as HomeSectionItem[]);
+    setTrails((trailsResponse.data ?? []) as TrailOption[]);
     setCourses((coursesResponse.data ?? []) as CourseOption[]);
     setModules((modulesResponse.data ?? []) as ModuleOption[]);
     setLessons((lessonsResponse.data ?? []) as LessonOption[]);
+    setLives((livesResponse.data ?? []) as LiveOption[]);
     setLoading(false);
   }
 
   useEffect(() => {
-    loadData();
+    void loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function toggleSectionStatus(section: HomeSection) {
@@ -359,6 +428,10 @@ export default function AdminStudentHomePage() {
     await loadData();
   }
 
+  function getTrailById(id: string) {
+    return trails.find((trail) => trail.id === id) ?? null;
+  }
+
   function getCourseById(id: string) {
     return courses.find((course) => course.id === id) ?? null;
   }
@@ -367,11 +440,23 @@ export default function AdminStudentHomePage() {
     return lessons.find((lesson) => lesson.id === id) ?? null;
   }
 
+  function getLiveById(id: string) {
+    return lives.find((live) => live.id === id) ?? null;
+  }
+
   function getItemTitle(item: HomeSectionItem) {
     if (item.title_override) return item.title_override;
 
+    if (item.content_type === "trail") {
+      return getTrailById(item.content_id)?.title ?? "Trilha não encontrada";
+    }
+
     if (item.content_type === "course") {
       return getCourseById(item.content_id)?.title ?? "Curso não encontrado";
+    }
+
+    if (item.content_type === "live") {
+      return getLiveById(item.content_id)?.title ?? "Live não encontrada";
     }
 
     return getLessonById(item.content_id)?.title ?? "Aula não encontrada";
@@ -379,6 +464,10 @@ export default function AdminStudentHomePage() {
 
   function getItemSubtitle(item: HomeSectionItem) {
     if (item.subtitle_override) return item.subtitle_override;
+
+    if (item.content_type === "trail") {
+      return getTrailById(item.content_id)?.description ?? "Trilha cadastrada no ADM.";
+    }
 
     if (item.content_type === "course") {
       const course = getCourseById(item.content_id);
@@ -389,41 +478,77 @@ export default function AdminStudentHomePage() {
       );
     }
 
+    if (item.content_type === "live") {
+      const live = getLiveById(item.content_id);
+      return (
+        live?.short_description ||
+        live?.description ||
+        "Live cadastrada no ADM."
+      );
+    }
+
     const lesson = getLessonById(item.content_id);
     const course = lesson ? moduleCourseMap.get(lesson.module_id) : null;
 
     if (lesson?.description) return lesson.description;
     if (course) return `Vinculado ao curso ${course.title}.`;
 
-    return item.content_type === "live"
-      ? "Live cadastrada no ADM."
-      : "Aula cadastrada no ADM.";
+    return "Aula cadastrada no ADM.";
   }
 
   function getItemMeta(item: HomeSectionItem) {
+    if (item.content_type === "trail") {
+      const trail = getTrailById(item.content_id);
+      return trail
+        ? `Trilha • Rank ${trail.required_rank ?? 0} • ${trail.status ?? "draft"}`
+        : "Trilha";
+    }
+
     if (item.content_type === "course") {
       const course = getCourseById(item.content_id);
       return course
-        ? `Curso / Trilha • Rank ${course.required_rank} • ${course.status}`
-        : "Curso / Trilha";
+        ? `Curso • Rank ${course.required_rank} • ${course.status}`
+        : "Curso";
+    }
+
+    if (item.content_type === "live") {
+      const live = getLiveById(item.content_id);
+
+      if (!live) return "Live";
+
+      const details = [
+        "Live",
+        live.presenter_name ? `Com ${live.presenter_name}` : null,
+        live.status ?? "scheduled",
+      ].filter(Boolean);
+
+      return details.join(" • ");
     }
 
     const lesson = getLessonById(item.content_id);
 
-    if (!lesson) return getContentTypeLabel(item.content_type);
-
-    if (item.content_type === "live") {
-      return `Live • ${lesson.status}`;
-    }
+    if (!lesson) return "Aula";
 
     return `Aula • ${formatDuration(lesson.duration_sec)} • ${lesson.status}`;
   }
 
   function getItemImage(item: HomeSectionItem) {
-    if (item.image_url_override) return item.image_url_override;
+    if (item.image_url_override) {
+      return resolvePublicAssetUrl(item.image_url_override);
+    }
+
+    if (item.content_type === "trail") {
+      return resolvePublicAssetUrl(getTrailById(item.content_id)?.cover_path ?? null);
+    }
 
     if (item.content_type === "course") {
-      return resolvePublicAssetUrl(getCourseById(item.content_id)?.cover_path ?? null);
+      return resolvePublicAssetUrl(
+        getCourseById(item.content_id)?.cover_path ?? null
+      );
+    }
+
+    if (item.content_type === "live") {
+      return resolvePublicAssetUrl(getLiveById(item.content_id)?.cover_path ?? null);
     }
 
     return resolvePublicAssetUrl(
@@ -433,67 +558,65 @@ export default function AdminStudentHomePage() {
 
   return (
     <div className="mx-auto max-w-[1440px] space-y-6 text-[#141414]">
-      <section className="flex flex-col gap-5 border-b border-[#e5e5e5] pb-6 lg:flex-row lg:items-end lg:justify-between">
-        <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8a8f9d]">
-            Área do aluno
-          </p>
+      <section className="border-b border-[#e5e5e5] pb-6">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8a8f9d]">
+              Área do aluno
+            </p>
 
-          <h1 className="mt-2 text-[38px] font-semibold leading-none tracking-[-0.04em] text-[#141414] sm:text-[46px]">
-            Categorias e cards
-          </h1>
+            <h1 className="mt-2 text-[36px] font-semibold leading-tight tracking-[-0.04em] text-[#141414] sm:text-[44px]">
+              Categorias e cards
+            </h1>
+          </div>
 
-          <p className="mt-3 max-w-[760px] text-[15px] leading-6 text-[#5d6472]">
-            Controle as fileiras da home do aluno e os conteúdos exibidos em
-            cada uma delas.
-          </p>
-        </div>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Link
+              href="/admin/home-aluno/novo?tipo=categoria"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-[12px] bg-[#DBC094] px-5 text-[14px] font-semibold text-black transition hover:brightness-105"
+            >
+              <Plus className="h-4 w-4" />
+              Nova categoria
+            </Link>
 
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <Link
-            href="/admin/home-aluno/novo?tipo=categoria"
-            className="inline-flex h-12 items-center justify-center gap-2 rounded-[12px] bg-[#DBC094] px-5 text-[14px] font-semibold text-black transition hover:brightness-105"
-          >
-            <Plus size={18} />
-            Nova categoria
-          </Link>
-
-          <Link
-            href="/admin/home-aluno/novo?tipo=card"
-            className="inline-flex h-12 items-center justify-center gap-2 rounded-[12px] border border-[#e5e5e5] bg-white px-5 text-[14px] font-semibold text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836]"
-          >
-            <Plus size={18} />
-            Inserir card
-          </Link>
+            <Link
+              href="/admin/home-aluno/novo?tipo=card"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-[12px] border border-[#e5e5e5] bg-white px-5 text-[14px] font-semibold text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836]"
+            >
+              <Plus className="h-4 w-4" />
+              Inserir card
+            </Link>
+          </div>
         </div>
       </section>
 
-      <section className="grid gap-3 md:grid-cols-3">
-        <div className="rounded-[14px] border border-[#e5e5e5] bg-white px-5 py-4">
-          <p className="text-[13px] font-medium text-[#666b76]">Categorias</p>
-          <strong className="mt-2 block text-[34px] font-semibold leading-none tracking-[-0.05em] text-[#141414]">
-            {sections.length}
-          </strong>
-        </div>
+      <section className="overflow-hidden rounded-[18px] border border-[#e5e5e5] bg-white">
+        <div className="grid grid-cols-3 divide-x divide-[#ededed]">
+          <div className="px-5 py-4">
+            <p className="text-[13px] font-medium text-[#666b76]">Categorias</p>
+            <strong className="mt-2 block text-[32px] font-semibold leading-none tracking-[-0.04em] text-[#141414]">
+              {sections.length}
+            </strong>
+          </div>
 
-        <div className="rounded-[14px] border border-[#e5e5e5] bg-white px-5 py-4">
-          <p className="text-[13px] font-medium text-[#666b76]">Ativas</p>
-          <strong className="mt-2 block text-[34px] font-semibold leading-none tracking-[-0.05em] text-[#141414]">
-            {activeSectionsCount}
-          </strong>
-        </div>
+          <div className="px-5 py-4">
+            <p className="text-[13px] font-medium text-[#666b76]">Ativas</p>
+            <strong className="mt-2 block text-[32px] font-semibold leading-none tracking-[-0.04em] text-[#141414]">
+              {activeSectionsCount}
+            </strong>
+          </div>
 
-        <div className="rounded-[14px] border border-[#e5e5e5] bg-white px-5 py-4">
-          <p className="text-[13px] font-medium text-[#666b76]">Cards exibidos</p>
-          <strong className="mt-2 block text-[34px] font-semibold leading-none tracking-[-0.05em] text-[#141414]">
-            {activeItemsCount}
-          </strong>
+          <div className="px-5 py-4">
+            <p className="text-[13px] font-medium text-[#666b76]">Cards</p>
+            <strong className="mt-2 block text-[32px] font-semibold leading-none tracking-[-0.04em] text-[#141414]">
+              {activeItemsCount}
+            </strong>
+          </div>
         </div>
       </section>
 
       {message ? (
-        <div className="flex items-center gap-3 rounded-[12px] border border-emerald-200 bg-emerald-50 px-5 py-4 text-[14px] font-semibold text-emerald-700">
-          <CheckCircle2 size={20} />
+        <div className="rounded-[12px] border border-emerald-200 bg-emerald-50 px-5 py-4 text-[14px] font-semibold text-emerald-700">
           {message}
         </div>
       ) : null}
@@ -505,7 +628,7 @@ export default function AdminStudentHomePage() {
       ) : null}
 
       <section className="overflow-hidden rounded-[18px] border border-[#e5e5e5] bg-white">
-        <div className="grid grid-cols-[minmax(0,1fr)_120px_120px_180px] gap-4 border-b border-[#e5e5e5] bg-[#fafafa] px-5 py-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8a8f9d] max-lg:hidden">
+        <div className="hidden grid-cols-[minmax(0,1fr)_120px_130px_132px] gap-4 border-b border-[#ededed] bg-[#fafafa] px-5 py-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8a8f9d] lg:grid">
           <div>Categoria</div>
           <div>Status</div>
           <div>Layout</div>
@@ -513,107 +636,82 @@ export default function AdminStudentHomePage() {
         </div>
 
         {loading ? (
-          <div className="flex min-h-[320px] items-center justify-center">
+          <div className="flex min-h-[260px] items-center justify-center bg-white">
             <div className="flex items-center gap-3 text-[14px] font-semibold text-[#666b76]">
-              <Loader2 size={18} className="animate-spin" />
-              Carregando categorias e cards...
+              <Loader2 className="h-5 w-5 animate-spin" />
+              Carregando categorias...
             </div>
           </div>
         ) : sections.length === 0 ? (
-          <div className="flex min-h-[320px] items-center justify-center px-6 text-center">
+          <div className="flex min-h-[260px] items-center justify-center px-6 text-center">
             <div>
-              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-[#e2d2b6] bg-[#f3eee5] text-[#8a6836]">
-                <Layers3 size={24} />
-              </div>
-
-              <h3 className="text-[20px] font-semibold text-[#141414]">
+              <h3 className="text-[18px] font-semibold text-[#141414]">
                 Nenhuma categoria cadastrada
               </h3>
-
-              <p className="mx-auto mt-2 max-w-[360px] text-[14px] leading-6 text-[#666b76]">
-                Crie a primeira categoria para organizar os cards da home do
-                aluno.
-              </p>
 
               <Link
                 href="/admin/home-aluno/novo?tipo=categoria"
                 className="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-[12px] bg-[#DBC094] px-5 text-[14px] font-semibold text-black transition hover:brightness-105"
               >
-                <Plus size={17} />
-                Nova categoria
+                <Plus className="h-4 w-4" />
+                Criar categoria
               </Link>
             </div>
           </div>
         ) : (
           <div className="divide-y divide-[#ededed]">
             {sections.map((section) => {
-              const sectionItems = items.filter(
-                (item) => item.section_id === section.id
-              );
+              const sectionItems = items.filter((item) => item.section_id === section.id);
 
               return (
-                <details key={section.id} className="group bg-white" open>
-                  <summary className="grid cursor-pointer list-none gap-4 px-5 py-5 transition hover:bg-[#fafafa] lg:grid-cols-[minmax(0,1fr)_120px_120px_180px] lg:items-center">
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2 lg:hidden">
-                        <span
-                          className={[
-                            "rounded-full border px-2.5 py-1 text-[12px] font-semibold",
-                            section.is_active
-                              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                              : "border-red-200 bg-red-50 text-red-700",
-                          ].join(" ")}
-                        >
-                          {section.is_active ? "Ativa" : "Inativa"}
-                        </span>
+                <details key={section.id} className="group bg-white">
+                  <summary className="grid cursor-pointer list-none gap-4 px-5 py-4 transition hover:bg-[#fafafa] lg:grid-cols-[minmax(0,1fr)_120px_130px_132px] lg:items-center">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <ChevronRight className="h-4 w-4 shrink-0 text-[#8a8f9d] transition group-open:rotate-90" />
 
-                        <span className="rounded-full border border-[#e2d2b6] bg-[#f3eee5] px-2.5 py-1 text-[12px] font-semibold text-[#8a6836]">
-                          {getLayoutLabel(section.layout_variant)}
-                        </span>
-                      </div>
+                      <div className="min-w-0">
+                        <h3 className="truncate text-[16px] font-semibold text-[#141414]">
+                          {section.title}
+                        </h3>
 
-                      <h3 className="text-[18px] font-semibold tracking-[-0.03em] text-[#141414]">
-                        {section.title}
-                      </h3>
-
-                      <p className="mt-1 text-[13px] font-medium text-[#8a8f9d]">
-                        /{section.slug} • Ordem {section.sort_order} • {sectionItems.length} card(s)
-                      </p>
-
-                      {section.description ? (
-                        <p className="mt-2 line-clamp-2 max-w-[720px] text-[14px] leading-6 text-[#666b76]">
-                          {section.description}
+                        <p className="mt-1 truncate text-[13px] text-[#666b76]">
+                          Ordem {section.sort_order} • {sectionItems.length} card(s)
                         </p>
-                      ) : null}
+
+                        {section.description ? (
+                          <p className="mt-1 line-clamp-1 text-[13px] text-[#666b76]">
+                            {section.description}
+                          </p>
+                        ) : null}
+                      </div>
                     </div>
 
-                    <div className="hidden lg:block">
+                    <div>
                       <span
-                        className={[
+                        className={cx(
                           "inline-flex rounded-full border px-2.5 py-1 text-[12px] font-semibold",
                           section.is_active
                             ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                            : "border-red-200 bg-red-50 text-red-700",
-                        ].join(" ")}
+                            : "border-[#e5e5e5] bg-[#f4f4f5] text-[#52525b]"
+                        )}
                       >
-                        {section.is_active ? "Ativa" : "Inativa"}
+                        {section.is_active ? "Ativa" : "Oculta"}
                       </span>
                     </div>
 
-                    <div className="hidden lg:block">
-                      <span className="inline-flex rounded-full border border-[#e2d2b6] bg-[#f3eee5] px-2.5 py-1 text-[12px] font-semibold text-[#8a6836]">
-                        {getLayoutLabel(section.layout_variant)}
-                      </span>
+                    <div className="text-[13px] font-semibold text-[#8a6836]">
+                      {getLayoutLabel(section.layout_variant)}
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+                    <div className="flex items-center justify-start gap-2 lg:justify-end">
                       <Link
                         href={`/admin/home-aluno/novo?tipo=categoria&id=${section.id}`}
-                        className="inline-flex h-9 items-center gap-2 rounded-[10px] border border-[#e5e5e5] bg-white px-3 text-[13px] font-semibold text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836]"
+                        title="Editar categoria"
+                        aria-label="Editar categoria"
                         onClick={(event) => event.stopPropagation()}
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-[10px] border border-[#e5e5e5] bg-white text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836]"
                       >
-                        <Pencil size={14} />
-                        Editar
+                        <Pencil className="h-4 w-4" />
                       </Link>
 
                       <button
@@ -621,16 +719,17 @@ export default function AdminStudentHomePage() {
                         onClick={(event) => {
                           event.preventDefault();
                           event.stopPropagation();
-                          toggleSectionStatus(section);
+                          void toggleSectionStatus(section);
                         }}
-                        className="inline-flex h-9 items-center gap-2 rounded-[10px] border border-[#e5e5e5] bg-white px-3 text-[13px] font-semibold text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836]"
+                        title={section.is_active ? "Ocultar categoria" : "Ativar categoria"}
+                        aria-label={section.is_active ? "Ocultar categoria" : "Ativar categoria"}
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-[10px] border border-[#e5e5e5] bg-white text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836]"
                       >
                         {section.is_active ? (
-                          <EyeOff size={14} />
+                          <EyeOff className="h-4 w-4" />
                         ) : (
-                          <Eye size={14} />
+                          <Eye className="h-4 w-4" />
                         )}
-                        {section.is_active ? "Ocultar" : "Exibir"}
                       </button>
 
                       <button
@@ -638,33 +737,35 @@ export default function AdminStudentHomePage() {
                         onClick={(event) => {
                           event.preventDefault();
                           event.stopPropagation();
-                          deleteSection(section);
+                          void deleteSection(section);
                         }}
-                        className="inline-flex h-9 items-center gap-2 rounded-[10px] border border-red-200 bg-red-50 px-3 text-[13px] font-semibold text-red-700 transition hover:bg-red-100"
+                        title="Excluir categoria"
+                        aria-label="Excluir categoria"
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-[10px] border border-red-200 bg-red-50 text-red-700 transition hover:bg-red-100"
                       >
-                        <Trash2 size={14} />
+                        <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
                   </summary>
 
-                  <div className="border-t border-[#ededed] bg-[#fcfcfc] px-5 py-4">
+                  <div className="border-t border-[#ededed] bg-white px-5 py-2">
                     {sectionItems.length === 0 ? (
-                      <div className="flex flex-col items-start justify-between gap-3 rounded-[12px] border border-dashed border-[#d9d9d9] bg-white px-4 py-4 sm:flex-row sm:items-center">
-                        <p className="text-[14px] font-medium text-[#666b76]">
-                          Esta categoria ainda não possui cards.
+                      <div className="flex items-center justify-between gap-4 py-4">
+                        <p className="text-[14px] text-[#666b76]">
+                          Nenhum card cadastrado nesta categoria.
                         </p>
 
                         <Link
                           href={`/admin/home-aluno/novo?tipo=card&section=${section.id}`}
                           className="inline-flex h-10 items-center justify-center gap-2 rounded-[10px] border border-[#e5e5e5] bg-white px-4 text-[13px] font-semibold text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836]"
                         >
-                          <Plus size={15} />
+                          <Plus className="h-4 w-4" />
                           Inserir card
                         </Link>
                       </div>
                     ) : (
-                      <div className="overflow-hidden rounded-[12px] border border-[#e5e5e5] bg-white">
-                        <div className="grid grid-cols-[92px_minmax(0,1fr)_150px_170px] gap-4 border-b border-[#ededed] bg-white px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8a8f9d] max-lg:hidden">
+                      <div>
+                        <div className="hidden grid-cols-[92px_minmax(0,1fr)_110px_112px] gap-4 border-b border-[#ededed] px-1 py-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8a8f9d] lg:grid">
                           <div>Capa</div>
                           <div>Conteúdo</div>
                           <div>Tipo</div>
@@ -673,104 +774,88 @@ export default function AdminStudentHomePage() {
 
                         <div className="divide-y divide-[#ededed]">
                           {sectionItems.map((item) => {
-                            const imageUrl = getItemImage(item);
+                            const itemImage = getItemImage(item);
+                            const itemTitle = getItemTitle(item);
 
                             return (
                               <div
                                 key={item.id}
-                                className="grid gap-4 p-4 lg:grid-cols-[92px_minmax(0,1fr)_150px_170px] lg:items-center"
+                                className="grid gap-4 px-1 py-3 lg:grid-cols-[92px_minmax(0,1fr)_110px_112px] lg:items-center"
                               >
-                                <div className="h-[58px] overflow-hidden rounded-[8px] bg-[#141414]">
-                                  {imageUrl ? (
+                                <div className="h-[52px] w-[92px] overflow-hidden rounded-[10px] bg-[#141414]">
+                                  {itemImage ? (
                                     <img
-                                      src={imageUrl}
-                                      alt={getItemTitle(item)}
+                                      src={itemImage}
+                                      alt={itemTitle}
                                       className="h-full w-full object-cover"
                                     />
                                   ) : (
-                                    <div className="flex h-full w-full items-center justify-center text-[10px] font-semibold text-white/45">
-                                      SEM CAPA
+                                    <div className="flex h-full w-full items-center justify-center text-[9px] font-semibold uppercase tracking-[0.12em] text-white/60">
+                                      Sem capa
                                     </div>
                                   )}
                                 </div>
 
                                 <div className="min-w-0">
-                                  <div className="flex flex-wrap items-center gap-2">
-                                    <span
-                                      className={[
-                                        "rounded-full border px-2.5 py-1 text-[12px] font-semibold lg:hidden",
-                                        item.is_active
-                                          ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                                          : "border-red-200 bg-red-50 text-red-700",
-                                      ].join(" ")}
-                                    >
-                                      {item.is_active ? "Ativo" : "Inativo"}
-                                    </span>
-
-                                    {item.badge_override ? (
-                                      <span className="rounded-full border border-[#e5e5e5] bg-[#f4f4f5] px-2.5 py-1 text-[12px] font-semibold text-[#52525b]">
-                                        {item.badge_override}
-                                      </span>
-                                    ) : null}
-                                  </div>
-
-                                  <h4 className="mt-1 text-[15px] font-semibold tracking-[-0.02em] text-[#141414]">
-                                    {getItemTitle(item)}
+                                  <h4 className="truncate text-[15px] font-semibold text-[#141414]">
+                                    {itemTitle}
                                   </h4>
 
-                                  <p className="mt-1 line-clamp-2 text-[13px] leading-5 text-[#666b76]">
+                                  <p className="mt-1 line-clamp-1 text-[13px] text-[#666b76]">
                                     {getItemSubtitle(item)}
                                   </p>
 
-                                  <p className="mt-1 text-[12px] font-medium text-[#8a8f9d]">
-                                    {getItemMeta(item)} • Ordem {item.sort_order}
-                                  </p>
                                 </div>
 
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <span className="rounded-full border border-[#e5e5e5] bg-[#f4f4f5] px-2.5 py-1 text-[12px] font-semibold text-[#52525b]">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[13px] font-semibold text-[#52525b]">
                                     {getContentTypeLabel(item.content_type)}
                                   </span>
 
                                   <span
-                                    className={[
-                                      "hidden rounded-full border px-2.5 py-1 text-[12px] font-semibold lg:inline-flex",
+                                    className={cx(
+                                      "inline-flex rounded-full border px-2.5 py-1 text-[12px] font-semibold",
                                       item.is_active
                                         ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                                        : "border-red-200 bg-red-50 text-red-700",
-                                    ].join(" ")}
+                                        : "border-[#e5e5e5] bg-[#f4f4f5] text-[#52525b]"
+                                    )}
                                   >
-                                    {item.is_active ? "Ativo" : "Inativo"}
+                                    {item.is_active ? "Ativo" : "Oculto"}
                                   </span>
                                 </div>
 
-                                <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+                                <div className="flex items-center justify-start gap-2 lg:justify-end">
                                   <Link
                                     href={`/admin/home-aluno/novo?tipo=card&id=${item.id}`}
-                                    className="inline-flex h-9 items-center gap-2 rounded-[10px] border border-[#e5e5e5] bg-white px-3 text-[13px] font-semibold text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836]"
+                                    title="Editar card"
+                                    aria-label="Editar card"
+                                    className="inline-flex h-9 w-9 items-center justify-center rounded-[10px] border border-[#e5e5e5] bg-white text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836]"
                                   >
-                                    <Pencil size={14} />
-                                    Editar
+                                    <Pencil className="h-4 w-4" />
                                   </Link>
 
                                   <button
                                     type="button"
-                                    onClick={() => toggleItemStatus(item)}
-                                    className="inline-flex h-9 items-center gap-2 rounded-[10px] border border-[#e5e5e5] bg-white px-3 text-[13px] font-semibold text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836]"
+                                    onClick={() => void toggleItemStatus(item)}
+                                    title={item.is_active ? "Ocultar card" : "Ativar card"}
+                                    aria-label={item.is_active ? "Ocultar card" : "Ativar card"}
+                                    className="inline-flex h-9 w-9 items-center justify-center rounded-[10px] border border-[#e5e5e5] bg-white text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836]"
                                   >
                                     {item.is_active ? (
-                                      <EyeOff size={14} />
+                                      <EyeOff className="h-4 w-4" />
                                     ) : (
-                                      <Eye size={14} />
+                                      <Eye className="h-4 w-4" />
                                     )}
                                   </button>
 
                                   <button
                                     type="button"
-                                    onClick={() => deleteItem(item)}
-                                    className="inline-flex h-9 items-center gap-2 rounded-[10px] border border-red-200 bg-red-50 px-3 text-[13px] font-semibold text-red-700 transition hover:bg-red-100"
+                                    onClick={() => void deleteItem(item)}
+                                    title="Excluir card"
+                                    aria-label="Excluir card"
+                                    className="inline-flex h-9 w-9 items-center justify-center rounded-[10px] border border-red-200 bg-red-50 text-red-700 transition hover:bg-red-100"
                                   >
-                                    <Trash2 size={14} />
+                                    <Trash2 className="h-4 w-4" />
                                   </button>
                                 </div>
                               </div>

@@ -78,6 +78,22 @@ type LessonOption = {
   scheduled_start_at: string | null;
 };
 
+type LiveOption = {
+  id: string;
+  title: string;
+  slug: string | null;
+  short_description: string | null;
+  description: string | null;
+  cover_path: string | null;
+  starts_at: string | null;
+  ends_at: string | null;
+  presenter_name: string | null;
+  required_rank: number | null;
+  status: string | null;
+  is_featured: boolean | null;
+  is_active: boolean | null;
+};
+
 type ContentOption = {
   id: string;
   label: string;
@@ -157,6 +173,22 @@ function formatDuration(seconds: number | null) {
   return `${hours}h ${remainingMinutes}min`;
 }
 
+function formatLiveDateTime(value: string | null) {
+  if (!value) return "Data não informada";
+
+  try {
+    return new Intl.DateTimeFormat("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date(value));
+  } catch {
+    return "Data não informada";
+  }
+}
+
 function getLayoutLabel(variant: LayoutVariant) {
   if (variant === "horizontal") return "Horizontal";
   if (variant === "featured") return "Destaque extragrande";
@@ -180,7 +212,11 @@ function resolvePublicAssetUrl(path: string | null) {
   const cleanPath = path.replace(/^\/+/, "");
   const supabase = supabaseBrowser();
 
-  if (cleanPath.startsWith("courses/") || cleanPath.startsWith("trilhas/")) {
+  if (
+    cleanPath.startsWith("courses/") ||
+    cleanPath.startsWith("trilhas/") ||
+    cleanPath.startsWith("lives/")
+  ) {
     const { data } = supabase.storage.from("covers").getPublicUrl(cleanPath);
     return data.publicUrl;
   }
@@ -238,6 +274,7 @@ export default function NewStudentHomeConfigPage() {
   const [courses, setCourses] = useState<CourseOption[]>([]);
   const [modules, setModules] = useState<ModuleOption[]>([]);
   const [lessons, setLessons] = useState<LessonOption[]>([]);
+  const [lives, setLives] = useState<LiveOption[]>([]);
 
   const [sectionForm, setSectionForm] =
     useState<SectionFormState>(initialSectionForm);
@@ -293,28 +330,19 @@ export default function NewStudentHomeConfigPage() {
     }
 
     if (itemForm.content_type === "live") {
-      return lessons
-        .filter(
-          (lesson) =>
-            lesson.content_type === "live" ||
-            Boolean(lesson.scheduled_start_at)
-        )
-        .map((lesson) => {
-          const course = moduleCourseMap.get(lesson.module_id);
-
-          return {
-            id: lesson.id,
-            label: lesson.title,
-            description:
-              lesson.description ||
-              (course
-                ? `Live vinculada ao curso ${course.title}.`
-                : "Live cadastrada no ADM."),
-            meta: course ? `Live • ${course.title}` : "Live cadastrada em aulas",
-            status: lesson.status,
-            imageUrl: resolvePublicAssetUrl(lesson.primary_asset_path),
-          };
-        });
+      return lives.map((live) => ({
+        id: live.id,
+        label: live.title,
+        description:
+          live.short_description ||
+          live.description ||
+          "Live cadastrada no ADM.",
+        meta: live.presenter_name
+          ? `Live • ${formatLiveDateTime(live.starts_at)} • ${live.presenter_name}`
+          : `Live • ${formatLiveDateTime(live.starts_at)}`,
+        status: live.status || "draft",
+        imageUrl: resolvePublicAssetUrl(live.cover_path),
+      }));
     }
 
     return lessons
@@ -340,7 +368,7 @@ export default function NewStudentHomeConfigPage() {
           imageUrl: resolvePublicAssetUrl(lesson.primary_asset_path),
         };
       });
-  }, [courses, itemForm.content_type, lessons, moduleCourseMap, trails]);
+  }, [courses, itemForm.content_type, lessons, lives, moduleCourseMap, trails]);
 
   const selectedContent = useMemo(() => {
     return (
@@ -369,6 +397,7 @@ export default function NewStudentHomeConfigPage() {
         coursesResponse,
         modulesResponse,
         lessonsResponse,
+        livesResponse,
       ] = await Promise.all([
         supabase
           .from("student_home_sections")
@@ -397,6 +426,14 @@ export default function NewStudentHomeConfigPage() {
             "id,module_id,title,description,status,content_type,duration_sec,primary_asset_path,scheduled_start_at"
           )
           .order("created_at", { ascending: false }),
+        supabase
+          .from("lives")
+          .select(
+            "id,title,slug,short_description,description,cover_path,starts_at,ends_at,presenter_name,required_rank,status,is_featured,is_active"
+          )
+          .eq("is_active", true)
+          .in("status", ["scheduled", "live", "ended"])
+          .order("starts_at", { ascending: false }),
       ]);
 
       if (sectionsResponse.error) {
@@ -439,6 +476,12 @@ export default function NewStudentHomeConfigPage() {
         return;
       }
 
+      if (livesResponse.error) {
+        setErrorMessage(`Erro ao carregar lives: ${livesResponse.error.message}`);
+        setLoading(false);
+        return;
+      }
+
       const loadedSections = (sectionsResponse.data ?? []) as HomeSection[];
 
       setSections(loadedSections);
@@ -446,6 +489,7 @@ export default function NewStudentHomeConfigPage() {
       setCourses((coursesResponse.data ?? []) as CourseOption[]);
       setModules((modulesResponse.data ?? []) as ModuleOption[]);
       setLessons((lessonsResponse.data ?? []) as LessonOption[]);
+      setLives((livesResponse.data ?? []) as LiveOption[]);
 
       if (!recordId) {
         setItemForm((current) => ({
@@ -953,7 +997,9 @@ export default function NewStudentHomeConfigPage() {
                   ? `${trails.length} trilha(s) encontrada(s)`
                   : itemForm.content_type === "course"
                     ? `${courses.length} curso(s) encontrado(s)`
-                    : `${availableContentOptions.length} conteúdo(s) encontrado(s)`}
+                    : itemForm.content_type === "live"
+                      ? `${lives.length} live(s) encontrada(s)`
+                      : `${availableContentOptions.length} conteúdo(s) encontrado(s)`}
               </div>
 
               {selectedContent ? (

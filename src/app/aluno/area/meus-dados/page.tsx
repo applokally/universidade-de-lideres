@@ -56,7 +56,6 @@ function getInitials(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean);
 
   if (parts.length === 0) return "A";
-
   if (parts.length === 1) return parts[0].slice(0, 1).toUpperCase();
 
   return `${parts[0].slice(0, 1)}${parts[parts.length - 1].slice(0, 1)}`.toUpperCase();
@@ -219,22 +218,25 @@ export default function StudentDataPage() {
   return (
     <StudentAreaShell
       eyebrow="Perfil"
-      title="Conta ativa"
-      description="Mantenha seus dados atualizados."
+      title="Meus Dados"
+      description="Mantenha seus dados atualizados e gerencie sua conta."
     >
       {loading ? (
-        <section className="flex min-h-[320px] items-center justify-center rounded-[24px] border border-white/8 bg-[#101116]/72">
-          <div className="flex items-center gap-3 text-[14px] font-medium text-white/58">
+        <section className="flex min-h-[320px] items-center justify-center rounded-2xl border border-white/5 bg-[#0a0b10]">
+          <div className="flex items-center gap-3 text-sm font-medium text-white/60">
             <Loader2 className="h-5 w-5 animate-spin text-[#DBC094]" />
             Carregando seus dados...
           </div>
         </section>
       ) : (
-        <form onSubmit={handleSubmit} className="rounded-[24px] border border-white/8 bg-[#101116]/72 p-5 sm:p-6">
-          <div className="flex flex-wrap items-center justify-between gap-5 border-b border-white/8 pb-6">
-            <div className="flex min-w-0 items-center gap-4">
+        <form onSubmit={handleSubmit} className="rounded-2xl border border-white/5 bg-[#0a0b10] p-6 sm:p-8">
+          
+          {/* --- CABEÇALHO DO PERFIL --- */}
+          <div className="flex flex-col gap-6 border-b border-white/5 pb-8 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 items-center gap-5">
+              
               <div className="relative">
-                <div className="flex h-18 w-18 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-[#DBC094] text-[22px] font-semibold text-black sm:h-20 sm:w-20">
+                <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white/5 border border-white/10 text-2xl font-semibold text-[#DBC094]">
                   {avatarPreview ? (
                     <img
                       src={avatarPreview}
@@ -246,7 +248,7 @@ export default function StudentDataPage() {
                   )}
                 </div>
 
-                <label className="absolute -bottom-2 -right-2 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-white/10 bg-white text-black shadow-[0_10px_24px_rgba(0,0,0,0.35)] transition hover:bg-[#DBC094]">
+                <label className="absolute -bottom-2 -right-2 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-white/10 bg-[#0a0b10] text-white shadow-lg transition-all hover:scale-105 hover:bg-[#DBC094] hover:text-black">
                   <Camera className="h-4 w-4" />
                   <input
                     type="file"
@@ -258,16 +260,11 @@ export default function StudentDataPage() {
               </div>
 
               <div className="min-w-0">
-                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#DBC094]">
-                  Perfil do aluno
-                </p>
-
-                <h2 className="mt-1 text-[26px] font-semibold leading-tight tracking-[-0.025em] text-white sm:text-[31px]">
+                <h2 className="truncate text-2xl font-semibold leading-tight tracking-tight text-white">
                   {studentName}
                 </h2>
-
-                <p className="mt-1 text-[13px] leading-5 text-white/44">
-                  Edite seus dados principais, foto de perfil e senha.
+                <p className="mt-1 text-sm text-white/50">
+                  Edite seus dados principais e senha de acesso.
                 </p>
               </div>
             </div>
@@ -275,125 +272,122 @@ export default function StudentDataPage() {
             <button
               type="submit"
               disabled={saving || !user?.id}
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-[12px] bg-[#DBC094] px-5 text-[13px] font-semibold text-black transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-55"
+              className="inline-flex h-11 w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-[#DBC094] px-6 text-sm font-semibold text-black transition-all hover:bg-white active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {saving ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Save className="h-4 w-4" />
-              )}
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
               {saving ? "Salvando..." : "Salvar alterações"}
             </button>
           </div>
 
-          <div className="mt-6 grid gap-5 xl:grid-cols-[minmax(0,1fr)_260px]">
-            <section className="min-w-0">
-              <div className="grid gap-0">
-                <div className="grid gap-3 border-b border-white/8 py-4 sm:grid-cols-[190px_minmax(0,1fr)] sm:items-center">
-                  <div className="flex items-center gap-2 text-[13px] font-medium text-white/48">
-                    <UserRound className="h-4 w-4 text-[#DBC094]" />
-                    Nome completo
-                  </div>
+          {/* --- CORPO DO FORMULÁRIO --- */}
+          <div className="mt-8 grid gap-8 xl:grid-cols-[minmax(0,1fr)_300px]">
+            
+            <section className="space-y-6">
+              
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-6">
+                <label className="flex items-center gap-2 text-sm font-medium text-white/60 sm:w-48 shrink-0">
+                  <UserRound className="h-4 w-4 text-[#DBC094]" />
+                  Nome completo
+                </label>
+                <input
+                  value={fullName}
+                  onChange={(event) => setFullName(event.target.value)}
+                  placeholder="Informe seu nome completo"
+                  className="h-11 w-full flex-1 rounded-xl border border-white/10 bg-white/5 px-4 text-sm font-medium text-white outline-none transition-all placeholder:text-white/30 focus:border-[#DBC094] focus:bg-white/10 focus:ring-1 focus:ring-[#DBC094]"
+                />
+              </div>
 
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-6">
+                <label className="flex items-center gap-2 text-sm font-medium text-white/60 sm:w-48 shrink-0">
+                  <Mail className="h-4 w-4 text-[#DBC094]" />
+                  E-mail
+                </label>
+                <input
+                  value={email}
+                  disabled
+                  className="h-11 w-full flex-1 cursor-not-allowed rounded-xl border border-white/5 bg-white/[0.02] px-4 text-sm font-medium text-white/40 outline-none"
+                />
+              </div>
+
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-6">
+                <label className="flex items-center gap-2 text-sm font-medium text-white/60 sm:w-48 shrink-0">
+                  <Phone className="h-4 w-4 text-[#DBC094]" />
+                  Telefone
+                </label>
+                <input
+                  value={phone}
+                  onChange={(event) => setPhone(event.target.value)}
+                  placeholder="Informe seu telefone"
+                  className="h-11 w-full flex-1 rounded-xl border border-white/10 bg-white/5 px-4 text-sm font-medium text-white outline-none transition-all placeholder:text-white/30 focus:border-[#DBC094] focus:bg-white/10 focus:ring-1 focus:ring-[#DBC094]"
+                />
+              </div>
+
+              <div className="flex flex-col gap-2 pt-4 sm:flex-row sm:items-start sm:gap-6">
+                <label className="flex items-center gap-2 text-sm font-medium text-white/60 sm:mt-3 sm:w-48 shrink-0">
+                  <KeyRound className="h-4 w-4 text-[#DBC094]" />
+                  Segurança
+                </label>
+                <div className="flex-1 space-y-3">
                   <input
-                    value={fullName}
-                    onChange={(event) => setFullName(event.target.value)}
-                    placeholder="Informe seu nome completo"
-                    className="h-11 rounded-[13px] border border-white/10 bg-black/18 px-4 text-[14px] font-medium text-white outline-none transition placeholder:text-white/28 focus:border-[#DBC094]/60"
+                    type="password"
+                    value={newPassword}
+                    onChange={(event) => setNewPassword(event.target.value)}
+                    placeholder="Nova senha"
+                    autoComplete="new-password"
+                    className="h-11 w-full rounded-xl border border-white/10 bg-white/5 px-4 text-sm font-medium text-white outline-none transition-all placeholder:text-white/30 focus:border-[#DBC094] focus:bg-white/10 focus:ring-1 focus:ring-[#DBC094]"
                   />
-                </div>
-
-                <div className="grid gap-3 border-b border-white/8 py-4 sm:grid-cols-[190px_minmax(0,1fr)] sm:items-center">
-                  <div className="flex items-center gap-2 text-[13px] font-medium text-white/48">
-                    <Mail className="h-4 w-4 text-[#DBC094]" />
-                    E-mail
-                  </div>
-
                   <input
-                    value={email}
-                    disabled
-                    className="h-11 cursor-not-allowed rounded-[13px] border border-white/8 bg-white/[0.025] px-4 text-[14px] font-medium text-white/46 outline-none"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(event) => setConfirmPassword(event.target.value)}
+                    placeholder="Confirmar nova senha"
+                    autoComplete="new-password"
+                    className="h-11 w-full rounded-xl border border-white/10 bg-white/5 px-4 text-sm font-medium text-white outline-none transition-all placeholder:text-white/30 focus:border-[#DBC094] focus:bg-white/10 focus:ring-1 focus:ring-[#DBC094]"
                   />
-                </div>
-
-                <div className="grid gap-3 border-b border-white/8 py-4 sm:grid-cols-[190px_minmax(0,1fr)] sm:items-center">
-                  <div className="flex items-center gap-2 text-[13px] font-medium text-white/48">
-                    <Phone className="h-4 w-4 text-[#DBC094]" />
-                    Telefone
-                  </div>
-
-                  <input
-                    value={phone}
-                    onChange={(event) => setPhone(event.target.value)}
-                    placeholder="Informe seu telefone"
-                    className="h-11 rounded-[13px] border border-white/10 bg-black/18 px-4 text-[14px] font-medium text-white outline-none transition placeholder:text-white/28 focus:border-[#DBC094]/60"
-                  />
-                </div>
-
-                <div className="grid gap-3 border-b border-white/8 py-4 sm:grid-cols-[190px_minmax(0,1fr)] sm:items-start">
-                  <div className="flex items-center gap-2 pt-2 text-[13px] font-medium text-white/48">
-                    <KeyRound className="h-4 w-4 text-[#DBC094]" />
-                    Alterar senha
-                  </div>
-
-                  <div className="grid gap-3">
-                    <input
-                      type="password"
-                      value={newPassword}
-                      onChange={(event) => setNewPassword(event.target.value)}
-                      placeholder="Nova senha"
-                      autoComplete="new-password"
-                      className="h-11 rounded-[13px] border border-white/10 bg-black/18 px-4 text-[14px] font-medium text-white outline-none transition placeholder:text-white/28 focus:border-[#DBC094]/60"
-                    />
-
-                    <input
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(event) => setConfirmPassword(event.target.value)}
-                      placeholder="Confirmar nova senha"
-                      autoComplete="new-password"
-                      className="h-11 rounded-[13px] border border-white/10 bg-black/18 px-4 text-[14px] font-medium text-white outline-none transition placeholder:text-white/28 focus:border-[#DBC094]/60"
-                    />
-
-                    <p className="text-[12px] leading-5 text-white/34">
-                      Preencha somente se quiser alterar sua senha.
-                    </p>
-                  </div>
+                  <p className="text-xs text-white/40">
+                    Preencha estes campos somente se desejar alterar a sua senha atual.
+                  </p>
                 </div>
               </div>
 
-              {feedback ? (
-                <p className="mt-5 rounded-[14px] border border-[#DBC094]/18 bg-[#DBC094]/9 px-4 py-3 text-[13px] font-medium text-[#DBC094]">
-                  {feedback}
-                </p>
-              ) : null}
+              {feedback && (
+                <div className="mt-6 rounded-xl border border-[#DBC094]/20 bg-[#DBC094]/10 p-4">
+                  <p className="text-sm font-medium text-[#DBC094]">
+                    {feedback}
+                  </p>
+                </div>
+              )}
             </section>
 
-            <aside className="rounded-[20px] bg-white/[0.025] p-4">
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#DBC094]">
-                Dados da conta
+            {/* --- SIDEBAR DE INFORMAÇÕES --- */}
+            <aside className="h-fit rounded-2xl border border-white/5 bg-gradient-to-br from-white/[0.03] to-transparent p-6">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-[#DBC094]">
+                Detalhes da Conta
               </p>
 
-              <div className="mt-4 space-y-4 text-[13px]">
+              <div className="mt-5 space-y-5 text-sm">
                 <div>
-                  <div className="flex items-center gap-2 text-white/38">
+                  <div className="flex items-center gap-2 text-white/50">
                     <ShieldCheck className="h-4 w-4 text-[#DBC094]" />
                     Tipo de acesso
                   </div>
-                  <p className="mt-1 font-semibold text-[#DBC094]">
+                  <p className="mt-1.5 font-semibold text-white">
                     {accessLevelLabel}
                   </p>
                 </div>
 
                 <div>
-                  <div className="flex items-center gap-2 text-white/38">
+                  <div className="flex items-center gap-2 text-white/50">
                     <CalendarDays className="h-4 w-4 text-[#DBC094]" />
-                    Cadastro
+                    Membro desde
                   </div>
-                  <p className="mt-1 font-medium text-white/62">{createdAt}</p>
+                  <p className="mt-1.5 font-medium text-white">
+                    {createdAt}
+                  </p>
                 </div>
               </div>
             </aside>
+
           </div>
         </form>
       )}

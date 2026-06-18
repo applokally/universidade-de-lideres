@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { supabaseServer } from "@/lib/supabase/server";
 import { ContinueWatching } from "./_components/ContinueWatching";
 import { ContentRow } from "./_components/ContentRow";
 import { FeaturedHero } from "./_components/FeaturedHero";
@@ -106,6 +106,22 @@ type LessonRow = {
   scheduled_start_at: string | null;
 };
 
+type LiveRow = {
+  id: string;
+  slug: string | null;
+  title: string;
+  short_description: string | null;
+  description: string | null;
+  cover_path: string | null;
+  starts_at: string | null;
+  ends_at: string | null;
+  presenter_name: string | null;
+  required_rank: number | null;
+  status: string | null;
+  is_featured: boolean | null;
+  is_active: boolean | null;
+};
+
 type StudentHomeRow = {
   id: string;
   title: string;
@@ -116,13 +132,6 @@ type StudentHomeRow = {
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
 
-function getSupabaseClient() {
-  return createClient(supabaseUrl, supabaseAnonKey, {
-    auth: {
-      persistSession: false,
-    },
-  });
-}
 
 function formatDuration(seconds: number | null) {
   if (!seconds || seconds <= 0) return "Aula";
@@ -184,6 +193,7 @@ function resolvePublicAssetUrl(path: string | null) {
   if (
     withoutSlash.startsWith("courses/") ||
     withoutSlash.startsWith("trilhas/") ||
+    withoutSlash.startsWith("lives/") ||
     withoutSlash.startsWith("covers/") ||
     withoutSlash.startsWith("course-covers/")
   ) {
@@ -324,7 +334,7 @@ async function getStudentBanners(): Promise<StudentContentItem[]> {
     return heroItems;
   }
 
-  const supabase = getSupabaseClient();
+  const supabase = await supabaseServer();
 
   const { data, error } = await supabase
     .from("student_banners")
@@ -366,7 +376,7 @@ async function getStudentHomeRows(): Promise<StudentHomeRow[]> {
     ];
   }
 
-  const supabase = getSupabaseClient();
+  const supabase = await supabaseServer();
 
   const { data: sectionsData, error: sectionsError } = await supabase
     .from("student_home_sections")
@@ -441,10 +451,15 @@ async function getStudentHomeRows(): Promise<StudentHomeRow[]> {
   const lessonIds = Array.from(
     new Set(
       sectionItems
-        .filter(
-          (item) =>
-            item.content_type === "lesson" || item.content_type === "live"
-        )
+        .filter((item) => item.content_type === "lesson")
+        .map((item) => item.content_id)
+    )
+  );
+
+  const liveIds = Array.from(
+    new Set(
+      sectionItems
+        .filter((item) => item.content_type === "live")
         .map((item) => item.content_id)
     )
   );
@@ -453,36 +468,46 @@ async function getStudentHomeRows(): Promise<StudentHomeRow[]> {
     { data: trailsData },
     { data: coursesData },
     { data: lessonsData },
+    { data: livesData },
   ] = await Promise.all([
     trailIds.length > 0
       ? supabase
-          .from("course_categories")
-          .select(
-            "id,title,slug,description,cover_path,cover_vertical_path,cover_horizontal_path,cover_featured_path,preferred_card_format,required_rank,status,is_featured"
-          )
-          .in("id", trailIds)
+        .from("course_categories")
+        .select(
+          "id,title,slug,description,cover_path,cover_vertical_path,cover_horizontal_path,cover_featured_path,preferred_card_format,required_rank,status,is_featured"
+        )
+        .in("id", trailIds)
       : Promise.resolve({ data: [] as TrailRow[] }),
     courseIds.length > 0
       ? supabase
-          .from("courses")
-          .select(
-            "id,slug,title,short_description,description,cover_path,cover_vertical_path,cover_horizontal_path,cover_featured_path,preferred_card_format,status,required_rank,is_featured"
-          )
-          .in("id", courseIds)
+        .from("courses")
+        .select(
+          "id,slug,title,short_description,description,cover_path,cover_vertical_path,cover_horizontal_path,cover_featured_path,preferred_card_format,status,required_rank,is_featured"
+        )
+        .in("id", courseIds)
       : Promise.resolve({ data: [] as CourseRow[] }),
     lessonIds.length > 0
       ? supabase
-          .from("lessons")
-          .select(
-            "id,module_id,title,description,status,content_type,duration_sec,primary_asset_path,scheduled_start_at"
-          )
-          .in("id", lessonIds)
+        .from("lessons")
+        .select(
+          "id,module_id,title,description,status,content_type,duration_sec,primary_asset_path,scheduled_start_at"
+        )
+        .in("id", lessonIds)
       : Promise.resolve({ data: [] as LessonRow[] }),
+    liveIds.length > 0
+      ? supabase
+        .from("lives")
+        .select(
+          "id,slug,title,short_description,description,cover_path,starts_at,ends_at,presenter_name,required_rank,status,is_featured,is_active"
+        )
+        .in("id", liveIds)
+      : Promise.resolve({ data: [] as LiveRow[] }),
   ]);
 
   const trails = (trailsData ?? []) as TrailRow[];
   const courses = (coursesData ?? []) as CourseRow[];
   const lessons = (lessonsData ?? []) as LessonRow[];
+  const lives = (livesData ?? []) as LiveRow[];
 
   const moduleIds = Array.from(
     new Set(lessons.map((lesson) => lesson.module_id))
@@ -491,9 +516,9 @@ async function getStudentHomeRows(): Promise<StudentHomeRow[]> {
   const { data: modulesData } =
     moduleIds.length > 0
       ? await supabase
-          .from("course_modules")
-          .select("id,title,course_id")
-          .in("id", moduleIds)
+        .from("course_modules")
+        .select("id,title,course_id")
+        .in("id", moduleIds)
       : { data: [] as ModuleRow[] };
 
   const modules = (modulesData ?? []) as ModuleRow[];
@@ -501,6 +526,7 @@ async function getStudentHomeRows(): Promise<StudentHomeRow[]> {
   const trailsMap = new Map(trails.map((trail) => [trail.id, trail]));
   const coursesMap = new Map(courses.map((course) => [course.id, course]));
   const lessonsMap = new Map(lessons.map((lesson) => [lesson.id, lesson]));
+  const livesMap = new Map(lives.map((live) => [live.id, live]));
   const modulesMap = new Map(modules.map((module) => [module.id, module]));
 
   return sections.map((section) => {
@@ -527,7 +553,7 @@ async function getStudentHomeRows(): Promise<StudentHomeRow[]> {
               (trail.is_featured ? "Destaque" : undefined),
             imageUrl: resolvePublicAssetUrl(
               item.image_url_override ??
-                getTrailCoverBySectionVariant(trail, section.layout_variant)
+              getTrailCoverBySectionVariant(trail, section.layout_variant)
             ),
             hoverImageUrl: resolvePublicAssetUrl(
               getTrailHoverCoverBySectionVariant(trail, section.layout_variant)
@@ -573,6 +599,40 @@ async function getStudentHomeRows(): Promise<StudentHomeRow[]> {
           };
         }
 
+        if (item.content_type === "live") {
+          const live = livesMap.get(item.content_id);
+
+          if (!live) return null;
+
+          return {
+            id: item.id,
+            title: item.title_override ?? live.title,
+            subtitle:
+              item.subtitle_override ??
+              live.short_description ??
+              live.description ??
+              "Acompanhe esta transmissão ao vivo.",
+            category: "Live",
+            duration: live.status === "live" ? "Ao vivo" : "Agendada",
+            level: live.presenter_name
+              ? `Com ${live.presenter_name}`
+              : "Transmissão",
+            badge:
+              item.badge_override ??
+              (live.status === "live"
+                ? "Ao vivo"
+                : live.is_featured
+                  ? "Destaque"
+                  : "Live"),
+            imageUrl: resolvePublicAssetUrl(
+              item.image_url_override ?? live.cover_path
+            ),
+            targetUrl:
+              item.target_url_override ?? `/aluno/ao-vivo?live=${live.id}`,
+            accent: getAccentByIndex(index),
+          };
+        }
+
         const lesson = lessonsMap.get(item.content_id);
 
         if (!lesson) return null;
@@ -588,15 +648,10 @@ async function getStudentHomeRows(): Promise<StudentHomeRow[]> {
             (module
               ? `Conteúdo vinculado ao módulo ${module.title}.`
               : "Conteúdo disponível para você."),
-          category: item.content_type === "live" ? "Live" : "Aula",
-          duration:
-            item.content_type === "live"
-              ? "Ao vivo"
-              : formatDuration(lesson.duration_sec),
-          level: item.content_type === "live" ? "Transmissão" : "Aula liberada",
-          badge:
-            item.badge_override ??
-            (item.content_type === "live" ? "Ao vivo" : undefined),
+          category: "Aula",
+          duration: formatDuration(lesson.duration_sec),
+          level: "Aula liberada",
+          badge: item.badge_override ?? undefined,
           imageUrl: resolvePublicAssetUrl(
             item.image_url_override ?? lesson.primary_asset_path
           ),
@@ -620,12 +675,12 @@ export default async function StudentAreaPage() {
   const homeRows = await getStudentHomeRows();
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[#050609] text-white">
+    <main className="min-h-screen overflow-x-hidden bg-[#050609] text-white selection:bg-[#DBC094]/30 selection:text-[#DBC094]">
       <StudentHeader />
 
       <FeaturedHero items={banners} />
 
-      <section className="relative z-20 space-y-16 pb-28 pt-10 sm:pt-12 lg:pt-14">
+      <section className="relative z-20 flex flex-col gap-10 pb-28 pt-8 sm:gap-14 sm:pt-12 lg:pt-14">
         <ContinueWatching />
 
         {homeRows.map((row) =>

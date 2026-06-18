@@ -9,6 +9,7 @@ import {
   Gamepad2,
   GraduationCap,
   LayoutDashboard,
+  MessageCircle,
   User,
 } from "lucide-react";
 import { StudentHeader } from "./StudentHeader";
@@ -43,6 +44,12 @@ const studentAreaMenu = [
     href: "/aluno/gamificacao",
     activePaths: ["/aluno/gamificacao"],
     icon: Gamepad2,
+  },
+  {
+    label: "Comunidade UNL",
+    href: "/aluno/comunidade",
+    activePaths: ["/aluno/comunidade"],
+    icon: MessageCircle,
   },
   {
     label: "Meus Certificados",
@@ -138,7 +145,7 @@ export function StudentAreaShell({
 
         <div className="border-t border-white/10 px-6 py-5">
           <p className="text-[11px] font-medium leading-5 text-white/30">
-            Conteúdos, trilhas, conquistas e certificados em um só lugar.
+            Conteúdos, trilhas, conquistas e comunidade em um só lugar.
           </p>
         </div>
       </aside>
