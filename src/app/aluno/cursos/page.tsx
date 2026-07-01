@@ -182,7 +182,7 @@ export default async function StudentCoursesPage() {
               </h1>
 
               <p className="mt-4 max-w-[720px] text-[15px] leading-7 text-white/56">
-                Cursos independentes publicados pelo ADM, sem vínculo com uma trilha.
+                Os melhores cursos criados por experts.
               </p>
             </div>
 
