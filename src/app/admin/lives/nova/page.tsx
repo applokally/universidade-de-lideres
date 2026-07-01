@@ -57,10 +57,17 @@ type FormState = {
 type CoverState = {
   file: File | null;
   previewUrl: string | null;
+  originalName: string | null;
+  originalSize: number | null;
 };
 
 const LIVE_COVERS_BUCKET = "covers";
 const LIVE_COVERS_FOLDER = "lives";
+const LIVE_COVER_WIDTH = 1080;
+const LIVE_COVER_HEIGHT = 1350;
+const MAX_SOURCE_COVER_BYTES = 40 * 1024 * 1024;
+const MAX_OPTIMIZED_COVER_BYTES = 1024 * 1024;
+const COVER_OUTPUT_QUALITIES = [0.84, 0.76, 0.68] as const;
 
 const statusOptions: Array<{ value: LiveStatus; label: string }> = [
   { value: "draft", label: "Rascunho" },
@@ -153,6 +160,110 @@ function montarDataHoraIso(data: string, hora: string) {
   return date.toISOString();
 }
 
+function loadImageFromFile(file: File) {
+  return new Promise<{ image: HTMLImageElement; objectUrl: string }>(
+    (resolve, reject) => {
+      const objectUrl = URL.createObjectURL(file);
+      const image = new Image();
+
+      image.onload = () => resolve({ image, objectUrl });
+      image.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error("Não foi possível ler esta imagem."));
+      };
+      image.src = objectUrl;
+    }
+  );
+}
+
+function canvasToBlob(
+  canvas: HTMLCanvasElement,
+  type: string,
+  quality: number
+) {
+  return new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (blob) {
+          resolve(blob);
+          return;
+        }
+
+        reject(new Error("Não foi possível otimizar esta imagem."));
+      },
+      type,
+      quality
+    );
+  });
+}
+
+async function otimizarCapaDaLive(file: File) {
+  const { image, objectUrl } = await loadImageFromFile(file);
+
+  try {
+    if (!image.naturalWidth || !image.naturalHeight) {
+      throw new Error("A imagem selecionada não possui dimensões válidas.");
+    }
+
+    const canvas = document.createElement("canvas");
+    canvas.width = LIVE_COVER_WIDTH;
+    canvas.height = LIVE_COVER_HEIGHT;
+
+    const context = canvas.getContext("2d");
+
+    if (!context) {
+      throw new Error("Não foi possível preparar a imagem.");
+    }
+
+    const scale = Math.max(
+      LIVE_COVER_WIDTH / image.naturalWidth,
+      LIVE_COVER_HEIGHT / image.naturalHeight
+    );
+
+    const renderedWidth = image.naturalWidth * scale;
+    const renderedHeight = image.naturalHeight * scale;
+    const offsetX = (LIVE_COVER_WIDTH - renderedWidth) / 2;
+    const offsetY = (LIVE_COVER_HEIGHT - renderedHeight) / 2;
+
+    context.fillStyle = "#050609";
+    context.fillRect(0, 0, LIVE_COVER_WIDTH, LIVE_COVER_HEIGHT);
+    context.imageSmoothingEnabled = true;
+    context.imageSmoothingQuality = "high";
+    context.drawImage(
+      image,
+      offsetX,
+      offsetY,
+      renderedWidth,
+      renderedHeight
+    );
+
+    let optimizedBlob: Blob | null = null;
+
+    for (const quality of COVER_OUTPUT_QUALITIES) {
+      const candidate = await canvasToBlob(canvas, "image/webp", quality);
+      optimizedBlob = candidate;
+
+      if (candidate.size <= MAX_OPTIMIZED_COVER_BYTES) {
+        break;
+      }
+    }
+
+    if (!optimizedBlob) {
+      throw new Error("Não foi possível otimizar esta imagem.");
+    }
+
+    const fileBaseName =
+      gerarSlug(file.name.replace(/\.[^.]+$/, "")) || "capa-da-live";
+
+    return new File([optimizedBlob], `${fileBaseName}.webp`, {
+      type: "image/webp",
+      lastModified: Date.now(),
+    });
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
 const inputClass =
   "h-12 w-full rounded-[10px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition placeholder:text-[#8a8f9d] focus:border-[#DBC094]";
 
@@ -172,7 +283,10 @@ export default function AdminNovaLivePage() {
   const [cover, setCover] = useState<CoverState>({
     file: null,
     previewUrl: null,
+    originalName: null,
+    originalSize: null,
   });
+  const [processandoCapa, setProcessandoCapa] = useState(false);
 
   const [form, setForm] = useState<FormState>({
     title: "",
@@ -226,8 +340,11 @@ export default function AdminNovaLivePage() {
     updateField("slug", gerarSlug(value));
   }
 
-  function handleSelecionarCapa(event: React.ChangeEvent<HTMLInputElement>) {
+  async function handleSelecionarCapa(
+    event: React.ChangeEvent<HTMLInputElement>
+  ) {
     const arquivo = event.target.files?.[0] ?? null;
+    event.target.value = "";
 
     if (!arquivo) return;
 
@@ -240,24 +357,48 @@ export default function AdminNovaLivePage() {
 
     if (!tiposPermitidos.includes(arquivo.type)) {
       setErro("Envie uma imagem válida em PNG, JPG ou WEBP.");
-      event.target.value = "";
       return;
     }
 
-    if (cover.previewUrl) {
-      URL.revokeObjectURL(cover.previewUrl);
+    if (arquivo.size > MAX_SOURCE_COVER_BYTES) {
+      setErro("A imagem original pode ter no máximo 40 MB.");
+      return;
     }
 
-    setCover({
-      file: arquivo,
-      previewUrl: URL.createObjectURL(arquivo),
-    });
-
+    setProcessandoCapa(true);
     setErro(null);
-    event.target.value = "";
+
+    try {
+      const optimizedFile = await otimizarCapaDaLive(arquivo);
+      const previewUrl = URL.createObjectURL(optimizedFile);
+
+      setCover((current) => {
+        if (current.previewUrl) {
+          URL.revokeObjectURL(current.previewUrl);
+        }
+
+        return {
+          file: optimizedFile,
+          previewUrl,
+          originalName: arquivo.name,
+          originalSize: arquivo.size,
+        };
+      });
+    } catch (error) {
+      const mensagem =
+        error instanceof Error
+          ? error.message
+          : "Não foi possível preparar a imagem selecionada.";
+
+      setErro(mensagem);
+    } finally {
+      setProcessandoCapa(false);
+    }
   }
 
   function removerCapaSelecionada() {
+    if (processandoCapa) return;
+
     if (cover.previewUrl) {
       URL.revokeObjectURL(cover.previewUrl);
     }
@@ -265,10 +406,16 @@ export default function AdminNovaLivePage() {
     setCover({
       file: null,
       previewUrl: null,
+      originalName: null,
+      originalSize: null,
     });
   }
 
   function validarFormulario() {
+    if (processandoCapa) {
+      return "Aguarde a preparação da capa antes de salvar a live.";
+    }
+
     const title = form.title.trim();
     const slug = gerarSlug(form.slug || form.title);
     const requiredRank = Number(form.requiredRank);
@@ -340,7 +487,7 @@ export default function AdminNovaLivePage() {
     const { error } = await supabase.storage
       .from(LIVE_COVERS_BUCKET)
       .upload(storagePath, cover.file, {
-        cacheControl: "3600",
+        cacheControl: "31536000",
         upsert: false,
         contentType: cover.file.type,
       });
@@ -485,15 +632,15 @@ export default function AdminNovaLivePage() {
           <button
             type="submit"
             form="nova-live-form"
-            disabled={salvando}
+            disabled={salvando || processandoCapa}
             className="inline-flex h-12 items-center justify-center gap-2 rounded-[12px] bg-[#DBC094] px-5 text-[14px] font-semibold text-black transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {salvando ? (
+            {salvando || processandoCapa ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <Save className="h-4 w-4" />
             )}
-            Salvar live
+            {processandoCapa ? "Preparando capa" : "Salvar live"}
           </button>
         </div>
       </section>
@@ -882,29 +1029,45 @@ export default function AdminNovaLivePage() {
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  {cover.file ? (
+                  {processandoCapa ? (
+                    <div className="flex items-center gap-2 text-[14px] font-semibold text-[#52525b]">
+                      <Loader2 className="h-4 w-4 animate-spin text-[#8a6836]" />
+                      Preparando capa para o aplicativo...
+                    </div>
+                  ) : cover.file ? (
                     <div>
                       <p className="truncate text-[14px] font-semibold text-[#141414]">
-                        {cover.file.name}
+                        {cover.originalName ?? cover.file.name}
                       </p>
                       <p className="mt-1 text-[13px] text-[#8a8f9d]">
-                        {formatarTamanho(cover.file.size)}
+                        Otimizada para 1080 × 1350 · {formatarTamanho(cover.file.size)}
+                        {cover.originalSize
+                          ? ` (original: ${formatarTamanho(cover.originalSize)})`
+                          : ""}
                       </p>
                     </div>
                   ) : (
                     <p className="text-[14px] leading-6 text-[#666b76]">
-                      Envie uma imagem em PNG, JPG ou WEBP.
+                      Envie uma imagem em PNG, JPG ou WEBP. A capa será
+                      preparada automaticamente para o aplicativo.
                     </p>
                   )}
 
                   <div className="mt-4 flex flex-wrap gap-2">
-                    <label className="inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-[10px] border border-[#e5e5e5] bg-white px-4 text-[13px] font-semibold text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836]">
+                    <label
+                      className={`inline-flex h-10 items-center justify-center gap-2 rounded-[10px] border border-[#e5e5e5] bg-white px-4 text-[13px] font-semibold text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836] ${
+                        processandoCapa
+                          ? "cursor-not-allowed opacity-60"
+                          : "cursor-pointer"
+                      }`}
+                    >
                       <Upload className="h-4 w-4" />
                       Selecionar capa
                       <input
                         type="file"
                         accept="image/png,image/jpeg,image/jpg,image/webp"
                         onChange={handleSelecionarCapa}
+                        disabled={processandoCapa}
                         className="hidden"
                       />
                     </label>
@@ -913,7 +1076,8 @@ export default function AdminNovaLivePage() {
                       <button
                         type="button"
                         onClick={removerCapaSelecionada}
-                        className="inline-flex h-10 items-center justify-center gap-2 rounded-[10px] border border-[#e5e5e5] bg-white px-4 text-[13px] font-semibold text-[#52525b] transition hover:border-rose-200 hover:text-rose-700"
+                        disabled={processandoCapa}
+                        className="inline-flex h-10 items-center justify-center gap-2 rounded-[10px] border border-[#e5e5e5] bg-white px-4 text-[13px] font-semibold text-[#52525b] transition hover:border-rose-200 hover:text-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         <X className="h-4 w-4" />
                         Remover
@@ -978,15 +1142,15 @@ export default function AdminNovaLivePage() {
 
             <button
               type="submit"
-              disabled={salvando}
+              disabled={salvando || processandoCapa}
               className="inline-flex h-12 items-center justify-center gap-2 rounded-[12px] bg-[#DBC094] px-5 text-[14px] font-semibold text-black transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {salvando ? (
+              {salvando || processandoCapa ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <MonitorPlay className="h-4 w-4" />
               )}
-              Salvar live
+              {processandoCapa ? "Preparando capa" : "Salvar live"}
             </button>
           </div>
         </div>
