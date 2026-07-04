@@ -795,7 +795,9 @@ export async function GET(request: Request) {
       .eq("status", "published")
       .order("sort_order", { ascending: true });
 
-    const moduleIds = (modules ?? []).map((module) => module.id);
+    const moduleIds = ((modules ?? []) as Array<{ id: string }>).map(
+      (module) => module.id,
+    );
 
     if (moduleIds.length === 0) {
       return NextResponse.json({
