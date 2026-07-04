@@ -5,14 +5,25 @@ import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
+const supabaseAnonKey =
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
+  process.env.SUPABASE_ANON_KEY ??
+  "";
 const supabaseServiceRoleKey =
   process.env.SUPABASE_SERVICE_ROLE_KEY ??
   process.env.SUPABASE_SERVICE_KEY ??
   process.env.SUPABASE_SERVICE_ROLE ??
   "";
+
+const noStoreHeaders = {
+  "Cache-Control": "private, no-store, max-age=0, must-revalidate",
+  Vary: "Authorization, Cookie",
+};
 
 const CERTIFICATE_TEMPLATE_BUCKET = "certificate-templates";
 const CERTIFICATE_WIDTH = 1200;
@@ -92,6 +103,14 @@ type IssuedCertificate = {
   status: "issued" | "revoked" | "deleted_by_student" | string;
   created_at: string;
   updated_at: string;
+};
+
+type CertificateSource = "issued_certificates" | "student_certificates";
+
+type StoredCertificate = IssuedCertificate & {
+  source_table?: CertificateSource;
+  deleted_at?: string | null;
+  deleted_by?: string | null;
 };
 
 type CertificateTemplate = {
@@ -385,20 +404,57 @@ function renderText(
   }" fill="${escapeXml(position.color)}">${escapeXml(value)}</text>`;
 }
 
-function buildCertificateRenderUrl(request: Request, certificateId: string) {
-  const url = new URL(request.url);
-  return `${url.origin}/api/student/certificados?certificateId=${certificateId}`;
+function getCertificateSource(value: unknown): CertificateSource {
+  return value === "student_certificates"
+    ? "student_certificates"
+    : "issued_certificates";
 }
 
-function withCertificateUrl(request: Request, certificate: IssuedCertificate) {
-  if (certificate.status !== "issued") return certificate;
+function getCertificateStatus(value: unknown) {
+  return cleanText(value).toLowerCase();
+}
+
+function isCertificateVisible(certificate: StoredCertificate) {
+  if (certificate.deleted_at) return false;
+
+  const status = getCertificateStatus(certificate.status);
+
+  return (
+    status === "issued" ||
+    status === "emitido" ||
+    status === "approved" ||
+    status === "aprovado" ||
+    status === "active" ||
+    status === "ativo"
+  );
+}
+
+function buildCertificateRenderUrl(
+  request: Request,
+  certificateId: string,
+  sourceTable: CertificateSource = "issued_certificates",
+) {
+  const url = new URL("/api/student/certificados", request.url);
+  url.searchParams.set("certificateId", certificateId);
+  url.searchParams.set("certificateSource", sourceTable);
+
+  return url.toString();
+}
+
+function withCertificateUrl(
+  request: Request,
+  certificate: StoredCertificate,
+): StoredCertificate {
+  const sourceTable = getCertificateSource(certificate.source_table);
 
   return {
     ...certificate,
+    source_table: sourceTable,
     certificate_path:
       certificate.certificate_path || `dynamic/${certificate.id}.svg`,
     certificate_url:
-      certificate.certificate_url || buildCertificateRenderUrl(request, certificate.id),
+      certificate.certificate_url ||
+      buildCertificateRenderUrl(request, certificate.id, sourceTable),
   };
 }
 
@@ -413,32 +469,68 @@ function getBearerAccessToken(request: Request) {
 async function getAuthenticatedStudent(request: Request) {
   const accessToken = getBearerAccessToken(request);
 
-  // O app Flutter envia a sessão Supabase no header Authorization. A validação
-  // é feita pelo Auth do Supabase com a chave anônima; a service role continua
-  // restrita às consultas administrativas realizadas no servidor.
-  if (accessToken && supabaseUrl && supabaseAnonKey) {
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-      },
-    });
+  // O Flutter sempre autentica esta rota por Authorization: Bearer. Não há
+  // fallback para cookies quando esse header existe: assim, uma falha de token
+  // não é mascarada por uma sessão de navegador inexistente no aplicativo.
+  if (accessToken) {
+    const authKey = supabaseAnonKey || supabaseServiceRoleKey;
 
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser(accessToken);
+    if (!supabaseUrl || !authKey) {
+      console.error(
+        "Configuração Supabase ausente para validar a sessão do aplicativo.",
+      );
 
-    if (!error && user?.id) {
       return {
-        ok: true as const,
-        user,
+        ok: false as const,
+        response: NextResponse.json(
+          { error: "Configuração de autenticação indisponível." },
+          { status: 500, headers: noStoreHeaders },
+        ),
       };
     }
+
+    try {
+      const supabase = createClient(supabaseUrl, authKey, {
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false,
+        },
+      });
+
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser(accessToken);
+
+      if (!error && user?.id) {
+        return {
+          ok: true as const,
+          user,
+        };
+      }
+
+      console.error(
+        "Token Bearer recusado na rota de certificados:",
+        error?.message || "Usuário não encontrado.",
+      );
+    } catch (error) {
+      console.error(
+        "Falha ao validar o token Bearer na rota de certificados:",
+        error,
+      );
+    }
+
+    return {
+      ok: false as const,
+      response: NextResponse.json(
+        { error: "Sua sessão expirou. Entre novamente no aplicativo." },
+        { status: 401, headers: noStoreHeaders },
+      ),
+    };
   }
 
-  // Mantém a autenticação por cookies da área web sem qualquer mudança no
-  // comportamento atual do navegador.
+  // Mantém a autenticação por cookies para a área web, sem alteração no
+  // comportamento da plataforma já publicada.
   const cookieStore = await cookies();
   const supabase = createStudentSupabaseClient(cookieStore);
 
@@ -452,7 +544,7 @@ async function getAuthenticatedStudent(request: Request) {
       ok: false as const,
       response: NextResponse.json(
         { error: "Sessão do aluno não encontrada." },
-        { status: 401 },
+        { status: 401, headers: noStoreHeaders },
       ),
     };
   }
@@ -461,6 +553,60 @@ async function getAuthenticatedStudent(request: Request) {
     ok: true as const,
     user,
   };
+}
+
+async function loadStudentCertificates(
+  adminSupabase: ReturnType<typeof createAdminSupabaseClient>,
+  studentId: string,
+) {
+  const sourceTables: CertificateSource[] = [
+    "issued_certificates",
+    "student_certificates",
+  ];
+  const certificates: StoredCertificate[] = [];
+  const failures: string[] = [];
+  let successfulSources = 0;
+
+  for (const sourceTable of sourceTables) {
+    const { data, error } = await adminSupabase
+      .from(sourceTable)
+      .select("*")
+      .eq("student_id", studentId)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      failures.push(`${sourceTable}: ${error.message}`);
+      continue;
+    }
+
+    successfulSources += 1;
+
+    for (const row of (data ?? []) as StoredCertificate[]) {
+      const certificate: StoredCertificate = {
+        ...row,
+        source_table: sourceTable,
+      };
+
+      if (certificate.id && isCertificateVisible(certificate)) {
+        certificates.push(certificate);
+      }
+    }
+  }
+
+  if (successfulSources === 0) {
+    throw new Error(
+      failures.join(" | ") ||
+        "Não foi possível acessar as tabelas de certificados.",
+    );
+  }
+
+  certificates.sort((first, second) => {
+    const firstTime = new Date(first.created_at || 0).getTime();
+    const secondTime = new Date(second.created_at || 0).getTime();
+    return secondTime - firstTime;
+  });
+
+  return certificates;
 }
 
 async function loadAttempts(
@@ -519,29 +665,28 @@ async function renderCertificateSvgResponse(
   request: Request,
   studentId: string,
   certificateId: string,
+  sourceTable: CertificateSource,
 ) {
   const adminSupabase = createAdminSupabaseClient();
 
   const { data: certificate, error: certificateError } = await adminSupabase
-    .from("issued_certificates")
+    .from(sourceTable)
     .select("*")
     .eq("id", certificateId)
     .eq("student_id", studentId)
-    .eq("status", "issued")
-    .is("deleted_at", null)
-    .maybeSingle<IssuedCertificate>();
+    .maybeSingle<StoredCertificate>();
 
-  if (certificateError || !certificate?.id) {
+  if (certificateError || !certificate?.id || !isCertificateVisible(certificate)) {
     return NextResponse.json(
       { error: "Certificado não encontrado para este aluno." },
-      { status: 404 },
+      { status: 404, headers: noStoreHeaders },
     );
   }
 
   if (!certificate.template_id) {
     return NextResponse.json(
       { error: "Este certificado não possui modelo vinculado." },
-      { status: 400 },
+      { status: 400, headers: noStoreHeaders },
     );
   }
 
@@ -555,7 +700,7 @@ async function renderCertificateSvgResponse(
   if (templateError || !template?.id) {
     return NextResponse.json(
       { error: "Modelo de certificado não encontrado." },
-      { status: 404 },
+      { status: 404, headers: noStoreHeaders },
     );
   }
 
@@ -570,7 +715,7 @@ async function renderCertificateSvgResponse(
   if (!templateImageUrl) {
     return NextResponse.json(
       { error: "Imagem do modelo de certificado não encontrada." },
-      { status: 400 },
+      { status: 400, headers: noStoreHeaders },
     );
   }
 
@@ -696,7 +841,8 @@ async function renderCertificateSvgResponse(
     status: 200,
     headers: {
       "Content-Type": "image/svg+xml; charset=utf-8",
-      "Cache-Control": "private, no-store",
+      "Cache-Control": "private, no-store, max-age=0, must-revalidate",
+      Vary: "Authorization, Cookie",
       "Content-Disposition": `${shouldDownload ? "attachment" : "inline"}; filename="${fileName}"`,
     },
   });
@@ -711,6 +857,9 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const certificateId = cleanText(searchParams.get("certificateId"));
+  const certificateSource = getCertificateSource(
+    searchParams.get("certificateSource"),
+  );
   const courseId = cleanText(searchParams.get("courseId"));
 
   try {
@@ -718,40 +867,33 @@ export async function GET(request: Request) {
     const studentId = studentCheck.user.id;
 
     if (certificateId) {
-      return renderCertificateSvgResponse(request, studentId, certificateId);
+      return renderCertificateSvgResponse(
+        request,
+        studentId,
+        certificateId,
+        certificateSource,
+      );
     }
 
     if (!courseId) {
-      const { data: certificates, error: certificatesError } =
-        await adminSupabase
-          .from("issued_certificates")
-          .select("*")
-          .eq("student_id", studentId)
-          .eq("status", "issued")
-          .is("deleted_at", null)
-          .order("created_at", { ascending: false });
-
-      if (certificatesError) {
-        return NextResponse.json(
-          {
-            error:
-              certificatesError.message ||
-              "Não foi possível carregar os certificados do aluno.",
-          },
-          { status: 500 },
-        );
-      }
-
-      const issuedCertificates = ((certificates ?? []) as IssuedCertificate[]).map(
-        (certificate) => withCertificateUrl(request, certificate),
+      const certificates = await loadStudentCertificates(
+        adminSupabase,
+        studentId,
       );
 
-      return NextResponse.json({
-        certificates: issuedCertificates,
-        totals: {
-          issued: issuedCertificates.length,
+      const issuedCertificates = certificates.map((certificate) =>
+        withCertificateUrl(request, certificate),
+      );
+
+      return NextResponse.json(
+        {
+          certificates: issuedCertificates,
+          totals: {
+            issued: issuedCertificates.length,
+          },
         },
-      });
+        { headers: noStoreHeaders },
+      );
     }
 
     const { data: course, error: courseError } = await adminSupabase
@@ -948,14 +1090,27 @@ export async function GET(request: Request) {
 
     const scorePercent = getAttemptScore(approvedAttempt);
 
-    const { data: existingCertificate } = await adminSupabase
-      .from("issued_certificates")
-      .select("*")
-      .eq("student_id", studentId)
-      .eq("course_id", courseId)
-      .eq("status", "issued")
-      .is("deleted_at", null)
-      .maybeSingle<IssuedCertificate>();
+    const { data: existingCertificates, error: existingCertificatesError } =
+      await adminSupabase
+        .from("issued_certificates")
+        .select("*")
+        .eq("student_id", studentId)
+        .eq("course_id", courseId)
+        .order("created_at", { ascending: false });
+
+    if (existingCertificatesError) {
+      return NextResponse.json(
+        {
+          error:
+            existingCertificatesError.message ||
+            "Não foi possível localizar o certificado já emitido.",
+        },
+        { status: 500, headers: noStoreHeaders },
+      );
+    }
+
+    const existingCertificate = ((existingCertificates ?? []) as StoredCertificate[])
+      .find((certificate) => isCertificateVisible(certificate));
 
     if (existingCertificate?.id) {
       const certificateUrl = buildCertificateRenderUrl(
@@ -1125,7 +1280,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json(
       { error: "Não foi possível verificar o certificado." },
-      { status: 500 },
+      { status: 500, headers: noStoreHeaders },
     );
   }
 }
@@ -1156,43 +1311,85 @@ export async function DELETE(request: Request) {
   try {
     const adminSupabase = createAdminSupabaseClient();
     const studentId = studentCheck.user.id;
+    const sourceTables: CertificateSource[] = [
+      "issued_certificates",
+      "student_certificates",
+    ];
+    const failures: string[] = [];
 
-    const { data, error } = await adminSupabase
-      .from("issued_certificates")
-      .update({
-        status: "deleted_by_student",
-        deleted_at: new Date().toISOString(),
-        deleted_by: studentId,
-      })
-      .eq("id", certificateId)
-      .eq("student_id", studentId)
-      .eq("status", "issued")
-      .is("deleted_at", null)
-      .select("id,status,deleted_at")
-      .maybeSingle();
+    for (const sourceTable of sourceTables) {
+      const { data: certificate, error: readError } = await adminSupabase
+        .from(sourceTable)
+        .select("*")
+        .eq("id", certificateId)
+        .eq("student_id", studentId)
+        .maybeSingle<StoredCertificate>();
 
-    if (error || !data) {
+      if (readError) {
+        failures.push(`${sourceTable}: ${readError.message}`);
+        continue;
+      }
+
+      if (!certificate?.id) {
+        continue;
+      }
+
+      if (!isCertificateVisible(certificate)) {
+        return NextResponse.json(
+          { error: "Este certificado não está disponível para exclusão." },
+          { status: 404, headers: noStoreHeaders },
+        );
+      }
+
+      // A mudança de status é suficiente para ocultar o certificado da área do
+      // aluno e preserva a compatibilidade com bases que ainda não possuem as
+      // colunas deleted_at e deleted_by.
+      const { data, error } = await adminSupabase
+        .from(sourceTable)
+        .update({
+          status: "deleted_by_student",
+        })
+        .eq("id", certificateId)
+        .eq("student_id", studentId)
+        .select("id,status")
+        .maybeSingle();
+
+      if (error || !data) {
+        return NextResponse.json(
+          {
+            error:
+              error?.message ||
+              "Não foi possível excluir este certificado agora.",
+          },
+          { status: 500, headers: noStoreHeaders },
+        );
+      }
+
       return NextResponse.json(
         {
-          error:
-            error?.message ||
-            "Não foi possível excluir este certificado ou ele não pertence ao aluno logado.",
+          ok: true,
+          deleted_id: data.id,
+          message: "Certificado excluído da sua área.",
         },
-        { status: 500 },
+        { headers: noStoreHeaders },
       );
     }
 
-    return NextResponse.json({
-      ok: true,
-      deleted_id: data.id,
-      message: "Certificado excluído da sua área.",
-    });
+    return NextResponse.json(
+      {
+        error:
+          failures.length > 0
+            ? "Não foi possível localizar o certificado na base atual."
+            : "Este certificado não pertence ao aluno logado.",
+      },
+      { status: 404, headers: noStoreHeaders },
+    );
   } catch (error) {
     console.error("Erro ao excluir certificado do aluno:", error);
 
     return NextResponse.json(
       { error: "Não foi possível excluir o certificado." },
-      { status: 500 },
+      { status: 500, headers: noStoreHeaders },
     );
   }
 }
