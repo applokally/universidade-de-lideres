@@ -402,7 +402,43 @@ function withCertificateUrl(request: Request, certificate: IssuedCertificate) {
   };
 }
 
-async function getAuthenticatedStudent() {
+function getBearerAccessToken(request: Request) {
+  const authorization = request.headers.get("authorization") ?? "";
+  const match = authorization.match(/^Bearer\s+(.+)$/i);
+  const token = match?.[1]?.trim() ?? "";
+
+  return token || null;
+}
+
+async function getAuthenticatedStudent(request: Request) {
+  const accessToken = getBearerAccessToken(request);
+
+  // O app Flutter envia a sessão Supabase no header Authorization. A validação
+  // é feita pelo Auth do Supabase com a chave anônima; a service role continua
+  // restrita às consultas administrativas realizadas no servidor.
+  if (accessToken && supabaseUrl && supabaseAnonKey) {
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+      },
+    });
+
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser(accessToken);
+
+    if (!error && user?.id) {
+      return {
+        ok: true as const,
+        user,
+      };
+    }
+  }
+
+  // Mantém a autenticação por cookies da área web sem qualquer mudança no
+  // comportamento atual do navegador.
   const cookieStore = await cookies();
   const supabase = createStudentSupabaseClient(cookieStore);
 
@@ -667,7 +703,7 @@ async function renderCertificateSvgResponse(
 }
 
 export async function GET(request: Request) {
-  const studentCheck = await getAuthenticatedStudent();
+  const studentCheck = await getAuthenticatedStudent(request);
 
   if (!studentCheck.ok) {
     return studentCheck.response;
@@ -1093,7 +1129,7 @@ export async function GET(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  const studentCheck = await getAuthenticatedStudent();
+  const studentCheck = await getAuthenticatedStudent(request);
 
   if (!studentCheck.ok) {
     return studentCheck.response;
