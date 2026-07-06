@@ -1,6 +1,7 @@
-// VERSÃO: v31
+// VERSÃO: v32
 import { Buffer } from "node:buffer";
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { deflateSync, inflateSync } from "node:zlib";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
@@ -300,15 +301,6 @@ function attemptLooksApproved(attempt: AttemptRow, assessment: AssessmentRow) {
   );
 }
 
-function escapeXml(value: unknown) {
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
 function sanitizeFileName(value: string) {
   return value
     .normalize("NFD")
@@ -362,35 +354,6 @@ function getPosition(
     color,
     fontWeight: Number.isFinite(fontWeight) ? fontWeight : fallback.fontWeight,
   };
-}
-
-function textAnchorForAlign(align: PositionConfig["align"]) {
-  if (align === "left") return "start";
-  if (align === "right") return "end";
-  return "middle";
-}
-
-function positionX(position: PositionConfig) {
-  return (position.x / 100) * CERTIFICATE_WIDTH;
-}
-
-function positionY(position: PositionConfig) {
-  return (position.y / 100) * CERTIFICATE_HEIGHT;
-}
-
-function renderText(
-  label: string,
-  value: string,
-  position: PositionConfig,
-  extraClass = "certificate-text",
-) {
-  return `<text class="${extraClass}" x="${positionX(position)}" y="${positionY(
-    position,
-  )}" text-anchor="${textAnchorForAlign(
-    position.align,
-  )}" dominant-baseline="middle" font-size="${position.fontSize}" font-weight="${
-    position.fontWeight
-  }" fill="${escapeXml(position.color)}">${escapeXml(value)}</text>`;
 }
 
 function createCertificateShareToken(
@@ -486,11 +449,11 @@ function withCertificateUrl(request: Request, certificate: IssuedCertificate) {
   if (certificate.status !== "issued") return certificate;
 
   // Ignora URLs antigas salvas no banco, que podiam apontar para a arte-base
-  // ou exigir cookie de sessão. A URL abaixo sempre aponta para o SVG final
+  // ou exigir cookie de sessão. A URL abaixo sempre aponta para o PDF final
   // preenchido e possui assinatura temporária para abrir fora do app.
   return {
     ...certificate,
-    certificate_path: `dynamic/${certificate.id}.svg`,
+    certificate_path: `dynamic/${certificate.id}.pdf`,
     certificate_url: buildCertificateRenderUrl(request, certificate),
   };
 }
@@ -584,27 +547,595 @@ async function loadAttempts(
   return [] as AttemptRow[];
 }
 
-async function imageToDataUrl(imageUrl: string) {
-  try {
-    const response = await fetch(imageUrl, {
-      cache: "no-store",
-    });
+type PdfImageColorSpace = "DeviceGray" | "DeviceRGB" | "DeviceCMYK";
 
-    if (!response.ok) return imageUrl;
+type PdfTemplateImage = {
+  width: number;
+  height: number;
+  colorSpace: PdfImageColorSpace;
+  filter: "DCTDecode" | "FlateDecode";
+  bytes: Buffer;
+};
 
-    const contentType =
-      response.headers.get("content-type")?.split(";")[0] || "image/png";
-    const arrayBuffer = await response.arrayBuffer();
-    const base64 = Buffer.from(arrayBuffer).toString("base64");
+type PdfTextLine = {
+  key: string;
+  value: string;
+  position: PositionConfig;
+};
 
-    return `data:${contentType};base64,${base64}`;
-  } catch (error) {
-    console.error("Erro ao incorporar imagem do certificado:", error);
-    return imageUrl;
-  }
+const WIN_ANSI_EXTRA_CHARACTERS: Record<string, number> = {
+  "€": 0x80,
+  "‚": 0x82,
+  "ƒ": 0x83,
+  "„": 0x84,
+  "…": 0x85,
+  "†": 0x86,
+  "‡": 0x87,
+  "ˆ": 0x88,
+  "‰": 0x89,
+  "Š": 0x8a,
+  "‹": 0x8b,
+  "Œ": 0x8c,
+  "Ž": 0x8e,
+  "‘": 0x91,
+  "’": 0x92,
+  "“": 0x93,
+  "”": 0x94,
+  "•": 0x95,
+  "–": 0x96,
+  "—": 0x97,
+  "˜": 0x98,
+  "™": 0x99,
+  "š": 0x9a,
+  "›": 0x9b,
+  "œ": 0x9c,
+  "ž": 0x9e,
+  "Ÿ": 0x9f,
+};
+
+function positionX(position: PositionConfig) {
+  return (position.x / 100) * CERTIFICATE_WIDTH;
 }
 
-async function renderCertificateSvgResponse(
+function positionY(position: PositionConfig) {
+  return (position.y / 100) * CERTIFICATE_HEIGHT;
+}
+
+function pdfNumber(value: number) {
+  return Number.isFinite(value) ? Number(value.toFixed(3)).toString() : "0";
+}
+
+function encodeWinAnsi(value: string) {
+  const bytes: number[] = [];
+
+  for (const character of String(value ?? "")) {
+    const codePoint = character.codePointAt(0) ?? 0;
+
+    if (codePoint <= 0x7f) {
+      bytes.push(codePoint);
+      continue;
+    }
+
+    if (codePoint >= 0xa0 && codePoint <= 0xff) {
+      bytes.push(codePoint);
+      continue;
+    }
+
+    bytes.push(WIN_ANSI_EXTRA_CHARACTERS[character] ?? 0x3f);
+  }
+
+  return Buffer.from(bytes);
+}
+
+function pdfHexText(value: string) {
+  return `<${encodeWinAnsi(value).toString("hex").toUpperCase()}>`;
+}
+
+function parsePdfColor(color: string) {
+  const normalized = color.trim();
+  const shorthand = /^#([0-9a-f]{3})$/i.exec(normalized);
+
+  if (shorthand) {
+    const hex = shorthand[1]
+      .split("")
+      .map((item) => `${item}${item}`)
+      .join("");
+
+    return [
+      Number.parseInt(hex.slice(0, 2), 16) / 255,
+      Number.parseInt(hex.slice(2, 4), 16) / 255,
+      Number.parseInt(hex.slice(4, 6), 16) / 255,
+    ] as const;
+  }
+
+  const full = /^#([0-9a-f]{6})$/i.exec(normalized);
+
+  if (full) {
+    const hex = full[1];
+
+    return [
+      Number.parseInt(hex.slice(0, 2), 16) / 255,
+      Number.parseInt(hex.slice(2, 4), 16) / 255,
+      Number.parseInt(hex.slice(4, 6), 16) / 255,
+    ] as const;
+  }
+
+  return [0.067, 0.094, 0.153] as const;
+}
+
+function estimatePdfTextWidth(value: string, fontSize: number) {
+  let units = 0;
+
+  for (const character of value) {
+    if (/\s/.test(character)) {
+      units += 0.28;
+    } else if (/[ilI1.,:;|'`]/.test(character)) {
+      units += 0.27;
+    } else if (/[MW@#%]/.test(character)) {
+      units += 0.88;
+    } else if (/[A-ZÁÀÂÃÉÊÍÓÔÕÚÇ]/.test(character)) {
+      units += 0.64;
+    } else {
+      units += 0.52;
+    }
+  }
+
+  return units * fontSize;
+}
+
+function pdfFontForText(key: string, fontWeight: number) {
+  const bold = fontWeight >= 600;
+
+  if (key === "student_name") {
+    return bold ? "F4" : "F3";
+  }
+
+  return bold ? "F2" : "F1";
+}
+
+function createPdfTextCommand({ key, value, position }: PdfTextLine) {
+  const fontSize = Math.max(1, position.fontSize);
+  const estimatedWidth = estimatePdfTextWidth(value, fontSize);
+  let x = positionX(position);
+
+  if (position.align === "center") {
+    x -= estimatedWidth / 2;
+  } else if (position.align === "right") {
+    x -= estimatedWidth;
+  }
+
+  // O editor usa coordenadas com origem no topo. No PDF a origem é inferior.
+  // O pequeno ajuste mantém o texto visualmente centralizado na posição salva.
+  const y = CERTIFICATE_HEIGHT - positionY(position) - fontSize * 0.28;
+  const [red, green, blue] = parsePdfColor(position.color);
+  const font = pdfFontForText(key, position.fontWeight);
+
+  return [
+    "BT",
+    `/${font} ${pdfNumber(fontSize)} Tf`,
+    `${pdfNumber(red)} ${pdfNumber(green)} ${pdfNumber(blue)} rg`,
+    `1 0 0 1 ${pdfNumber(x)} ${pdfNumber(y)} Tm`,
+    `${pdfHexText(value)} Tj`,
+    "ET",
+  ].join("\n");
+}
+
+function parseJpegTemplateImage(bytes: Buffer): PdfTemplateImage {
+  if (
+    bytes.length < 4 ||
+    bytes[0] !== 0xff ||
+    bytes[1] !== 0xd8
+  ) {
+    throw new Error("Arquivo JPEG de certificado inválido.");
+  }
+
+  let offset = 2;
+
+  while (offset < bytes.length) {
+    while (offset < bytes.length && bytes[offset] === 0xff) {
+      offset += 1;
+    }
+
+    if (offset >= bytes.length) break;
+
+    const marker = bytes[offset];
+    offset += 1;
+
+    if (marker === 0xd8 || marker === 0xd9 || marker === 0x01) {
+      continue;
+    }
+
+    if (offset + 2 > bytes.length) break;
+
+    const segmentLength = bytes.readUInt16BE(offset);
+
+    if (segmentLength < 2 || offset + segmentLength > bytes.length) {
+      break;
+    }
+
+    const isStartOfFrame =
+      (marker >= 0xc0 && marker <= 0xc3) ||
+      (marker >= 0xc5 && marker <= 0xc7) ||
+      (marker >= 0xc9 && marker <= 0xcb) ||
+      (marker >= 0xcd && marker <= 0xcf);
+
+    if (isStartOfFrame && segmentLength >= 8) {
+      const height = bytes.readUInt16BE(offset + 3);
+      const width = bytes.readUInt16BE(offset + 5);
+      const components = bytes[offset + 7];
+
+      if (!width || !height) {
+        throw new Error("Dimensões inválidas na imagem JPEG do certificado.");
+      }
+
+      return {
+        width,
+        height,
+        colorSpace:
+          components === 1
+            ? "DeviceGray"
+            : components === 4
+              ? "DeviceCMYK"
+              : "DeviceRGB",
+        filter: "DCTDecode",
+        bytes,
+      };
+    }
+
+    offset += segmentLength;
+  }
+
+  throw new Error("Não foi possível identificar as dimensões da imagem JPEG.");
+}
+
+function pngPaethPredictor(left: number, up: number, upLeft: number) {
+  const prediction = left + up - upLeft;
+  const leftDistance = Math.abs(prediction - left);
+  const upDistance = Math.abs(prediction - up);
+  const upLeftDistance = Math.abs(prediction - upLeft);
+
+  if (leftDistance <= upDistance && leftDistance <= upLeftDistance) return left;
+  if (upDistance <= upLeftDistance) return up;
+
+  return upLeft;
+}
+
+function parsePngTemplateImage(bytes: Buffer): PdfTemplateImage {
+  const signature = Buffer.from([
+    0x89,
+    0x50,
+    0x4e,
+    0x47,
+    0x0d,
+    0x0a,
+    0x1a,
+    0x0a,
+  ]);
+
+  if (bytes.length < signature.length || !bytes.subarray(0, 8).equals(signature)) {
+    throw new Error("Arquivo PNG de certificado inválido.");
+  }
+
+  let offset = 8;
+  let width = 0;
+  let height = 0;
+  let bitDepth = 0;
+  let colorType = -1;
+  let interlaceMethod = -1;
+  let palette: Buffer | null = null;
+  let transparency: Buffer | null = null;
+  const idatChunks: Buffer[] = [];
+
+  while (offset + 12 <= bytes.length) {
+    const length = bytes.readUInt32BE(offset);
+    const type = bytes.subarray(offset + 4, offset + 8).toString("ascii");
+    const dataStart = offset + 8;
+    const dataEnd = dataStart + length;
+
+    if (dataEnd + 4 > bytes.length) {
+      throw new Error("Estrutura PNG inválida no modelo de certificado.");
+    }
+
+    const chunk = bytes.subarray(dataStart, dataEnd);
+
+    if (type === "IHDR") {
+      width = chunk.readUInt32BE(0);
+      height = chunk.readUInt32BE(4);
+      bitDepth = chunk[8];
+      colorType = chunk[9];
+      interlaceMethod = chunk[12];
+    } else if (type === "PLTE") {
+      palette = Buffer.from(chunk);
+    } else if (type === "tRNS") {
+      transparency = Buffer.from(chunk);
+    } else if (type === "IDAT") {
+      idatChunks.push(Buffer.from(chunk));
+    } else if (type === "IEND") {
+      break;
+    }
+
+    offset = dataEnd + 4;
+  }
+
+  if (
+    !width ||
+    !height ||
+    bitDepth !== 8 ||
+    interlaceMethod !== 0 ||
+    idatChunks.length === 0
+  ) {
+    throw new Error(
+      "O modelo PNG precisa ser uma imagem 8-bit, sem entrelaçamento.",
+    );
+  }
+
+  const channelsByColorType: Record<number, number> = {
+    0: 1,
+    2: 3,
+    3: 1,
+    4: 2,
+    6: 4,
+  };
+  const channels = channelsByColorType[colorType];
+
+  if (!channels) {
+    throw new Error("Formato de cor PNG não suportado no modelo de certificado.");
+  }
+
+  if (colorType === 3 && (!palette || palette.length < 3)) {
+    throw new Error("A imagem PNG indexada não possui paleta válida.");
+  }
+
+  const decompressed = inflateSync(Buffer.concat(idatChunks));
+  const rowLength = width * channels;
+  const expectedLength = (rowLength + 1) * height;
+
+  if (decompressed.length < expectedLength) {
+    throw new Error("Dados PNG incompletos no modelo de certificado.");
+  }
+
+  const rgb = Buffer.alloc(width * height * 3);
+  let readOffset = 0;
+  let writeOffset = 0;
+  let previousRow = Buffer.alloc(rowLength);
+
+  for (let row = 0; row < height; row += 1) {
+    const filterType = decompressed[readOffset];
+    readOffset += 1;
+
+    const currentRow = Buffer.from(
+      decompressed.subarray(readOffset, readOffset + rowLength),
+    );
+    readOffset += rowLength;
+
+    for (let index = 0; index < currentRow.length; index += 1) {
+      const left = index >= channels ? currentRow[index - channels] : 0;
+      const up = previousRow[index] ?? 0;
+      const upLeft = index >= channels ? previousRow[index - channels] ?? 0 : 0;
+
+      if (filterType === 1) {
+        currentRow[index] = (currentRow[index] + left) & 0xff;
+      } else if (filterType === 2) {
+        currentRow[index] = (currentRow[index] + up) & 0xff;
+      } else if (filterType === 3) {
+        currentRow[index] = (currentRow[index] + Math.floor((left + up) / 2)) & 0xff;
+      } else if (filterType === 4) {
+        currentRow[index] =
+          (currentRow[index] + pngPaethPredictor(left, up, upLeft)) & 0xff;
+      } else if (filterType !== 0) {
+        throw new Error("Filtro PNG não suportado no modelo de certificado.");
+      }
+    }
+
+    for (let column = 0; column < width; column += 1) {
+      const pixelOffset = column * channels;
+      let red = 255;
+      let green = 255;
+      let blue = 255;
+      let alpha = 255;
+
+      if (colorType === 0) {
+        red = currentRow[pixelOffset];
+        green = red;
+        blue = red;
+      } else if (colorType === 2) {
+        red = currentRow[pixelOffset];
+        green = currentRow[pixelOffset + 1];
+        blue = currentRow[pixelOffset + 2];
+      } else if (colorType === 3) {
+        const paletteIndex = currentRow[pixelOffset];
+        const paletteOffset = paletteIndex * 3;
+
+        red = palette?.[paletteOffset] ?? 255;
+        green = palette?.[paletteOffset + 1] ?? 255;
+        blue = palette?.[paletteOffset + 2] ?? 255;
+        alpha = transparency?.[paletteIndex] ?? 255;
+      } else if (colorType === 4) {
+        red = currentRow[pixelOffset];
+        green = red;
+        blue = red;
+        alpha = currentRow[pixelOffset + 1];
+      } else if (colorType === 6) {
+        red = currentRow[pixelOffset];
+        green = currentRow[pixelOffset + 1];
+        blue = currentRow[pixelOffset + 2];
+        alpha = currentRow[pixelOffset + 3];
+      }
+
+      if (alpha < 255) {
+        red = Math.round((red * alpha + 255 * (255 - alpha)) / 255);
+        green = Math.round((green * alpha + 255 * (255 - alpha)) / 255);
+        blue = Math.round((blue * alpha + 255 * (255 - alpha)) / 255);
+      }
+
+      rgb[writeOffset] = red;
+      rgb[writeOffset + 1] = green;
+      rgb[writeOffset + 2] = blue;
+      writeOffset += 3;
+    }
+
+    previousRow = currentRow;
+  }
+
+  return {
+    width,
+    height,
+    colorSpace: "DeviceRGB",
+    filter: "FlateDecode",
+    bytes: deflateSync(rgb),
+  };
+}
+
+function parseCertificateTemplateImage(
+  bytes: Buffer,
+  contentType: string,
+): PdfTemplateImage {
+  const normalizedType = contentType.toLowerCase();
+
+  if (
+    normalizedType.includes("image/jpeg") ||
+    (bytes.length >= 3 &&
+      bytes[0] === 0xff &&
+      bytes[1] === 0xd8 &&
+      bytes[2] === 0xff)
+  ) {
+    return parseJpegTemplateImage(bytes);
+  }
+
+  if (
+    normalizedType.includes("image/png") ||
+    (bytes.length >= 8 &&
+      bytes[0] === 0x89 &&
+      bytes[1] === 0x50 &&
+      bytes[2] === 0x4e &&
+      bytes[3] === 0x47)
+  ) {
+    return parsePngTemplateImage(bytes);
+  }
+
+  throw new Error(
+    "O modelo do certificado precisa estar em PNG ou JPG para gerar o PDF.",
+  );
+}
+
+async function loadCertificateTemplateImage(imageUrl: string) {
+  const response = await fetch(imageUrl, {
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error("Não foi possível baixar a imagem do modelo do certificado.");
+  }
+
+  const contentType =
+    response.headers.get("content-type")?.split(";")[0] || "";
+  const bytes = Buffer.from(await response.arrayBuffer());
+
+  return parseCertificateTemplateImage(bytes, contentType);
+}
+
+function createPdfStreamObject(content: Buffer) {
+  return Buffer.concat([
+    Buffer.from(`<< /Length ${content.length} >>\nstream\n`, "ascii"),
+    content,
+    Buffer.from("\nendstream", "ascii"),
+  ]);
+}
+
+function buildCertificatePdf(
+  image: PdfTemplateImage,
+  textLines: PdfTextLine[],
+) {
+  const imageObject = Buffer.concat([
+    Buffer.from(
+      `<< /Type /XObject /Subtype /Image /Width ${image.width} /Height ${image.height} /ColorSpace /${image.colorSpace} /BitsPerComponent 8 /Filter /${image.filter} /Length ${image.bytes.length} >>\nstream\n`,
+      "ascii",
+    ),
+    image.bytes,
+    Buffer.from("\nendstream", "ascii"),
+  ]);
+
+  const imageScale = Math.min(
+    CERTIFICATE_WIDTH / image.width,
+    CERTIFICATE_HEIGHT / image.height,
+  );
+  const drawnImageWidth = image.width * imageScale;
+  const drawnImageHeight = image.height * imageScale;
+  const imageOffsetX = (CERTIFICATE_WIDTH - drawnImageWidth) / 2;
+  const imageOffsetY = (CERTIFICATE_HEIGHT - drawnImageHeight) / 2;
+
+  const content = Buffer.from(
+    [
+      "q",
+      `${pdfNumber(drawnImageWidth)} 0 0 ${pdfNumber(drawnImageHeight)} ${pdfNumber(imageOffsetX)} ${pdfNumber(imageOffsetY)} cm`,
+      "/Im0 Do",
+      "Q",
+      ...textLines.map(createPdfTextCommand),
+      "",
+    ].join("\n"),
+    "ascii",
+  );
+
+  const objects: Buffer[] = [
+    Buffer.from("<< /Type /Catalog /Pages 2 0 R >>", "ascii"),
+    Buffer.from("<< /Type /Pages /Kids [3 0 R] /Count 1 >>", "ascii"),
+    Buffer.from(
+      `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${CERTIFICATE_WIDTH} ${CERTIFICATE_HEIGHT}] /Resources << /Font << /F1 4 0 R /F2 5 0 R /F3 6 0 R /F4 7 0 R >> /XObject << /Im0 8 0 R >> >> /Contents 9 0 R >>`,
+      "ascii",
+    ),
+    Buffer.from(
+      "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>",
+      "ascii",
+    ),
+    Buffer.from(
+      "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>",
+      "ascii",
+    ),
+    Buffer.from(
+      "<< /Type /Font /Subtype /Type1 /BaseFont /Times-Roman /Encoding /WinAnsiEncoding >>",
+      "ascii",
+    ),
+    Buffer.from(
+      "<< /Type /Font /Subtype /Type1 /BaseFont /Times-Bold /Encoding /WinAnsiEncoding >>",
+      "ascii",
+    ),
+    imageObject,
+    createPdfStreamObject(content),
+  ];
+
+  const header = Buffer.from("%PDF-1.4\n%\xE2\xE3\xCF\xD3\n", "binary");
+  const chunks: Buffer[] = [header];
+  const offsets = [0];
+  let offset = header.length;
+
+  objects.forEach((object, index) => {
+    offsets.push(offset);
+
+    const prefix = Buffer.from(`${index + 1} 0 obj\n`, "ascii");
+    const suffix = Buffer.from("\nendobj\n", "ascii");
+    const serialized = Buffer.concat([prefix, object, suffix]);
+
+    chunks.push(serialized);
+    offset += serialized.length;
+  });
+
+  const xrefOffset = offset;
+  const xref = [
+    `xref\n0 ${objects.length + 1}`,
+    "0000000000 65535 f ",
+    ...offsets.slice(1).map((value) => `${String(value).padStart(10, "0")} 00000 n `),
+    `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>`,
+    `startxref\n${xrefOffset}`,
+    "%%EOF",
+    "",
+  ].join("\n");
+
+  chunks.push(Buffer.from(xref, "ascii"));
+
+  return Buffer.concat(chunks);
+}
+
+async function renderCertificatePdfResponse(
   request: Request,
   studentId: string,
   certificateId: string,
@@ -663,7 +1194,7 @@ async function renderCertificateSvgResponse(
     );
   }
 
-  const embeddedImageUrl = await imageToDataUrl(templateImageUrl);
+  const templateImage = await loadCertificateTemplateImage(templateImageUrl);
   const positionConfig = template.position_config;
 
   const studentNamePosition = getPosition(positionConfig, "student_name", {
@@ -741,50 +1272,59 @@ async function renderCertificateSvgResponse(
   const periodStart = formatDateBR(certificate.period_start);
   const periodEnd = formatDateBR(certificate.completed_at);
   const workload = formatWorkloadLong(certificate.workload_hours);
-
-  const svg = `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="${CERTIFICATE_WIDTH}" height="${CERTIFICATE_HEIGHT}" viewBox="0 0 ${CERTIFICATE_WIDTH} ${CERTIFICATE_HEIGHT}">
-  <title>Certificado - ${escapeXml(certificate.course_title)}</title>
-  <style>
-    .certificate-text {
-      font-family: Arial, Helvetica, sans-serif;
-      paint-order: stroke;
-      stroke: rgba(255,255,255,0.35);
-      stroke-width: 0.35px;
-      stroke-linejoin: round;
-    }
-    .student-name {
-      font-family: Georgia, 'Times New Roman', serif;
-      letter-spacing: 0.02em;
-    }
-  </style>
-  <rect width="100%" height="100%" fill="#ffffff" />
-  <image href="${embeddedImageUrl}" x="0" y="0" width="${CERTIFICATE_WIDTH}" height="${CERTIFICATE_HEIGHT}" preserveAspectRatio="xMidYMid meet" />
-  ${renderText(
-    "student_name",
-    certificate.student_name,
-    studentNamePosition,
-    "certificate-text student-name",
-  )}
-  ${renderText("course_name", certificate.course_title, courseNamePosition)}
-  ${renderText("period_start", periodStart, periodStartPosition)}
-  ${renderText("period_end", periodEnd, periodEndPosition)}
-  ${renderText("workload_text", workload, workloadTextPosition)}
-  ${renderText("footer_workload", workload, footerWorkloadPosition)}
-  ${renderText("footer_start_date", periodStart, footerStartDatePosition)}
-  ${renderText("footer_end_date", periodEnd, footerEndDatePosition)}
-</svg>`;
+  const pdf = buildCertificatePdf(templateImage, [
+    {
+      key: "student_name",
+      value: certificate.student_name,
+      position: studentNamePosition,
+    },
+    {
+      key: "course_name",
+      value: certificate.course_title,
+      position: courseNamePosition,
+    },
+    {
+      key: "period_start",
+      value: periodStart,
+      position: periodStartPosition,
+    },
+    {
+      key: "period_end",
+      value: periodEnd,
+      position: periodEndPosition,
+    },
+    {
+      key: "workload_text",
+      value: workload,
+      position: workloadTextPosition,
+    },
+    {
+      key: "footer_workload",
+      value: workload,
+      position: footerWorkloadPosition,
+    },
+    {
+      key: "footer_start_date",
+      value: periodStart,
+      position: footerStartDatePosition,
+    },
+    {
+      key: "footer_end_date",
+      value: periodEnd,
+      position: footerEndDatePosition,
+    },
+  ]);
 
   const params = new URL(request.url).searchParams;
   const shouldDownload = params.get("download") === "1";
   const fileName = `certificado-${sanitizeFileName(
     certificate.course_title || certificate.id,
-  )}.svg`;
+  )}.pdf`;
 
-  return new Response(svg, {
+  return new Response(pdf, {
     status: 200,
     headers: {
-      "Content-Type": "image/svg+xml; charset=utf-8",
+      "Content-Type": "application/pdf",
       "Cache-Control": "private, no-store",
       "Content-Disposition": `${shouldDownload ? "attachment" : "inline"}; filename="${fileName}"`,
     },
@@ -816,7 +1356,7 @@ export async function GET(request: Request) {
     }
 
     try {
-      return await renderCertificateSvgResponse(
+      return await renderCertificatePdfResponse(
         request,
         studentId,
         certificateId,
@@ -1074,7 +1614,7 @@ export async function GET(request: Request) {
       .maybeSingle<IssuedCertificate>();
 
     if (existingCertificate?.id) {
-      const certificatePath = `dynamic/${existingCertificate.id}.svg`;
+      const certificatePath = `dynamic/${existingCertificate.id}.pdf`;
       const certificateUrl = buildCertificateRenderUrl(
         request,
         existingCertificate,
@@ -1198,7 +1738,7 @@ export async function GET(request: Request) {
       );
     }
 
-    const certificatePath = `dynamic/${createdCertificate.id}.svg`;
+    const certificatePath = `dynamic/${createdCertificate.id}.pdf`;
     const certificateUrl = buildCertificateRenderUrl(request, createdCertificate);
 
     const { data: updatedCertificate } = await adminSupabase
