@@ -225,12 +225,12 @@ function SuccessModal({
                   </div>
 
                   <h2 className="text-[28px] font-semibold tracking-[-0.03em] text-white sm:text-[32px]">
-                    Cadastro enviado
+                    Solicitação enviada
                   </h2>
 
                   <p className="mx-auto mt-4 max-w-[360px] text-[15px] leading-7 text-white/66 sm:text-[16px]">
-                    Parabéns, os seus dados foram enviados com sucesso, em breve
-                    será aprovado!
+                    Seus dados foram enviados com sucesso. A equipe responsável
+                    fará a conferência e retornará com a orientação de acesso.
                   </p>
 
                   <div className="mt-7">
@@ -373,12 +373,12 @@ export default function RegisterPage() {
 
       if (message.includes("already") || message.includes("registered")) {
         setError(
-          "Este e-mail já possui login cadastrado. Acesse a tela de login ou aguarde a aprovação do seu cadastro."
+          "Este e-mail já possui uma solicitação ou login registrado. Acesse a tela de login ou aguarde o retorno da equipe responsável."
         );
         return;
       }
 
-      setError(signUpError.message || "Não foi possível criar o login do aluno.");
+      setError(signUpError.message || "Não foi possível registrar a solicitação agora.");
       return;
     }
 
@@ -400,12 +400,12 @@ export default function RegisterPage() {
 
       if (insertError.code === "23505") {
         setError(
-          "Seu login foi criado e já existe uma solicitação pendente com este e-mail e login MMN. Aguarde a aprovação."
+          "Já existe uma solicitação pendente com este e-mail e identificação informada. Aguarde o retorno da equipe responsável."
         );
         return;
       }
 
-      setError(insertError.message || "O login foi criado, mas não foi possível enviar a solicitação de aprovação.");
+      setError(insertError.message || "Não foi possível enviar a solicitação de orientação agora.");
       return;
     }
 
@@ -462,18 +462,17 @@ export default function RegisterPage() {
 
                 <div className="relative z-10">
                   <div className="inline-flex rounded-full border border-[#DBC094]/22 bg-[#DBC094]/8 px-4 py-2 text-xs uppercase tracking-[0.28em] text-[#DBC094]">
-                    Área do aluno
+                    Acesso orientado
                   </div>
 
                   <h1 className="mt-5 text-[32px] font-semibold leading-[1.02] tracking-[-0.03em] text-white sm:text-[40px]">
-                    Criar Cadastro
+                    Solicitação de acesso
                   </h1>
 
                   <p className="mt-4 max-w-[640px] text-[15px] leading-7 text-white/62 sm:text-[16px]">
-                    Crie o seu cadastro para ter acesso à Universidade de Líderes,
-                    preencha os mesmos dados e informações cadastrados na empresa
-                    de produtos da nossa parceria, após enviar as suas
-                    informações, iremos aprovar o seu cadastro.
+                    Envie seus dados para que a equipe responsável possa orientar
+                    seu acesso à Universidade de Líderes. O acesso é destinado a
+                    membros e alunos previamente validados pela organização.
                   </p>
 
                   <form onSubmit={onSubmit} className="mt-8 space-y-5">
@@ -541,7 +540,7 @@ export default function RegisterPage() {
                     <div className="grid gap-5 md:grid-cols-2">
                       <div>
                         <label className="mb-2 block text-sm font-medium text-white/82">
-                          Senha
+                          Senha para acesso
                         </label>
                         <input
                           type="password"
@@ -550,21 +549,21 @@ export default function RegisterPage() {
                           autoComplete="new-password"
                           required
                           minLength={6}
-                          placeholder="Crie sua senha"
+                          placeholder="Informe uma senha para acesso"
                           className="h-14 w-full rounded-[20px] border border-white/10 bg-white/[0.03] px-5 text-white outline-none transition placeholder:text-white/28 focus:border-[#DBC094]/45 focus:bg-white/[0.05] focus:shadow-[0_0_0_4px_rgba(219,192,148,0.08)]"
                         />
                       </div>
 
                       <div>
                         <label className="mb-2 block text-sm font-medium text-white/82">
-                          Login MMN
+                          Identificação interna
                         </label>
                         <input
                           type="text"
                           value={form.mmnLogin}
                           onChange={(e) => updateField("mmnLogin", e.target.value)}
                           required
-                          placeholder="Digite seu login MMN"
+                          placeholder="Digite sua identificação interna"
                           className="h-14 w-full rounded-[20px] border border-white/10 bg-white/[0.03] px-5 text-white outline-none transition placeholder:text-white/28 focus:border-[#DBC094]/45 focus:bg-white/[0.05] focus:shadow-[0_0_0_4px_rgba(219,192,148,0.08)]"
                         />
                       </div>
@@ -572,14 +571,14 @@ export default function RegisterPage() {
 
                     <div>
                       <label className="mb-2 block text-sm font-medium text-white/82">
-                        Nome do seu líder
+                        Responsável pelo seu acesso
                       </label>
                       <input
                         type="text"
                         value={form.leaderName}
                         onChange={(e) => updateField("leaderName", e.target.value)}
                         required
-                        placeholder="Digite o nome do seu líder"
+                        placeholder="Digite o nome do responsável"
                         className="h-14 w-full rounded-[20px] border border-white/10 bg-white/[0.03] px-5 text-white outline-none transition placeholder:text-white/28 focus:border-[#DBC094]/45 focus:bg-white/[0.05] focus:shadow-[0_0_0_4px_rgba(219,192,148,0.08)]"
                       />
                     </div>
@@ -694,7 +693,7 @@ export default function RegisterPage() {
 
                     <div className="pt-2">
                       <PremiumPillButton disabled={busy}>
-                        {busy ? "Enviando cadastro..." : "Cadastrar"}
+                        {busy ? "Enviando solicitação..." : "Enviar solicitação"}
                       </PremiumPillButton>
                     </div>
                   </form>
