@@ -8,10 +8,11 @@ import {
   useScroll,
   useSpring,
   useTransform,
-  type MotionValue,
 } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/browser";
+
+type NumberMotionValue = ReturnType<typeof useSpring>;
 
 const navItems = [
   { label: "Home", href: "#home" },
@@ -650,10 +651,10 @@ function HeroScene({
   opacity,
   blackoutOpacity,
 }: {
-  scale: MotionValue<number>;
-  y: MotionValue<number>;
-  opacity: MotionValue<number>;
-  blackoutOpacity: MotionValue<number>;
+  scale: NumberMotionValue;
+  y: NumberMotionValue;
+  opacity: NumberMotionValue;
+  blackoutOpacity: NumberMotionValue;
 }) {
   return (
     <motion.div
@@ -778,8 +779,8 @@ function LeadersPortalSection({
   contentOpacity,
   carouselItems,
 }: {
-  contentY: MotionValue<number>;
-  contentOpacity: MotionValue<number>;
+  contentY: NumberMotionValue;
+  contentOpacity: NumberMotionValue;
   carouselItems: CarouselCourseItem[];
 }) {
   return (
