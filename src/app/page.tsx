@@ -1076,12 +1076,11 @@ function HowToJoinSection() {
           </h2>
 
           <p className="mx-auto mt-5 max-w-[980px] text-[16px] leading-8 text-white/64 sm:text-[18px]">
-            Para ter acesso à Universidade de Líderes, o primeiro passo é fazer
-            o seu cadastro gratuito e desbloquear acesso aos melhores produtos
-            cosméticos e capilares com{" "}
-            <span className="text-[#DBC094]">50% de desconto</span>.
-            Depois disso, basta seguir o fluxo de ativação e informar seu login
-            para receber o link oficial de cadastro aqui na plataforma.
+            O acesso à Universidade de Líderes é exclusivo para membros e alunos
+            previamente aprovados pela organização. O app não vende cursos,
+            trilhas, aulas, assinaturas ou conteúdos digitais. Usuários aprovados
+            recebem suas credenciais pela equipe responsável e acessam apenas os
+            conteúdos educacionais liberados para sua conta.
           </p>
         </motion.div>
 
@@ -1105,12 +1104,13 @@ function HowToJoinSection() {
                 </div>
 
                 <h3 className="text-[26px] font-semibold leading-[1.02] tracking-[-0.045em] text-white sm:text-[30px]">
-                  Realizar cadastro
+                  Acesso aprovado
                 </h3>
 
                 <p className="mt-4 text-[15px] leading-7 text-white/66 sm:text-[16px]">
-                  Comece com o seu cadastro gratuito para entrar no processo de
-                  ativação e acessar a estrutura inicial.
+                  A Universidade de Líderes é destinada a usuários já validados
+                  pela organização para acesso aos conteúdos educacionais
+                  liberados para sua conta.
                 </p>
 
                 <div className="mt-auto pt-8">
@@ -1124,7 +1124,7 @@ function HowToJoinSection() {
                       href="/cadastro"
                       className="inline-flex items-center gap-3 rounded-full bg-[#DBC094] pl-5 pr-1 py-1 text-[15px] font-medium text-black transition duration-300 hover:scale-[1.02]"
                     >
-                      Fazer cadastro
+                      Solicitar orientação
                       <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-black text-lg text-white">
                         →
                       </span>
@@ -1154,22 +1154,21 @@ function HowToJoinSection() {
                 </div>
 
                 <h3 className="text-[26px] font-semibold leading-[1.02] tracking-[-0.045em] text-white sm:text-[30px]">
-                  Ativar o cadastro
+                  Credenciais de acesso
                 </h3>
 
                 <p className="mt-4 text-[15px] leading-7 text-white/66 sm:text-[16px]">
-                  Faça o seu pedido de ativação com valor mínimo de{" "}
-                  <span className="text-[#DBC094]">R$150,00</span> em produtos,
-                  aproveitando os{" "}
-                  <span className="text-[#DBC094]">50% de desconto</span>.
+                  Após a validação interna, o usuário recebe as orientações
+                  oficiais para acessar a plataforma com as credenciais
+                  disponibilizadas pela equipe responsável.
                 </p>
 
                 <div className="mt-8 rounded-[22px] border border-white/8 bg-white/[0.03] p-5">
                   <div className="mb-2 text-sm text-white/45">
-                    Ativação mínima primeiro pedido
+                    Acesso educacional
                   </div>
                   <div className="text-[22px] font-semibold tracking-[-0.04em] text-white">
-                    R$150,00 em produtos
+                    Conteúdos liberados pela organização
                   </div>
                 </div>
               </div>
@@ -1195,13 +1194,13 @@ function HowToJoinSection() {
                 </div>
 
                 <h3 className="text-[26px] font-semibold leading-[1.02] tracking-[-0.045em] text-white sm:text-[30px]">
-                  Informar login no WhatsApp
+                  Suporte oficial
                 </h3>
 
                 <p className="mt-4 text-[15px] leading-7 text-white/66 sm:text-[16px]">
-                  Depois da confirmação, envie seu login pelo WhatsApp. Assim
-                  que validado, você receberá o link para se cadastrar aqui na
-                  nossa plataforma.
+                  Em caso de dúvida, fale com a equipe responsável para confirmar
+                  seus dados e receber orientação sobre o acesso educacional à
+                  plataforma.
                 </p>
 
                 <div className="mt-auto pt-8">
@@ -1220,7 +1219,7 @@ function HowToJoinSection() {
                       <span className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#DBC094]/40 bg-black/50 text-sm">
                         ✆
                       </span>
-                      Enviar login no WhatsApp
+                      Falar com suporte
                     </motion.a>
                   </GlowFollowBorderCard>
                 </div>
@@ -1330,7 +1329,7 @@ function ContactSection() {
 
                   <div>
                     <label className="mb-2 block text-sm text-white/58">
-                      Já desenvolve algum projeto?
+                      Você já possui vínculo com a organização?
                     </label>
                     <div className="grid gap-3 sm:grid-cols-2">
                       <button
@@ -1387,32 +1386,32 @@ function ContactSection() {
 
                           <div>
                             <label className="mb-2 block text-sm text-white/58">
-                              Quem é o seu Líder
+                              Responsável pelo seu acesso
                             </label>
                             <input
                               type="text"
                               className="h-14 w-full rounded-[18px] border border-white/10 bg-white/[0.03] px-5 text-white outline-none transition placeholder:text-white/28 focus:border-[#DBC094]/45 focus:bg-white/[0.045]"
-                              placeholder="Digite o nome do seu líder"
+                              placeholder="Digite o nome do responsável"
                             />
                           </div>
                         </div>
 
                         <div>
                           <label className="mb-2 block text-sm text-white/58">
-                            Você está ativo ou não?
+                            Sua situação já foi validada?
                           </label>
                           <select className="h-14 w-full rounded-[18px] border border-white/10 bg-white/[0.03] px-5 text-white outline-none transition focus:border-[#DBC094]/45 focus:bg-white/[0.045]">
                             <option value="" className="bg-black text-white">
                               Selecionar
                             </option>
                             <option value="ativo" className="bg-black text-white">
-                              Ativo
+                              Validado
                             </option>
                             <option
                               value="nao-ativo"
                               className="bg-black text-white"
                             >
-                              Não ativo
+                              Não validado
                             </option>
                           </select>
                         </div>
@@ -1464,8 +1463,8 @@ function ContactSection() {
                 </h3>
 
                 <p className="mt-4 text-[15px] leading-7 text-white/66 sm:text-[16px]">
-                  Envie seus dados e receba a orientação correta para ativação,
-                  acesso e cadastro na plataforma.
+                  Envie seus dados e receba a orientação correta sobre o acesso
+                  educacional à plataforma.
                 </p>
 
                 <div className="mt-8 space-y-5">
