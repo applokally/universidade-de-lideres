@@ -31,6 +31,17 @@ type StudentWithPermission = {
   access_level: string | null;
 };
 
+type AccessTier = {
+  id: string;
+  name: string;
+  rank: number;
+  description: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  assigned_students: number;
+};
+
 type AccessLevelKey =
   | "executivo"
   | "lider"
@@ -350,6 +361,7 @@ export default function AdminNiveisPage() {
   const supabase = useMemo(() => supabaseBrowser(), []);
 
   const [students, setStudents] = useState<StudentWithPermission[]>([]);
+  const [accessTiers, setAccessTiers] = useState<AccessTier[]>([]);
   const [draftLevels, setDraftLevels] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -367,6 +379,31 @@ export default function AdminNiveisPage() {
   const [levelPickerStudentId, setLevelPickerStudentId] = useState<string | null>(
     null,
   );
+
+  async function loadAccessTiers() {
+    try {
+      const response = await fetch("/api/admin/access-tiers", {
+        method: "GET",
+        cache: "no-store",
+      });
+
+      const payload = (await response.json()) as {
+        tiers?: AccessTier[];
+        message?: string;
+      };
+
+      if (!response.ok) {
+        throw new Error(
+          payload.message || "Não foi possível carregar os níveis de acesso.",
+        );
+      }
+
+      setAccessTiers(payload.tiers ?? []);
+    } catch (err) {
+      console.error("Erro ao carregar níveis de acesso:", err);
+      setAccessTiers([]);
+    }
+  }
 
   async function loadStudents(isRefresh = false) {
     if (isRefresh) setRefreshing(true);
@@ -451,6 +488,7 @@ export default function AdminNiveisPage() {
   }
 
   useEffect(() => {
+    loadAccessTiers();
     loadStudents();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -530,6 +568,61 @@ export default function AdminNiveisPage() {
             />
             {refreshing ? "Atualizando" : "Atualizar lista"}
           </button>
+        </section>
+
+        <section className="rounded-[18px] border border-[#e5e5e5] bg-white">
+          <div className="border-b border-[#e5e5e5] px-5 py-4">
+            <h2 className="text-[20px] font-semibold tracking-[-0.03em] text-[#141414]">
+              Níveis cadastrados
+            </h2>
+
+            <p className="mt-1 text-[13px] leading-5 text-[#666b76]">
+              Níveis reais utilizados pelo sistema para controlar o acesso aos conteúdos.
+            </p>
+          </div>
+
+          {accessTiers.length === 0 ? (
+            <div className="px-5 py-8 text-[14px] font-medium text-[#8a8f9d]">
+              Nenhum nível de acesso cadastrado.
+            </div>
+          ) : (
+            <div className="grid divide-y divide-[#ededed] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-4">
+              {accessTiers.map((tier) => (
+                <div key={tier.id} className="p-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-[17px] font-semibold text-[#18181b]">
+                        {tier.name}
+                      </p>
+
+                      <p className="mt-1 text-[12px] font-semibold uppercase tracking-[0.14em] text-[#8a6836]">
+                        Rank {tier.rank}
+                      </p>
+                    </div>
+
+                    <span
+                      className={cn(
+                        "rounded-full px-2.5 py-1 text-[11px] font-semibold",
+                        tier.is_active
+                          ? "bg-green-50 text-green-700"
+                          : "bg-[#f3f4f6] text-[#666b76]",
+                      )}
+                    >
+                      {tier.is_active ? "Ativo" : "Inativo"}
+                    </span>
+                  </div>
+
+                  <p className="mt-4 min-h-12 text-[13px] leading-5 text-[#666b76]">
+                    {tier.description?.trim() || "Sem descrição cadastrada."}
+                  </p>
+
+                  <p className="mt-4 text-[12px] font-medium text-[#8a8f9d]">
+                    {tier.assigned_students} aluno(s) vinculado(s)
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
 
         <section className="overflow-hidden rounded-[18px] border border-[#e5e5e5] bg-white">
