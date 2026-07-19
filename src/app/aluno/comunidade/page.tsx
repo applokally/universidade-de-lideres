@@ -788,14 +788,33 @@ export default function AlunoComunidadePage() {
         ]),
       );
 
-      const profilesResponse = allAuthorIds.length > 0
-        ? await supabase
-            .from("profiles")
-            .select("id,full_name,avatar_url,role")
-            .in("id", allAuthorIds)
-        : { data: [], error: null };
+      const [profilesResponse, adminAuthorsResponse] = await Promise.all([
+        allAuthorIds.length > 0
+          ? supabase
+              .from("profiles")
+              .select("id,full_name,avatar_url,role")
+              .in("id", allAuthorIds)
+          : Promise.resolve({ data: [], error: null }),
+        fetch("/api/student/community-authors", {
+          method: "GET",
+          cache: "no-store",
+        }),
+      ]);
 
-      const profiles = ((profilesResponse.data ?? []) as ProfileUser[]).reduce(
+      let adminAuthors: ProfileUser[] = [];
+
+      if (adminAuthorsResponse.ok) {
+        const adminAuthorsPayload = (await adminAuthorsResponse.json()) as {
+          authors?: ProfileUser[];
+        };
+
+        adminAuthors = adminAuthorsPayload.authors ?? [];
+      }
+
+      const profiles = [
+        ...((profilesResponse.data ?? []) as ProfileUser[]),
+        ...adminAuthors,
+      ].reduce(
         (acc, profile) => {
           acc.set(profile.id, profile);
           return acc;

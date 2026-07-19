@@ -415,32 +415,31 @@ export function StudentHeader() {
           created_by: string | null;
         }>;
 
-        const authorIds = Array.from(
-          new Set(
-            notificationRows
-              .map((item) => item.created_by)
-              .filter(Boolean) as string[],
-          ),
+        const authorsResponse = await fetch(
+          "/api/student/community-authors",
+          {
+            method: "GET",
+            cache: "no-store",
+          },
         );
 
-        const authorsResponse = authorIds.length
-          ? await supabase
-              .from("profiles")
-              .select("id,full_name")
-              .in("id", authorIds)
-          : { data: [], error: null };
+        let authorNames = new Map<string, string>();
 
-        const authorNames = new Map(
-          (
-            (authorsResponse.data ?? []) as Array<{
+        if (authorsResponse.ok) {
+          const authorsPayload = (await authorsResponse.json()) as {
+            authors?: Array<{
               id: string;
               full_name: string | null;
-            }>
-          ).map((profile) => [
-            profile.id,
-            profile.full_name?.trim() || "Universidade de Líderes",
-          ]),
-        );
+            }>;
+          };
+
+          authorNames = new Map(
+            (authorsPayload.authors ?? []).map((profile) => [
+              profile.id,
+              profile.full_name?.trim() || "Universidade de Líderes",
+            ]),
+          );
+        }
 
         let readNotificationIds = new Set<string>();
 
