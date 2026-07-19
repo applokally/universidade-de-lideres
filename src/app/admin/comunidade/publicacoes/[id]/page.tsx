@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 import { CommunityAdminNav } from "../../_components/CommunityAdminNav";
+import { AdminAuthorSelect } from "../../_components/AdminAuthorSelect";
 import {
   CommunityChannel,
   CommunityComment,
@@ -48,6 +49,8 @@ export default function AdminCommunityPostDetailPage() {
   const [isPinned, setIsPinned] = useState(false);
   const [isFeatured, setIsFeatured] = useState(false);
   const [adminReply, setAdminReply] = useState("");
+  const [replyAuthorId, setReplyAuthorId] = useState("");
+  const [replying, setReplying] = useState(false);
   const [message, setMessage] = useState("");
 
   const loadPost = useCallback(async () => {
@@ -187,29 +190,50 @@ export default function AdminCommunityPostDetailPage() {
 
     if (!cleanReply || !post) return;
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      setMessage("Sessão expirada. Faça login novamente.");
+    if (!replyAuthorId) {
+      setMessage("Selecione o administrador que aparecerá como autor.");
       return;
     }
 
-    const { error } = await supabase.from("community_comments").insert({
-      post_id: post.id,
-      author_id: user.id,
-      body: cleanReply,
-      status: "published",
-    });
+    setReplying(true);
+    setMessage("");
 
-    if (error) {
-      setMessage(error.message);
-      return;
+    try {
+      const response = await fetch("/api/admin/community-content", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "comment",
+          author_id: replyAuthorId,
+          post_id: post.id,
+          body: cleanReply,
+        }),
+      });
+
+      const payload = (await response.json()) as {
+        message?: string;
+      };
+
+      if (!response.ok) {
+        throw new Error(
+          payload.message || "Não foi possível publicar o comentário.",
+        );
+      }
+
+      setAdminReply("");
+      await loadPost();
+      setMessage("Comentário publicado.");
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível publicar o comentário.",
+      );
+    } finally {
+      setReplying(false);
     }
-
-    setAdminReply("");
-    await loadPost();
   }
 
   return (
@@ -392,21 +416,38 @@ export default function AdminCommunityPostDetailPage() {
               </div>
 
               <div className="mt-4 space-y-3">
+                <AdminAuthorSelect
+                  value={replyAuthorId}
+                  onChange={setReplyAuthorId}
+                  disabled={replying}
+                  label="Responder como"
+                />
+
                 <textarea
                   value={adminReply}
                   onChange={(event) => setAdminReply(event.target.value)}
                   rows={3}
-                  placeholder="Responder como Universidade de Líderes..."
-                  className="w-full resize-none rounded-[14px] border border-[#dfe3ec] bg-white px-3 py-3 text-[14px] leading-6 text-[#1f2230] outline-none focus:border-[#DBC094]"
+                  disabled={replying}
+                  placeholder="Escreva o comentário administrativo..."
+                  className="w-full resize-none rounded-[14px] border border-[#dfe3ec] bg-white px-3 py-3 text-[14px] leading-6 text-[#1f2230] outline-none focus:border-[#DBC094] disabled:cursor-not-allowed disabled:bg-[#f5f6f8]"
                 />
 
                 <button
                   type="button"
                   onClick={sendAdminReply}
-                  className="inline-flex h-10 items-center gap-2 rounded-[12px] bg-[#DBC094] px-4 text-[13px] font-semibold text-black"
+                  disabled={
+                    replying ||
+                    !replyAuthorId ||
+                    !adminReply.trim()
+                  }
+                  className="inline-flex h-10 items-center gap-2 rounded-[12px] bg-[#DBC094] px-4 text-[13px] font-semibold text-black disabled:cursor-not-allowed disabled:opacity-55"
                 >
-                  <Send className="h-4 w-4" />
-                  Responder
+                  {replying ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                  {replying ? "Publicando..." : "Responder"}
                 </button>
 
                 <div className="mt-4 divide-y divide-[#edf0f5]">

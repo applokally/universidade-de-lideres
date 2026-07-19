@@ -7,7 +7,6 @@ import {
   Bell,
   Bookmark,
   BookOpen,
-  CalendarDays,
   ChevronRight,
   Clock3,
   Compass,
@@ -401,7 +400,7 @@ export function StudentHeader() {
 
         const notificationsResponse = await supabase
           .from("community_notifications")
-          .select("id,title,body,status,sent_at,created_at")
+          .select("id,title,body,created_by,status,sent_at,created_at")
           .eq("status", "sent")
           .order("sent_at", { ascending: false, nullsFirst: false })
           .order("created_at", { ascending: false })
@@ -413,7 +412,35 @@ export function StudentHeader() {
           id: string;
           title: string | null;
           body: string | null;
+          created_by: string | null;
         }>;
+
+        const authorIds = Array.from(
+          new Set(
+            notificationRows
+              .map((item) => item.created_by)
+              .filter(Boolean) as string[],
+          ),
+        );
+
+        const authorsResponse = authorIds.length
+          ? await supabase
+              .from("profiles")
+              .select("id,full_name")
+              .in("id", authorIds)
+          : { data: [], error: null };
+
+        const authorNames = new Map(
+          (
+            (authorsResponse.data ?? []) as Array<{
+              id: string;
+              full_name: string | null;
+            }>
+          ).map((profile) => [
+            profile.id,
+            profile.full_name?.trim() || "Universidade de Líderes",
+          ]),
+        );
 
         let readNotificationIds = new Set<string>();
 
@@ -444,15 +471,25 @@ export function StudentHeader() {
 
         const notificationItems: HeaderNotification[] = notificationRows
           .filter((item) => !readNotificationIds.has(item.id))
-          .map((item) => ({
-            id: `community-notification-${item.id}`,
-            notificationId: item.id,
-            title: item.title || "Comunidade UNL",
-            description: item.body || "Nova atualização da comunidade.",
-            href: `/aluno/comunidade?notificacao=${item.id}`,
-            unread: true,
-            type: "community",
-          }));
+          .map((item) => {
+            const authorName = item.created_by
+              ? authorNames.get(item.created_by)
+              : null;
+
+            return {
+              id: `community-notification-${item.id}`,
+              notificationId: item.id,
+              title: item.title || "Comunidade UNL",
+              description: authorName
+                ? `${authorName}: ${
+                    item.body || "Nova atualização da comunidade."
+                  }`
+                : item.body || "Nova atualização da comunidade.",
+              href: `/aluno/comunidade?notificacao=${item.id}`,
+              unread: true,
+              type: "community",
+            };
+          });
 
         setCommunityHeaderNotifications(notificationItems.slice(0, 5));
       } catch {

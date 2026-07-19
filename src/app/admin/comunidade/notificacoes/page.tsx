@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2, Send } from "lucide-react";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 import { CommunityAdminNav } from "../_components/CommunityAdminNav";
+import { AdminAuthorSelect } from "../_components/AdminAuthorSelect";
 import { CommunityChannel, formatDate } from "../_components/communityAdminHelpers";
 
 type NotificationRow = {
@@ -24,10 +25,11 @@ export default function AdminCommunityNotificationsPage() {
   const [body, setBody] = useState("");
   const [targetType, setTargetType] = useState("all");
   const [channelId, setChannelId] = useState("");
+  const [authorId, setAuthorId] = useState("");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
-  async function loadData() {
+  const loadData = useCallback(async () => {
     const [channelsResponse, notificationsResponse] = await Promise.all([
       supabase
         .from("community_channels")
@@ -46,11 +48,11 @@ export default function AdminCommunityNotificationsPage() {
     setChannels(loadedChannels);
     setChannelId((current) => current || loadedChannels[0]?.id || "");
     setNotifications((notificationsResponse.data ?? []) as NotificationRow[]);
-  }
+  }, [supabase]);
 
   useEffect(() => {
     void loadData();
-  }, []);
+  }, [loadData]);
 
   async function sendNotification(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -60,25 +62,39 @@ export default function AdminCommunityNotificationsPage() {
       return;
     }
 
+    if (!authorId) {
+      setMessage("Selecione o administrador que enviará a notificação.");
+      return;
+    }
+
     setSaving(true);
     setMessage("");
 
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      const { error } = await supabase.from("community_notifications").insert({
-        title: title.trim(),
-        body: body.trim(),
-        target_type: targetType,
-        channel_id: targetType === "channel" ? channelId : null,
-        status: "sent",
-        sent_at: new Date().toISOString(),
-        created_by: user?.id ?? null,
+      const response = await fetch("/api/admin/community-content", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "notification",
+          author_id: authorId,
+          title: title.trim(),
+          body: body.trim(),
+          target_type: targetType,
+          channel_id: targetType === "channel" ? channelId : null,
+        }),
       });
 
-      if (error) throw error;
+      const payload = (await response.json()) as {
+        message?: string;
+      };
+
+      if (!response.ok) {
+        throw new Error(
+          payload.message || "Não foi possível enviar a notificação.",
+        );
+      }
 
       setTitle("");
       setBody("");
@@ -123,6 +139,13 @@ export default function AdminCommunityNotificationsPage() {
           className="rounded-[22px] border border-[#e7e9f0] bg-white p-5"
         >
           <div className="grid gap-4">
+            <AdminAuthorSelect
+              value={authorId}
+              onChange={setAuthorId}
+              disabled={saving}
+              label="Enviar como"
+            />
+
             <label>
               <span className="text-[13px] font-semibold text-[#3f4658]">
                 Título
@@ -181,7 +204,7 @@ export default function AdminCommunityNotificationsPage() {
 
             <button
               type="submit"
-              disabled={saving}
+              disabled={saving || !authorId}
               className="inline-flex h-11 w-fit items-center gap-2 rounded-[12px] bg-[#DBC094] px-5 text-[14px] font-semibold text-black transition hover:brightness-105 disabled:opacity-55"
             >
               {saving ? (

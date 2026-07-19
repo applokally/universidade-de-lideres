@@ -88,6 +88,7 @@ type CommunityNotification = {
   target_type: string | null;
   channel_id: string | null;
   status: string | null;
+  created_by: string | null;
   sent_at: string | null;
   created_at: string | null;
 };
@@ -717,7 +718,7 @@ export default function AlunoComunidadePage() {
             .limit(100),
           supabase
             .from("community_notifications")
-            .select("id,title,body,target_type,channel_id,status,sent_at,created_at")
+            .select("id,title,body,target_type,channel_id,status,created_by,sent_at,created_at")
             .eq("status", "sent")
             .order("sent_at", { ascending: false, nullsFirst: false })
             .order("created_at", { ascending: false })
@@ -744,7 +745,12 @@ export default function AlunoComunidadePage() {
       setComposerChannelId((current) => current || firstAvailableChannel?.id || "");
 
       const postIds = loadedPosts.map((post) => post.id);
-      const authorIds = Array.from(new Set(loadedPosts.map((post) => post.author_id)));
+      const authorIds = Array.from(
+        new Set(loadedPosts.map((post) => post.author_id)),
+      );
+      const notificationAuthorIds = loadedNotifications
+        .map((notification) => notification.created_by)
+        .filter(Boolean) as string[];
 
       const [commentsResponse, reactionsResponse, savedResponse] =
         await Promise.all([
@@ -774,7 +780,13 @@ export default function AlunoComunidadePage() {
 
       const comments = (commentsResponse.data ?? []) as CommunityComment[];
       const commentAuthorIds = comments.map((comment) => comment.author_id);
-      const allAuthorIds = Array.from(new Set([...authorIds, ...commentAuthorIds]));
+      const allAuthorIds = Array.from(
+        new Set([
+          ...authorIds,
+          ...commentAuthorIds,
+          ...notificationAuthorIds,
+        ]),
+      );
 
       const profilesResponse = allAuthorIds.length > 0
         ? await supabase
@@ -835,24 +847,30 @@ export default function AlunoComunidadePage() {
       const mappedPosts = loadedPosts.map((post) => {
         const author = profiles.get(post.author_id);
         const channel = channelById.get(post.channel_id);
-        const authorName = author?.full_name || "Aluno";
         const isOfficial =
           Boolean(author?.role && author.role !== "member") ||
           getTabFromSlug(channel?.slug) === "avisos";
+        const authorName =
+          author?.full_name ||
+          (isOfficial ? "Universidade de Líderes" : "Aluno");
         const postComments = commentsByPost.get(post.id) ?? [];
 
         return {
           id: post.id,
           tab: getTabFromSlug(channel?.slug),
           authorId: post.author_id,
-          author: isOfficial ? "Universidade de Líderes" : authorName,
-          username: isOfficial
-            ? "@universidadedelideres"
-            : slugHandle(authorName),
-          initials: isOfficial ? "UL" : getInitials(authorName),
-          avatarUrl: isOfficial
-            ? "/logo.png"
-            : resolveAvatarUrl(author?.avatar_url),
+          author: authorName,
+          username: author
+            ? slugHandle(authorName)
+            : isOfficial
+              ? "@universidadedelideres"
+              : slugHandle(authorName),
+          initials: getInitials(authorName),
+          avatarUrl: author?.avatar_url
+            ? resolveAvatarUrl(author.avatar_url)
+            : isOfficial
+              ? "/logo.png"
+              : resolveAvatarUrl(null),
           time: getRelativeTime(post.published_at ?? post.created_at),
           channelId: post.channel_id,
           channel: channel?.name ?? "Comunidade",
@@ -873,17 +891,26 @@ export default function AlunoComunidadePage() {
         const notificationChannel = notification.channel_id
           ? channelById.get(notification.channel_id)
           : null;
+        const author = notification.created_by
+          ? profiles.get(notification.created_by)
+          : null;
+        const authorName =
+          author?.full_name || "Universidade de Líderes";
         const cleanTitle = notification.title?.trim();
         const cleanBody = notification.body?.trim();
 
         return {
           id: `notification-${notification.id}`,
           tab: "avisos",
-          authorId: "unl",
-          author: "Universidade de Líderes",
-          username: "@universidadedelideres",
-          initials: "UL",
-          avatarUrl: "/logo.png",
+          authorId: notification.created_by ?? "unl",
+          author: authorName,
+          username: author
+            ? slugHandle(authorName)
+            : "@universidadedelideres",
+          initials: getInitials(authorName),
+          avatarUrl: author?.avatar_url
+            ? resolveAvatarUrl(author.avatar_url)
+            : "/logo.png",
           time: getRelativeTime(notification.sent_at ?? notification.created_at),
           channelId: notification.channel_id ?? "",
           channel: notificationChannel?.name ?? "Avisos oficiais",

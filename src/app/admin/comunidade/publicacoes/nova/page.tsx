@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Loader2, Send } from "lucide-react";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 import { CommunityAdminNav } from "../../_components/CommunityAdminNav";
+import { AdminAuthorSelect } from "../../_components/AdminAuthorSelect";
 import { CommunityChannel } from "../../_components/communityAdminHelpers";
 
 export default function AdminCommunityNewPostPage() {
@@ -19,6 +20,7 @@ export default function AdminCommunityNewPostPage() {
   const [isPinned, setIsPinned] = useState(false);
   const [isFeatured, setIsFeatured] = useState(false);
   const [sendNotification, setSendNotification] = useState(false);
+  const [authorId, setAuthorId] = useState("");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -49,24 +51,24 @@ export default function AdminCommunityNewPostPage() {
       return;
     }
 
+    if (!authorId) {
+      setMessage("Selecione o administrador que aparecerá como autor.");
+      return;
+    }
+
     setSaving(true);
     setMessage("");
 
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) {
-        setMessage("Sessão expirada. Faça login novamente.");
-        return;
-      }
-
-      const { data: postData, error } = await supabase
-        .from("community_posts")
-        .insert({
+      const response = await fetch("/api/admin/community-content", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "post",
+          author_id: authorId,
           channel_id: channelId,
-          author_id: user.id,
           title: title.trim() || null,
           body: cleanBody,
           image_path: imagePath.trim() || null,
@@ -74,26 +76,22 @@ export default function AdminCommunityNewPostPage() {
           allow_comments: allowComments,
           is_pinned: isPinned,
           is_featured: isFeatured,
-          published_at: status === "published" ? new Date().toISOString() : null,
-        })
-        .select("id")
-        .single();
+          send_notification: sendNotification,
+        }),
+      });
 
-      if (error) throw error;
+      const payload = (await response.json()) as {
+        post_id?: string;
+        message?: string;
+      };
 
-      if (sendNotification) {
-        await supabase.from("community_notifications").insert({
-          title: title.trim() || "Nova publicação na Comunidade UNL",
-          body: cleanBody.length > 160 ? `${cleanBody.slice(0, 160)}...` : cleanBody,
-          target_type: "channel",
-          channel_id: channelId,
-          status: "sent",
-          sent_at: new Date().toISOString(),
-          created_by: user.id,
-        });
+      if (!response.ok || !payload.post_id) {
+        throw new Error(
+          payload.message || "Não foi possível criar a publicação.",
+        );
       }
 
-      window.location.href = `/admin/comunidade/publicacoes/${postData?.id}`;
+      window.location.href = `/admin/comunidade/publicacoes/${payload.post_id}`;
     } catch (error) {
       setMessage(
         error instanceof Error
@@ -196,6 +194,13 @@ export default function AdminCommunityNewPostPage() {
         </section>
 
         <aside className="space-y-4 rounded-[18px] border border-[#edf0f5] bg-[#fafbfe] p-4">
+          <AdminAuthorSelect
+            value={authorId}
+            onChange={setAuthorId}
+            disabled={saving}
+            label="Publicar como"
+          />
+
           <label className="block">
             <span className="text-[13px] font-semibold text-[#3f4658]">
               Status
@@ -251,7 +256,7 @@ export default function AdminCommunityNewPostPage() {
 
           <button
             type="submit"
-            disabled={saving}
+            disabled={saving || !authorId}
             className="mt-2 inline-flex h-11 w-full items-center justify-center gap-2 rounded-[12px] bg-[#DBC094] px-5 text-[14px] font-semibold text-black transition hover:brightness-105 disabled:opacity-55"
           >
             {saving ? (
