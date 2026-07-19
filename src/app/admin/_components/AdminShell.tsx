@@ -24,6 +24,24 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
+type AdminShellProfile = {
+  id: string;
+  role: string | null;
+  full_name: string | null;
+  phone: string | null;
+  avatar_url: string | null;
+};
+
+type AdminProfileResponse = {
+  profile?: AdminShellProfile | null;
+  user?: {
+    user_metadata?: {
+      full_name?: string | null;
+      avatar_url?: string | null;
+    };
+  } | null;
+};
+
 type NavChild = {
   label: string;
   href: string;
@@ -146,6 +164,18 @@ function isChildActive(pathname: string, href: string) {
   if (href === "/admin") return pathname === "/admin";
 
   return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+function getProfileInitials(name: string) {
+  const parts = name
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+
+  if (parts.length === 0) return "AD";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+
+  return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
 }
 
 function SidebarNavigation({
@@ -281,10 +311,81 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [adminProfile, setAdminProfile] = useState<AdminShellProfile | null>(
+    null,
+  );
 
   useEffect(() => {
-    setProfileOpen(false);
-  }, [pathname]);
+    let active = true;
+
+    async function loadAdminProfile() {
+      try {
+        const response = await fetch("/api/admin/profile", {
+          method: "GET",
+          cache: "no-store",
+        });
+
+        if (!response.ok) return;
+
+        const payload = (await response.json()) as AdminProfileResponse;
+
+        if (!active) return;
+
+        if (payload.profile) {
+          setAdminProfile(payload.profile);
+          return;
+        }
+
+        const metadata = payload.user?.user_metadata;
+
+        setAdminProfile({
+          id: "",
+          role: "admin",
+          full_name: metadata?.full_name ?? "Administrador",
+          phone: null,
+          avatar_url: metadata?.avatar_url ?? null,
+        });
+      } catch {
+        if (active) {
+          setAdminProfile(null);
+        }
+      }
+    }
+
+    function handleAdminProfileUpdated(event: Event) {
+      const customEvent = event as CustomEvent<{
+        profile?: AdminShellProfile | null;
+      }>;
+
+      if (customEvent.detail?.profile) {
+        setAdminProfile(customEvent.detail.profile);
+        return;
+      }
+
+      void loadAdminProfile();
+    }
+
+    void loadAdminProfile();
+
+    window.addEventListener(
+      "admin-profile-updated",
+      handleAdminProfileUpdated,
+    );
+
+    return () => {
+      active = false;
+      window.removeEventListener(
+        "admin-profile-updated",
+        handleAdminProfileUpdated,
+      );
+    };
+  }, []);
+
+  const adminName =
+    adminProfile?.full_name?.trim() || "Administrador";
+  const adminAvatarUrl =
+    adminProfile?.avatar_url?.trim() || "";
+  const adminInitials = getProfileInitials(adminName);
 
   return (
     <div className="min-h-screen bg-[#f5f6fb] text-[#1f2230]">
@@ -386,7 +487,17 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                     className="inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-[#f3f4f8] text-[13px] font-semibold text-[#1f2230]"
                     aria-label="Abrir perfil"
                   >
-                    AD
+                    {adminAvatarUrl ? (
+                      <span
+                        className="h-full w-full bg-cover bg-center"
+                        style={{
+                          backgroundImage: `url("${adminAvatarUrl}")`,
+                        }}
+                        aria-hidden="true"
+                      />
+                    ) : (
+                      adminInitials
+                    )}
                   </button>
 
                   <AnimatePresence>
@@ -399,13 +510,23 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                         className="absolute right-0 top-[calc(100%+12px)] w-[310px] overflow-hidden rounded-[20px] border border-[#e6eaf1] bg-white shadow-[0_18px_42px_rgba(31,34,48,0.12)]"
                       >
                         <div className="m-4 flex items-center gap-4 rounded-[16px] bg-[#f7f0e2] p-4">
-                          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#DBC094] text-[15px] font-semibold text-black">
-                            AD
+                          <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#DBC094] text-[15px] font-semibold text-black">
+                            {adminAvatarUrl ? (
+                              <span
+                                className="h-full w-full bg-cover bg-center"
+                                style={{
+                                  backgroundImage: `url("${adminAvatarUrl}")`,
+                                }}
+                                aria-hidden="true"
+                              />
+                            ) : (
+                              adminInitials
+                            )}
                           </div>
 
-                          <div>
-                            <div className="text-[18px] font-semibold text-[#1f2230]">
-                              Administrador
+                          <div className="min-w-0">
+                            <div className="truncate text-[18px] font-semibold text-[#1f2230]">
+                              {adminName}
                             </div>
                             <div className="mt-1 text-sm text-[#666b76]">
                               Universidade de Líderes
@@ -432,6 +553,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                               <Link
                                 key={item.label}
                                 href={item.href}
+                                onClick={() => setProfileOpen(false)}
                                 className="flex w-full items-center gap-3 rounded-[14px] px-4 py-3 text-left text-[15px] text-[#4f5568] transition hover:bg-[#f6f7fb] hover:text-[#1f2230]"
                               >
                                 <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#f3f4f8] text-[#6d7386]">
@@ -444,6 +566,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
                           <Link
                             href="/login"
+                            onClick={() => setProfileOpen(false)}
                             className="flex w-full items-center gap-3 rounded-[14px] px-4 py-3 text-left text-[15px] text-[#4f5568] transition hover:bg-[#f6f7fb] hover:text-[#1f2230]"
                           >
                             <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#f3f4f8] text-[#6d7386]">
