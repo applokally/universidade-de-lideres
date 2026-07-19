@@ -425,11 +425,6 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                               href: "/admin/comunidade",
                               icon: MessageCircle,
                             },
-                            {
-                              label: "Configurações",
-                              href: "/admin/configuracoes",
-                              icon: ShieldCheck,
-                            },
                           ].map((item) => {
                             const Icon = item.icon;
 
