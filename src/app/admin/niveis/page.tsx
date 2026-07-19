@@ -5,14 +5,17 @@ import {
   Check,
   ChevronRight,
   Eye,
+  Loader2,
+  Pencil,
+  Plus,
   RefreshCw,
   Save,
   Search,
+  Trash2,
   UserRound,
   X,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import { supabaseBrowser } from "@/lib/supabase/browser";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 
 type StudentWithPermission = {
   id: string;
@@ -29,6 +32,11 @@ type StudentWithPermission = {
   status: string | null;
   created_at: string | null;
   access_level: string | null;
+  auth_user_id: string | null;
+  tier_id: string | null;
+  tier_name: string | null;
+  tier_rank: number | null;
+  tier_is_active: boolean | null;
 };
 
 type AccessTier = {
@@ -40,79 +48,30 @@ type AccessTier = {
   created_at: string;
   updated_at: string;
   assigned_students: number;
+  assigned_profiles?: number;
 };
 
-type AccessLevelKey =
-  | "executivo"
-  | "lider"
-  | "diamante"
-  | "diamond_pro"
-  | "diamond_elite"
-  | "imperial_diamond";
-
-type AccessLevel = {
-  key: AccessLevelKey;
-  label: string;
-  badge: string;
+type TierFormState = {
+  name: string;
+  rank: string;
   description: string;
+  is_active: boolean;
 };
 
-const ACCESS_LEVELS: AccessLevel[] = [
-  {
-    key: "executivo",
-    label: "Executivo",
-    badge: "Base",
-    description: "Libera a base inicial de conteúdos e materiais introdutórios.",
-  },
-  {
-    key: "lider",
-    label: "Líder",
-    badge: "Intermediário",
-    description: "Libera treinamentos de liderança e evolução operacional.",
-  },
-  {
-    key: "diamante",
-    label: "Diamante",
-    badge: "Avançado",
-    description: "Libera materiais estratégicos e conteúdos de expansão.",
-  },
-  {
-    key: "diamond_pro",
-    label: "Diamond Pro",
-    badge: "Premium",
-    description: "Libera trilhas premium e conteúdos exclusivos.",
-  },
-  {
-    key: "diamond_elite",
-    label: "Diamond Elite",
-    badge: "Elite",
-    description: "Libera aulas estratégicas e materiais de alta performance.",
-  },
-  {
-    key: "imperial_diamond",
-    label: "Imperial Diamond",
-    badge: "Topo",
-    description: "Libera o topo da esteira de formação e conteúdos especiais.",
-  },
-];
+type ApiErrorPayload = {
+  error?: string;
+  message?: string;
+};
+
+const EMPTY_TIER_FORM: TierFormState = {
+  name: "",
+  rank: "",
+  description: "",
+  is_active: true,
+};
 
 function cn(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ");
-}
-
-function formatDateTime(value: string | null) {
-  if (!value) return "—";
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "—";
-
-  return new Intl.DateTimeFormat("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
 }
 
 function getDisplayName(item: StudentWithPermission) {
@@ -123,16 +82,22 @@ function getDisplayName(item: StudentWithPermission) {
   );
 }
 
-function getLevelLabel(levelKey: string | null | undefined) {
-  return ACCESS_LEVELS.find((level) => level.key === levelKey)?.label || "Executivo";
-}
-
-function getLevelBadge(levelKey: string | null | undefined) {
-  return ACCESS_LEVELS.find((level) => level.key === levelKey)?.badge || "Base";
-}
-
 function getLocation(item: StudentWithPermission) {
   return [item.city, item.state].filter(Boolean).join(" / ") || "—";
+}
+
+async function readApiResponse<T>(response: Response) {
+  const payload = (await response.json()) as T & ApiErrorPayload;
+
+  if (!response.ok) {
+    throw new Error(
+      payload.message ||
+        payload.error ||
+        "Não foi possível concluir a operação.",
+    );
+  }
+
+  return payload;
 }
 
 function AvatarCell({ name, size = 42 }: { name: string; size?: number }) {
@@ -178,11 +143,20 @@ function FilterSelect({
   );
 }
 
-function LevelBadge({ value }: { value: string | null | undefined }) {
+function LevelBadge({ tier }: { tier: AccessTier | null }) {
+  if (!tier) {
+    return (
+      <span className="inline-flex items-center gap-2 rounded-full bg-[#f3f4f6] px-3 py-1.5 text-[13px] font-semibold text-[#666b76]">
+        <span className="h-2 w-2 rounded-full bg-[#a1a1aa]" />
+        Sem nível
+      </span>
+    );
+  }
+
   return (
     <span className="inline-flex items-center gap-2 rounded-full bg-[#f3eee5] px-3 py-1.5 text-[13px] font-semibold text-[#8a6836]">
       <span className="h-2 w-2 rounded-full bg-[#DBC094]" />
-      {getLevelLabel(value)}
+      {tier.name}
     </span>
   );
 }
@@ -192,11 +166,13 @@ function ActionButton({
   children,
   onClick,
   disabled,
+  danger,
 }: {
   title: string;
-  children: React.ReactNode;
+  children: ReactNode;
   onClick?: () => void;
   disabled?: boolean;
+  danger?: boolean;
 }) {
   return (
     <button
@@ -204,7 +180,12 @@ function ActionButton({
       title={title}
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex h-9 w-9 items-center justify-center rounded-[10px] border border-[#e5e5e5] bg-white text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836] disabled:cursor-not-allowed disabled:opacity-50"
+      className={cn(
+        "inline-flex h-9 w-9 items-center justify-center rounded-[10px] border bg-white transition disabled:cursor-not-allowed disabled:opacity-40",
+        danger
+          ? "border-red-100 text-red-600 hover:border-red-300 hover:bg-red-50"
+          : "border-[#e5e5e5] text-[#52525b] hover:border-[#DBC094] hover:text-[#8a6836]",
+      )}
     >
       {children}
     </button>
@@ -212,19 +193,22 @@ function ActionButton({
 }
 
 function LevelPickerButton({
-  value,
+  tier,
   onClick,
+  disabled,
 }: {
-  value: string;
+  tier: AccessTier | null;
   onClick: () => void;
+  disabled?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex h-10 w-full items-center justify-between gap-3 rounded-[10px] border border-[#e5e5e5] bg-white px-3 text-left text-[14px] font-semibold text-[#27272a] transition hover:border-[#DBC094]"
+      disabled={disabled}
+      className="inline-flex h-10 w-full items-center justify-between gap-3 rounded-[10px] border border-[#e5e5e5] bg-white px-3 text-left text-[14px] font-semibold text-[#27272a] transition hover:border-[#DBC094] disabled:cursor-not-allowed disabled:opacity-50"
     >
-      <span className="truncate">{getLevelLabel(value)}</span>
+      <span className="truncate">{tier?.name || "Selecionar nível"}</span>
       <ChevronRight className="h-4 w-4 shrink-0 text-[#b89a65]" />
     </button>
   );
@@ -253,15 +237,19 @@ function DetailRow({
 function LevelPickerModal({
   open,
   value,
+  tiers,
   onSelect,
   onClose,
 }: {
   open: boolean;
   value: string;
-  onSelect: (value: AccessLevelKey) => void;
+  tiers: AccessTier[];
+  onSelect: (value: string) => void;
   onClose: () => void;
 }) {
   if (!open) return null;
+
+  const activeTiers = tiers.filter((tier) => tier.is_active);
 
   return (
     <AnimatePresence>
@@ -278,12 +266,12 @@ function LevelPickerModal({
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 18, scale: 0.98 }}
         transition={{ duration: 0.2 }}
-        className="fixed left-1/2 top-1/2 z-[141] w-[calc(100vw-32px)] max-w-[720px] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[18px] border border-[#e5e5e5] bg-white shadow-[0_24px_80px_rgba(31,34,48,0.16)]"
+        className="fixed left-1/2 top-1/2 z-[141] max-h-[82vh] w-[calc(100vw-32px)] max-w-[720px] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[18px] border border-[#e5e5e5] bg-white shadow-[0_24px_80px_rgba(31,34,48,0.16)]"
       >
         <div className="flex items-start justify-between gap-4 border-b border-[#e5e5e5] px-6 py-5">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8a8f9d]">
-              Permissão
+              Permissão real
             </p>
 
             <h2 className="mt-2 text-[26px] font-semibold tracking-[-0.04em] text-[#141414]">
@@ -291,7 +279,7 @@ function LevelPickerModal({
             </h2>
 
             <p className="mt-2 text-[14px] leading-6 text-[#666b76]">
-              Selecione qual esteira de conteúdos o aluno poderá acessar.
+              O rank do nível determina quais conteúdos o aluno poderá acessar.
             </p>
           </div>
 
@@ -305,52 +293,313 @@ function LevelPickerModal({
           </button>
         </div>
 
-        <div className="grid gap-0 divide-y divide-[#ededed]">
-          {ACCESS_LEVELS.map((level) => {
-            const selected = level.key === value;
+        <div className="max-h-[58vh] overflow-y-auto divide-y divide-[#ededed]">
+          {activeTiers.length === 0 ? (
+            <div className="px-6 py-10 text-center text-[14px] text-[#666b76]">
+              Nenhum nível ativo disponível. Cadastre ou ative um nível
+              primeiro.
+            </div>
+          ) : (
+            activeTiers.map((tier) => {
+              const selected = tier.id === value;
 
-            return (
-              <button
-                key={level.key}
-                type="button"
-                onClick={() => {
-                  onSelect(level.key);
-                  onClose();
-                }}
-                className={cn(
-                  "flex items-start gap-4 px-6 py-5 text-left transition hover:bg-[#f7f7f7]",
-                  selected && "bg-[#faf7f0]",
-                )}
-              >
-                <span
+              return (
+                <button
+                  key={tier.id}
+                  type="button"
+                  onClick={() => {
+                    onSelect(tier.id);
+                    onClose();
+                  }}
                   className={cn(
-                    "mt-1 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border",
-                    selected
-                      ? "border-[#DBC094] bg-[#DBC094] text-black"
-                      : "border-[#d4d4d8] bg-white text-transparent",
+                    "flex w-full items-start gap-4 px-6 py-5 text-left transition hover:bg-[#f7f7f7]",
+                    selected && "bg-[#faf7f0]",
                   )}
                 >
-                  <Check className="h-3.5 w-3.5" />
-                </span>
-
-                <span className="min-w-0 flex-1">
-                  <span className="flex flex-wrap items-center gap-2">
-                    <span className="text-[17px] font-semibold text-[#18181b]">
-                      {level.label}
-                    </span>
-
-                    <span className="rounded-full bg-[#f3eee5] px-2.5 py-1 text-[11px] font-semibold text-[#8a6836]">
-                      {level.badge}
-                    </span>
+                  <span
+                    className={cn(
+                      "mt-1 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border",
+                      selected
+                        ? "border-[#DBC094] bg-[#DBC094] text-black"
+                        : "border-[#d4d4d8] bg-white text-transparent",
+                    )}
+                  >
+                    <Check className="h-3.5 w-3.5" />
                   </span>
 
-                  <span className="mt-1 block text-[14px] leading-6 text-[#666b76]">
-                    {level.description}
+                  <span className="min-w-0 flex-1">
+                    <span className="flex flex-wrap items-center gap-2">
+                      <span className="text-[17px] font-semibold text-[#18181b]">
+                        {tier.name}
+                      </span>
+
+                      <span className="rounded-full bg-[#f3eee5] px-2.5 py-1 text-[11px] font-semibold text-[#8a6836]">
+                        Rank {tier.rank}
+                      </span>
+                    </span>
+
+                    <span className="mt-1 block text-[14px] leading-6 text-[#666b76]">
+                      {tier.description?.trim() || "Sem descrição cadastrada."}
+                    </span>
                   </span>
-                </span>
-              </button>
-            );
-          })}
+                </button>
+              );
+            })
+          )}
+        </div>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
+function TierFormModal({
+  open,
+  editingTier,
+  form,
+  saving,
+  error,
+  onChange,
+  onClose,
+  onSubmit,
+}: {
+  open: boolean;
+  editingTier: AccessTier | null;
+  form: TierFormState;
+  saving: boolean;
+  error: string | null;
+  onChange: (form: TierFormState) => void;
+  onClose: () => void;
+  onSubmit: () => void;
+}) {
+  if (!open) return null;
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[150] bg-black/30"
+        onClick={saving ? undefined : onClose}
+      />
+
+      <motion.div
+        initial={{ opacity: 0, y: 18, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 18, scale: 0.98 }}
+        className="fixed left-1/2 top-1/2 z-[151] w-[calc(100vw-32px)] max-w-[620px] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[18px] border border-[#e5e5e5] bg-white shadow-[0_24px_80px_rgba(31,34,48,0.16)]"
+      >
+        <div className="flex items-start justify-between gap-4 border-b border-[#e5e5e5] px-6 py-5">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8a8f9d]">
+              Configuração de permissão
+            </p>
+            <h2 className="mt-2 text-[26px] font-semibold tracking-[-0.04em] text-[#141414]">
+              {editingTier ? "Editar nível" : "Cadastrar nível"}
+            </h2>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={saving}
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] border border-[#e5e5e5] text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836] disabled:opacity-50"
+            aria-label="Fechar"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <form
+          className="space-y-5 p-6"
+          onSubmit={(event) => {
+            event.preventDefault();
+            onSubmit();
+          }}
+        >
+          <div className="grid gap-5 sm:grid-cols-[1fr_150px]">
+            <label className="block">
+              <span className="text-[13px] font-semibold text-[#27272a]">
+                Nome do nível
+              </span>
+              <input
+                type="text"
+                value={form.name}
+                onChange={(event) =>
+                  onChange({ ...form, name: event.target.value })
+                }
+                placeholder="Ex.: Executivo"
+                maxLength={80}
+                className="mt-2 h-11 w-full rounded-[12px] border border-[#e5e5e5] px-4 text-[14px] outline-none transition focus:border-[#DBC094]"
+              />
+            </label>
+
+            <label className="block">
+              <span className="text-[13px] font-semibold text-[#27272a]">
+                Rank
+              </span>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                value={form.rank}
+                onChange={(event) =>
+                  onChange({ ...form, rank: event.target.value })
+                }
+                placeholder="0"
+                className="mt-2 h-11 w-full rounded-[12px] border border-[#e5e5e5] px-4 text-[14px] outline-none transition focus:border-[#DBC094]"
+              />
+            </label>
+          </div>
+
+          <label className="block">
+            <span className="text-[13px] font-semibold text-[#27272a]">
+              Descrição
+            </span>
+            <textarea
+              value={form.description}
+              onChange={(event) =>
+                onChange({ ...form, description: event.target.value })
+              }
+              placeholder="Explique qual faixa de acesso este nível representa."
+              maxLength={300}
+              rows={4}
+              className="mt-2 w-full resize-none rounded-[12px] border border-[#e5e5e5] px-4 py-3 text-[14px] leading-6 outline-none transition focus:border-[#DBC094]"
+            />
+          </label>
+
+          <label className="flex cursor-pointer items-center justify-between gap-5 rounded-[12px] border border-[#e5e5e5] px-4 py-3">
+            <span>
+              <span className="block text-[14px] font-semibold text-[#27272a]">
+                Nível ativo
+              </span>
+              <span className="mt-1 block text-[12px] leading-5 text-[#666b76]">
+                Níveis inativos deixam de aparecer para novas atribuições.
+              </span>
+            </span>
+
+            <input
+              type="checkbox"
+              checked={form.is_active}
+              onChange={(event) =>
+                onChange({ ...form, is_active: event.target.checked })
+              }
+              className="h-5 w-5 accent-[#b99152]"
+            />
+          </label>
+
+          {error ? (
+            <div className="rounded-[12px] border border-red-200 bg-red-50 px-4 py-3 text-[14px] font-medium text-red-700">
+              {error}
+            </div>
+          ) : null}
+
+          <div className="flex flex-col-reverse gap-3 border-t border-[#ededed] pt-5 sm:flex-row sm:justify-end">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={saving}
+              className="h-11 rounded-[10px] border border-[#e5e5e5] px-5 text-[14px] font-semibold text-[#52525b] transition hover:border-[#DBC094] disabled:opacity-50"
+            >
+              Cancelar
+            </button>
+
+            <button
+              type="submit"
+              disabled={saving}
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-[10px] bg-[#DBC094] px-5 text-[14px] font-semibold text-black transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {saving ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
+              {saving
+                ? "Salvando..."
+                : editingTier
+                  ? "Salvar alterações"
+                  : "Cadastrar nível"}
+            </button>
+          </div>
+        </form>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
+function DeleteTierModal({
+  tier,
+  deleting,
+  error,
+  onClose,
+  onConfirm,
+}: {
+  tier: AccessTier | null;
+  deleting: boolean;
+  error: string | null;
+  onClose: () => void;
+  onConfirm: () => void;
+}) {
+  if (!tier) return null;
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[160] bg-black/30"
+        onClick={deleting ? undefined : onClose}
+      />
+
+      <motion.div
+        initial={{ opacity: 0, y: 18, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 18, scale: 0.98 }}
+        className="fixed left-1/2 top-1/2 z-[161] w-[calc(100vw-32px)] max-w-[520px] -translate-x-1/2 -translate-y-1/2 rounded-[18px] border border-[#e5e5e5] bg-white p-6 shadow-[0_24px_80px_rgba(31,34,48,0.16)]"
+      >
+        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-red-50 text-red-600">
+          <Trash2 className="h-5 w-5" />
+        </div>
+
+        <h2 className="mt-5 text-[25px] font-semibold tracking-[-0.04em] text-[#141414]">
+          Excluir nível {tier.name}?
+        </h2>
+
+        <p className="mt-3 text-[14px] leading-6 text-[#666b76]">
+          A exclusão é permanente. O sistema bloqueará a operação caso este
+          nível ainda esteja vinculado a algum usuário.
+        </p>
+
+        {error ? (
+          <div className="mt-4 rounded-[12px] border border-red-200 bg-red-50 px-4 py-3 text-[14px] font-medium text-red-700">
+            {error}
+          </div>
+        ) : null}
+
+        <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={deleting}
+            className="h-11 rounded-[10px] border border-[#e5e5e5] px-5 text-[14px] font-semibold text-[#52525b] disabled:opacity-50"
+          >
+            Cancelar
+          </button>
+
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={deleting}
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-[10px] bg-red-600 px-5 text-[14px] font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
+          >
+            {deleting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Trash2 className="h-4 w-4" />
+            )}
+            {deleting ? "Excluindo..." : "Excluir nível"}
+          </button>
         </div>
       </motion.div>
     </AnimatePresence>
@@ -358,8 +607,6 @@ function LevelPickerModal({
 }
 
 export default function AdminNiveisPage() {
-  const supabase = useMemo(() => supabaseBrowser(), []);
-
   const [students, setStudents] = useState<StudentWithPermission[]>([]);
   const [accessTiers, setAccessTiers] = useState<AccessTier[]>([]);
   const [draftLevels, setDraftLevels] = useState<Record<string, string>>({});
@@ -372,131 +619,100 @@ export default function AdminNiveisPage() {
   const [showCount, setShowCount] = useState("10");
   const [search, setSearch] = useState("");
   const [levelFilter, setLevelFilter] = useState("all");
-  const [selectedStudent, setSelectedStudent] =
-    useState<StudentWithPermission | null>(null);
-  const [savingId, setSavingId] = useState<string | null>(null);
-
-  const [levelPickerStudentId, setLevelPickerStudentId] = useState<string | null>(
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(
     null,
   );
+  const [savingId, setSavingId] = useState<string | null>(null);
+  const [levelPickerStudentId, setLevelPickerStudentId] = useState<
+    string | null
+  >(null);
 
-  async function loadAccessTiers() {
-    try {
-      const response = await fetch("/api/admin/access-tiers", {
-        method: "GET",
-        cache: "no-store",
-      });
+  const [tierModalOpen, setTierModalOpen] = useState(false);
+  const [editingTier, setEditingTier] = useState<AccessTier | null>(null);
+  const [tierForm, setTierForm] = useState<TierFormState>(EMPTY_TIER_FORM);
+  const [tierSaving, setTierSaving] = useState(false);
+  const [tierFormError, setTierFormError] = useState<string | null>(null);
 
-      const payload = (await response.json()) as {
-        tiers?: AccessTier[];
-        message?: string;
-      };
+  const [deleteTier, setDeleteTier] = useState<AccessTier | null>(null);
+  const [deletingTier, setDeletingTier] = useState(false);
+  const [deleteTierError, setDeleteTierError] = useState<string | null>(null);
 
-      if (!response.ok) {
-        throw new Error(
-          payload.message || "Não foi possível carregar os níveis de acesso.",
-        );
-      }
-
-      setAccessTiers(payload.tiers ?? []);
-    } catch (err) {
-      console.error("Erro ao carregar níveis de acesso:", err);
-      setAccessTiers([]);
-    }
-  }
-
-  async function loadStudents(isRefresh = false) {
+  async function loadAll(isRefresh = false) {
     if (isRefresh) setRefreshing(true);
     else setLoading(true);
 
     setError(null);
 
-    const { data, error: fetchError } = await supabase
-      .from("student_registration_requests")
-      .select(
-        "id, full_name, first_name, last_name, email, phone, mmn_login, leader_name, city, state, full_address, status, created_at, access_level",
-      )
-      .eq("status", "approved")
-      .order("created_at", { ascending: false });
+    try {
+      const [tiersResponse, studentsResponse] = await Promise.all([
+        fetch("/api/admin/access-tiers", {
+          method: "GET",
+          cache: "no-store",
+        }),
+        fetch("/api/admin/student-access", {
+          method: "GET",
+          cache: "no-store",
+        }),
+      ]);
 
-    if (fetchError) {
-      console.error("Erro ao buscar níveis e permissões:", fetchError);
-      setError(
-        fetchError.message ||
-          "Não foi possível carregar os alunos para configuração de acesso.",
+      const tiersPayload = await readApiResponse<{ tiers?: AccessTier[] }>(
+        tiersResponse,
       );
-      setStudents([]);
-      setDraftLevels({});
-    } else {
-      const rows = (data as StudentWithPermission[]) ?? [];
+      const studentsPayload = await readApiResponse<{
+        students?: StudentWithPermission[];
+      }>(studentsResponse);
+
+      const tiers = tiersPayload.tiers ?? [];
+      const rows = studentsPayload.students ?? [];
+      const defaultTierId = tiers.find((tier) => tier.is_active)?.id ?? "";
+
+      setAccessTiers(tiers);
       setStudents(rows);
 
       const mappedDrafts: Record<string, string> = {};
       rows.forEach((student) => {
-        mappedDrafts[student.id] = student.access_level || "executivo";
+        mappedDrafts[student.id] = student.tier_id || defaultTierId;
       });
       setDraftLevels(mappedDrafts);
-    }
-
-    setLoading(false);
-    setRefreshing(false);
-  }
-
-  async function saveStudentLevel(student: StudentWithPermission) {
-    const selectedLevel = draftLevels[student.id] || "executivo";
-
-    setSavingId(student.id);
-    setSaveError(null);
-    setSaveSuccess(null);
-
-    try {
-      const { error: updateError } = await supabase
-        .from("student_registration_requests")
-        .update({ access_level: selectedLevel })
-        .eq("id", student.id);
-
-      if (updateError) {
-        console.error("Erro ao salvar nível do aluno:", updateError);
-        setSaveError(
-          updateError.message ||
-            "Não foi possível salvar o nível de acesso do aluno.",
-        );
-        return;
-      }
-
-      setStudents((prev) =>
-        prev.map((item) =>
-          item.id === student.id ? { ...item, access_level: selectedLevel } : item,
-        ),
+    } catch (loadError) {
+      console.error("Erro ao carregar níveis e permissões:", loadError);
+      setError(
+        loadError instanceof Error
+          ? loadError.message
+          : "Não foi possível carregar os níveis e permissões.",
       );
-
-      if (selectedStudent?.id === student.id) {
-        setSelectedStudent((prev) =>
-          prev ? { ...prev, access_level: selectedLevel } : prev,
-        );
-      }
-
-      setSaveSuccess("Nível de acesso salvo com sucesso.");
-    } catch (err) {
-      console.error("Erro inesperado ao salvar nível do aluno:", err);
-      setSaveError(
-        "Não foi possível salvar o nível. Verifique se a coluna access_level já foi criada no Supabase.",
-      );
+      setStudents([]);
+      setAccessTiers([]);
+      setDraftLevels({});
     } finally {
-      setSavingId(null);
+      setLoading(false);
+      setRefreshing(false);
     }
   }
 
   useEffect(() => {
-    loadAccessTiers();
-    loadStudents();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    loadAll();
   }, []);
 
-  const filteredStudents = useMemo(() => {
-    const q = search.trim().toLowerCase();
+  const tierById = useMemo(
+    () => new Map(accessTiers.map((tier) => [tier.id, tier])),
+    [accessTiers],
+  );
 
-    let base = !q
+  const selectedStudent = useMemo(
+    () => students.find((item) => item.id === selectedStudentId) ?? null,
+    [students, selectedStudentId],
+  );
+
+  const levelPickerStudent = useMemo(
+    () => students.find((item) => item.id === levelPickerStudentId) ?? null,
+    [students, levelPickerStudentId],
+  );
+
+  const filteredStudents = useMemo(() => {
+    const query = search.trim().toLowerCase();
+
+    let rows = !query
       ? students
       : students.filter((item) => {
           const values = [
@@ -505,38 +721,236 @@ export default function AdminNiveisPage() {
             item.phone,
             item.mmn_login,
             item.leader_name,
-            item.access_level,
+            item.tier_name,
           ];
 
           return values.some((value) =>
-            (value ?? "").toLowerCase().includes(q),
+            (value ?? "").toLowerCase().includes(query),
           );
         });
 
-    if (levelFilter !== "all") {
-      base = base.filter(
-        (item) =>
-          (draftLevels[item.id] || item.access_level || "executivo") ===
-          levelFilter,
-      );
+    if (levelFilter === "none") {
+      rows = rows.filter((item) => !item.tier_id);
+    } else if (levelFilter !== "all") {
+      rows = rows.filter((item) => item.tier_id === levelFilter);
     }
 
     const limit = Number(showCount);
-    return Number.isFinite(limit) ? base.slice(0, limit) : base;
-  }, [students, search, showCount, levelFilter, draftLevels]);
+    return Number.isFinite(limit) ? rows.slice(0, limit) : rows;
+  }, [students, search, showCount, levelFilter]);
 
-  const levelPickerStudent = useMemo(
-    () => students.find((item) => item.id === levelPickerStudentId) ?? null,
-    [students, levelPickerStudentId],
-  );
-
-  const configuredStudents = students.filter((student) => student.access_level).length;
-  const withoutConfiguredLevel = Math.max(students.length - configuredStudents, 0);
-  const premiumStudents = students.filter((student) =>
-    ["diamond_pro", "diamond_elite", "imperial_diamond"].includes(
-      student.access_level || "",
-    ),
+  const configuredStudents = students.filter(
+    (student) => student.tier_id,
   ).length;
+  const withoutConfiguredLevel = Math.max(
+    students.length - configuredStudents,
+    0,
+  );
+  const advancedStudents = students.filter(
+    (student) => (student.tier_rank ?? 0) >= 20,
+  ).length;
+
+  function openCreateTier() {
+    const highestRank = accessTiers.reduce(
+      (highest, tier) => Math.max(highest, tier.rank),
+      -10,
+    );
+
+    setEditingTier(null);
+    setTierForm({
+      ...EMPTY_TIER_FORM,
+      rank: String(highestRank + 10),
+    });
+    setTierFormError(null);
+    setTierModalOpen(true);
+  }
+
+  function openEditTier(tier: AccessTier) {
+    setEditingTier(tier);
+    setTierForm({
+      name: tier.name,
+      rank: String(tier.rank),
+      description: tier.description ?? "",
+      is_active: tier.is_active,
+    });
+    setTierFormError(null);
+    setTierModalOpen(true);
+  }
+
+  function closeTierModal() {
+    if (tierSaving) return;
+
+    setTierModalOpen(false);
+    setEditingTier(null);
+    setTierForm(EMPTY_TIER_FORM);
+    setTierFormError(null);
+  }
+
+  async function saveTier() {
+    const name = tierForm.name.trim();
+    const rank = Number(tierForm.rank);
+
+    if (!name) {
+      setTierFormError("Informe o nome do nível.");
+      return;
+    }
+
+    if (!Number.isInteger(rank) || rank < 0) {
+      setTierFormError(
+        "O rank deve ser um número inteiro igual ou maior que zero.",
+      );
+      return;
+    }
+
+    setTierSaving(true);
+    setTierFormError(null);
+    setSaveError(null);
+    setSaveSuccess(null);
+
+    try {
+      const response = await fetch("/api/admin/access-tiers", {
+        method: editingTier ? "PATCH" : "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: editingTier?.id,
+          name,
+          rank,
+          description: tierForm.description.trim() || null,
+          is_active: tierForm.is_active,
+        }),
+      });
+
+      const payload = await readApiResponse<{ message?: string }>(response);
+      setTierModalOpen(false);
+      setEditingTier(null);
+      setTierForm(EMPTY_TIER_FORM);
+      setTierFormError(null);
+      await loadAll(true);
+      setSaveSuccess(
+        payload.message ||
+          (editingTier
+            ? "Nível atualizado com sucesso."
+            : "Nível criado com sucesso."),
+      );
+    } catch (tierError) {
+      setTierFormError(
+        tierError instanceof Error
+          ? tierError.message
+          : "Não foi possível salvar o nível.",
+      );
+    } finally {
+      setTierSaving(false);
+    }
+  }
+
+  function openDeleteTier(tier: AccessTier) {
+    setDeleteTier(tier);
+    setDeleteTierError(null);
+  }
+
+  function closeDeleteTier() {
+    if (deletingTier) return;
+
+    setDeleteTier(null);
+    setDeleteTierError(null);
+  }
+
+  async function confirmDeleteTier() {
+    if (!deleteTier) return;
+
+    setDeletingTier(true);
+    setDeleteTierError(null);
+    setSaveError(null);
+    setSaveSuccess(null);
+
+    try {
+      const response = await fetch("/api/admin/access-tiers", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id: deleteTier.id }),
+      });
+
+      const payload = await readApiResponse<{ message?: string }>(response);
+      setDeleteTier(null);
+      await loadAll(true);
+      setSaveSuccess(payload.message || "Nível excluído com sucesso.");
+    } catch (tierError) {
+      setDeleteTierError(
+        tierError instanceof Error
+          ? tierError.message
+          : "Não foi possível excluir o nível.",
+      );
+    } finally {
+      setDeletingTier(false);
+    }
+  }
+
+  async function saveStudentLevel(student: StudentWithPermission) {
+    const selectedTierId = draftLevels[student.id];
+
+    if (!selectedTierId) {
+      setSaveError("Selecione um nível de acesso antes de salvar.");
+      return;
+    }
+
+    setSavingId(student.id);
+    setSaveError(null);
+    setSaveSuccess(null);
+
+    try {
+      const response = await fetch("/api/admin/student-access", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          registration_id: student.id,
+          tier_id: selectedTierId,
+        }),
+      });
+
+      const payload = await readApiResponse<{
+        message?: string;
+        student?: StudentWithPermission;
+      }>(response);
+
+      if (payload.student) {
+        setStudents((previous) =>
+          previous.map((item) =>
+            item.id === student.id ? payload.student! : item,
+          ),
+        );
+      }
+
+      setSaveSuccess(payload.message || "Nível de acesso salvo com sucesso.");
+      await loadAll(true);
+    } catch (saveLevelError) {
+      console.error("Erro ao salvar nível do aluno:", saveLevelError);
+      setSaveError(
+        saveLevelError instanceof Error
+          ? saveLevelError.message
+          : "Não foi possível salvar o nível de acesso do aluno.",
+      );
+    } finally {
+      setSavingId(null);
+    }
+  }
+
+  const levelFilterOptions = useMemo(
+    () => [
+      { label: "Todos os níveis", value: "all" },
+      { label: "Sem nível", value: "none" },
+      ...accessTiers.map((tier) => ({
+        label: tier.is_active ? tier.name : `${tier.name} (inativo)`,
+        value: tier.id,
+      })),
+    ],
+    [accessTiers],
+  );
 
   return (
     <>
@@ -552,49 +966,100 @@ export default function AdminNiveisPage() {
             </h1>
 
             <p className="mt-3 max-w-2xl text-[15px] leading-6 text-[#5d6472]">
-              Defina o nível de acesso de cada aluno aprovado e controle quais esteiras de conteúdos serão liberadas.
+              Cadastre os níveis reais do sistema e defina a permissão de cada
+              aluno aprovado.
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={() => loadStudents(true)}
-            disabled={refreshing || Boolean(savingId)}
-            className="inline-flex h-12 items-center justify-center gap-3 self-start rounded-[12px] bg-[#DBC094] px-5 text-[14px] font-semibold text-black transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60 lg:self-auto"
-          >
-            <RefreshCw
-              className={cn("h-4 w-4", refreshing && "animate-spin")}
-              strokeWidth={1.9}
-            />
-            {refreshing ? "Atualizando" : "Atualizar lista"}
-          </button>
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={openCreateTier}
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-[12px] border border-[#DBC094] bg-white px-5 text-[14px] font-semibold text-[#8a6836] transition hover:bg-[#faf7f0]"
+            >
+              <Plus className="h-4 w-4" />
+              Novo nível
+            </button>
+
+            <button
+              type="button"
+              onClick={() => loadAll(true)}
+              disabled={refreshing || Boolean(savingId)}
+              className="inline-flex h-12 items-center justify-center gap-3 rounded-[12px] bg-[#DBC094] px-5 text-[14px] font-semibold text-black transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <RefreshCw
+                className={cn("h-4 w-4", refreshing && "animate-spin")}
+                strokeWidth={1.9}
+              />
+              {refreshing ? "Atualizando" : "Atualizar lista"}
+            </button>
+          </div>
         </section>
 
-        <section className="rounded-[18px] border border-[#e5e5e5] bg-white">
-          <div className="border-b border-[#e5e5e5] px-5 py-4">
-            <h2 className="text-[20px] font-semibold tracking-[-0.03em] text-[#141414]">
-              Níveis cadastrados
-            </h2>
+        {saveSuccess ? (
+          <div className="rounded-[12px] border border-green-200 bg-green-50 px-4 py-3 text-[14px] font-medium text-green-700">
+            {saveSuccess}
+          </div>
+        ) : null}
 
-            <p className="mt-1 text-[13px] leading-5 text-[#666b76]">
-              Níveis reais utilizados pelo sistema para controlar o acesso aos conteúdos.
-            </p>
+        {saveError ? (
+          <div className="rounded-[12px] border border-red-200 bg-red-50 px-4 py-3 text-[14px] font-medium text-red-700">
+            {saveError}
+          </div>
+        ) : null}
+
+        <section className="overflow-hidden rounded-[18px] border border-[#e5e5e5] bg-white">
+          <div className="flex flex-col gap-4 border-b border-[#e5e5e5] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-[20px] font-semibold tracking-[-0.03em] text-[#141414]">
+                Níveis cadastrados
+              </h2>
+              <p className="mt-1 text-[13px] leading-5 text-[#666b76]">
+                O rank define a hierarquia real usada pelas permissões da
+                plataforma.
+              </p>
+            </div>
+
+            <span className="text-[13px] font-medium text-[#8a8f9d]">
+              {accessTiers.length} nível(is)
+            </span>
           </div>
 
-          {accessTiers.length === 0 ? (
-            <div className="px-5 py-8 text-[14px] font-medium text-[#8a8f9d]">
-              Nenhum nível de acesso cadastrado.
+          {loading ? (
+            <div className="grid gap-px bg-[#ededed] sm:grid-cols-2 xl:grid-cols-4">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="h-[210px] animate-pulse bg-white p-5"
+                >
+                  <div className="h-5 w-28 rounded bg-[#f3f4f6]" />
+                  <div className="mt-3 h-3 w-16 rounded bg-[#f3f4f6]" />
+                  <div className="mt-8 h-4 w-full rounded bg-[#f3f4f6]" />
+                  <div className="mt-2 h-4 w-3/4 rounded bg-[#f3f4f6]" />
+                </div>
+              ))}
+            </div>
+          ) : accessTiers.length === 0 ? (
+            <div className="px-5 py-10 text-center">
+              <p className="text-[15px] font-semibold text-[#27272a]">
+                Nenhum nível cadastrado
+              </p>
+              <p className="mt-2 text-[13px] text-[#666b76]">
+                Use o botão “Novo nível” para criar a primeira permissão.
+              </p>
             </div>
           ) : (
-            <div className="grid divide-y divide-[#ededed] md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-4">
+            <div className="grid gap-px bg-[#ededed] sm:grid-cols-2 xl:grid-cols-4">
               {accessTiers.map((tier) => (
-                <div key={tier.id} className="p-5">
+                <div
+                  key={tier.id}
+                  className="flex min-h-[230px] flex-col bg-white p-5"
+                >
                   <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-[17px] font-semibold text-[#18181b]">
+                    <div className="min-w-0">
+                      <p className="truncate text-[17px] font-semibold text-[#18181b]">
                         {tier.name}
                       </p>
-
                       <p className="mt-1 text-[12px] font-semibold uppercase tracking-[0.14em] text-[#8a6836]">
                         Rank {tier.rank}
                       </p>
@@ -602,7 +1067,7 @@ export default function AdminNiveisPage() {
 
                     <span
                       className={cn(
-                        "rounded-full px-2.5 py-1 text-[11px] font-semibold",
+                        "shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold",
                         tier.is_active
                           ? "bg-green-50 text-green-700"
                           : "bg-[#f3f4f6] text-[#666b76]",
@@ -612,13 +1077,37 @@ export default function AdminNiveisPage() {
                     </span>
                   </div>
 
-                  <p className="mt-4 min-h-12 text-[13px] leading-5 text-[#666b76]">
+                  <p className="mt-4 flex-1 text-[13px] leading-5 text-[#666b76]">
                     {tier.description?.trim() || "Sem descrição cadastrada."}
                   </p>
 
-                  <p className="mt-4 text-[12px] font-medium text-[#8a8f9d]">
-                    {tier.assigned_students} aluno(s) vinculado(s)
-                  </p>
+                  <div className="mt-5 flex items-end justify-between gap-3 border-t border-[#ededed] pt-4">
+                    <p className="text-[12px] font-medium text-[#8a8f9d]">
+                      {tier.assigned_students} aluno(s) vinculado(s)
+                    </p>
+
+                    <div className="flex items-center gap-2">
+                      <ActionButton
+                        title="Editar nível"
+                        onClick={() => openEditTier(tier)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </ActionButton>
+
+                      <ActionButton
+                        title={
+                          tier.assigned_students > 0
+                            ? "Altere os alunos vinculados antes de excluir"
+                            : "Excluir nível"
+                        }
+                        onClick={() => openDeleteTier(tier)}
+                        disabled={tier.assigned_students > 0}
+                        danger
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </ActionButton>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -631,7 +1120,6 @@ export default function AdminNiveisPage() {
               <p className="text-[13px] font-medium text-[#666b76]">
                 Alunos aprovados
               </p>
-
               <strong className="mt-3 block text-[36px] font-semibold leading-none tracking-[-0.05em] text-[#141414]">
                 {students.length}
               </strong>
@@ -641,26 +1129,26 @@ export default function AdminNiveisPage() {
               <p className="text-[13px] font-medium text-[#666b76]">
                 Nível configurado
               </p>
-
               <strong className="mt-3 block text-[36px] font-semibold leading-none tracking-[-0.05em] text-[#141414]">
                 {configuredStudents}
               </strong>
+              {withoutConfiguredLevel > 0 ? (
+                <p className="mt-2 text-[12px] font-medium text-[#8a8f9d]">
+                  {withoutConfiguredLevel} sem nível real
+                </p>
+              ) : null}
             </div>
 
             <div className="p-5">
               <p className="text-[13px] font-medium text-[#666b76]">
-                Acessos premium
+                Acessos avançados
               </p>
-
               <strong className="mt-3 block text-[36px] font-semibold leading-none tracking-[-0.05em] text-[#141414]">
-                {premiumStudents}
+                {advancedStudents}
               </strong>
-
-              {withoutConfiguredLevel > 0 ? (
-                <p className="mt-2 text-[12px] font-medium text-[#8a8f9d]">
-                  {withoutConfiguredLevel} usando nível padrão
-                </p>
-              ) : null}
+              <p className="mt-2 text-[12px] font-medium text-[#8a8f9d]">
+                Rank 20 ou superior
+              </p>
             </div>
           </div>
         </section>
@@ -671,7 +1159,6 @@ export default function AdminNiveisPage() {
               <div className="flex flex-wrap items-center gap-3">
                 <div className="relative w-[420px] max-w-full">
                   <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8a8f9d]" />
-
                   <input
                     type="text"
                     placeholder="Buscar por nome, e-mail, telefone, líder ou MMN..."
@@ -684,15 +1171,7 @@ export default function AdminNiveisPage() {
                 <FilterSelect
                   value={levelFilter}
                   onChange={setLevelFilter}
-                  options={[
-                    { label: "Todos os níveis", value: "all" },
-                    { label: "Executivo", value: "executivo" },
-                    { label: "Líder", value: "lider" },
-                    { label: "Diamante", value: "diamante" },
-                    { label: "Diamond Pro", value: "diamond_pro" },
-                    { label: "Diamond Elite", value: "diamond_elite" },
-                    { label: "Imperial Diamond", value: "imperial_diamond" },
-                  ]}
+                  options={levelFilterOptions}
                   className="w-[220px]"
                 />
 
@@ -700,7 +1179,6 @@ export default function AdminNiveisPage() {
                   <span className="text-[13px] font-medium text-[#666b76]">
                     Mostrar
                   </span>
-
                   <FilterSelect
                     value={showCount}
                     onChange={setShowCount}
@@ -716,24 +1194,12 @@ export default function AdminNiveisPage() {
               </div>
 
               <p className="text-[13px] font-medium text-[#8a8f9d]">
-                Dados carregados de student_registration_requests
+                Permissões sincronizadas com profiles.tier_id
               </p>
             </div>
           </div>
 
           <div className="px-5 py-5">
-            {saveSuccess ? (
-              <div className="mb-4 rounded-[12px] border border-green-200 bg-green-50 px-4 py-3 text-[14px] font-medium text-green-700">
-                {saveSuccess}
-              </div>
-            ) : null}
-
-            {saveError ? (
-              <div className="mb-4 rounded-[12px] border border-red-200 bg-red-50 px-4 py-3 text-[14px] font-medium text-red-700">
-                {saveError}
-              </div>
-            ) : null}
-
             {loading ? (
               <div className="divide-y divide-[#ededed]">
                 {Array.from({ length: 6 }).map((_, index) => (
@@ -755,13 +1221,12 @@ export default function AdminNiveisPage() {
             ) : filteredStudents.length === 0 ? (
               <div className="flex min-h-[220px] flex-col items-center justify-center border border-dashed border-[#e5e5e5] px-6 text-center">
                 <UserRound className="h-8 w-8 text-[#DBC094]" />
-
                 <h2 className="mt-4 text-[22px] font-semibold tracking-[-0.03em] text-[#141414]">
                   Nenhum aluno encontrado
                 </h2>
-
                 <p className="mt-2 max-w-[520px] text-[14px] leading-6 text-[#666b76]">
-                  Ajuste os filtros ou atualize a lista para consultar os alunos aprovados.
+                  Ajuste os filtros ou atualize a lista para consultar os alunos
+                  aprovados.
                 </p>
               </div>
             ) : (
@@ -791,20 +1256,27 @@ export default function AdminNiveisPage() {
                     <tbody>
                       {filteredStudents.map((item) => {
                         const displayName = getDisplayName(item);
-                        const currentDraft = draftLevels[item.id] || "executivo";
+                        const currentDraft = draftLevels[item.id] || "";
+                        const currentTier = item.tier_id
+                          ? (tierById.get(item.tier_id) ?? null)
+                          : null;
+                        const draftTier = currentDraft
+                          ? (tierById.get(currentDraft) ?? null)
+                          : null;
                         const isSaving = savingId === item.id;
 
                         return (
-                          <tr key={item.id} className="border-b border-[#ededed] last:border-b-0">
+                          <tr
+                            key={item.id}
+                            className="border-b border-[#ededed] last:border-b-0"
+                          >
                             <td className="px-4 py-5">
                               <div className="flex items-center gap-3">
                                 <AvatarCell name={displayName} />
-
                                 <div className="min-w-0">
                                   <p className="truncate text-[15px] font-semibold text-[#18181b]">
                                     {displayName}
                                   </p>
-
                                   <p className="mt-1 truncate text-[13px] text-[#8a8f9d]">
                                     {item.phone || item.email || "Sem contato"}
                                   </p>
@@ -817,13 +1289,16 @@ export default function AdminNiveisPage() {
                             </td>
 
                             <td className="px-4 py-5">
-                              <LevelBadge value={item.access_level || currentDraft} />
+                              <LevelBadge tier={currentTier} />
                             </td>
 
                             <td className="px-4 py-5">
                               <LevelPickerButton
-                                value={currentDraft}
+                                tier={draftTier}
                                 onClick={() => setLevelPickerStudentId(item.id)}
+                                disabled={accessTiers.every(
+                                  (tier) => !tier.is_active,
+                                )}
                               />
                             </td>
 
@@ -831,17 +1306,23 @@ export default function AdminNiveisPage() {
                               <div className="flex items-center justify-end gap-2">
                                 <ActionButton
                                   title="Visualizar aluno"
-                                  onClick={() => setSelectedStudent(item)}
+                                  onClick={() => setSelectedStudentId(item.id)}
                                 >
                                   <Eye className="h-4 w-4" />
                                 </ActionButton>
 
                                 <ActionButton
-                                  title={isSaving ? "Salvando..." : "Salvar nível"}
+                                  title={
+                                    isSaving ? "Salvando..." : "Salvar nível"
+                                  }
                                   onClick={() => saveStudentLevel(item)}
-                                  disabled={isSaving}
+                                  disabled={isSaving || !currentDraft}
                                 >
-                                  <Save className="h-4 w-4" />
+                                  {isSaving ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <Save className="h-4 w-4" />
+                                  )}
                                 </ActionButton>
                               </div>
                             </td>
@@ -855,25 +1336,28 @@ export default function AdminNiveisPage() {
                 <div className="divide-y divide-[#ededed] xl:hidden">
                   {filteredStudents.map((item) => {
                     const displayName = getDisplayName(item);
-                    const currentDraft = draftLevels[item.id] || "executivo";
+                    const currentDraft = draftLevels[item.id] || "";
+                    const currentTier = item.tier_id
+                      ? (tierById.get(item.tier_id) ?? null)
+                      : null;
+                    const draftTier = currentDraft
+                      ? (tierById.get(currentDraft) ?? null)
+                      : null;
                     const isSaving = savingId === item.id;
 
                     return (
                       <div key={item.id} className="py-5">
                         <div className="flex items-start gap-3">
                           <AvatarCell name={displayName} size={46} />
-
                           <div className="min-w-0 flex-1">
                             <p className="text-[16px] font-semibold tracking-[-0.02em] text-[#18181b]">
                               {displayName}
                             </p>
-
                             <p className="mt-1 text-[13px] text-[#666b76]">
                               {item.phone || item.email || "Sem contato"}
                             </p>
-
                             <div className="mt-3">
-                              <LevelBadge value={item.access_level || currentDraft} />
+                              <LevelBadge tier={currentTier} />
                             </div>
                           </div>
                         </div>
@@ -881,20 +1365,26 @@ export default function AdminNiveisPage() {
                         <div className="mt-4 grid gap-3">
                           <DetailRow label="Login MMN" value={item.mmn_login} />
                           <DetailRow label="Líder" value={item.leader_name} />
-                          <DetailRow label="Cidade / Estado" value={getLocation(item)} />
+                          <DetailRow
+                            label="Cidade / Estado"
+                            value={getLocation(item)}
+                          />
                         </div>
 
                         <div className="mt-4">
                           <LevelPickerButton
-                            value={currentDraft}
+                            tier={draftTier}
                             onClick={() => setLevelPickerStudentId(item.id)}
+                            disabled={accessTiers.every(
+                              (tier) => !tier.is_active,
+                            )}
                           />
                         </div>
 
                         <div className="mt-4 flex items-center gap-2">
                           <ActionButton
                             title="Visualizar aluno"
-                            onClick={() => setSelectedStudent(item)}
+                            onClick={() => setSelectedStudentId(item.id)}
                           >
                             <Eye className="h-4 w-4" />
                           </ActionButton>
@@ -902,9 +1392,13 @@ export default function AdminNiveisPage() {
                           <ActionButton
                             title={isSaving ? "Salvando..." : "Salvar nível"}
                             onClick={() => saveStudentLevel(item)}
-                            disabled={isSaving}
+                            disabled={isSaving || !currentDraft}
                           >
-                            <Save className="h-4 w-4" />
+                            {isSaving ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Save className="h-4 w-4" />
+                            )}
                           </ActionButton>
                         </div>
                       </div>
@@ -922,19 +1416,39 @@ export default function AdminNiveisPage() {
         value={
           levelPickerStudent
             ? draftLevels[levelPickerStudent.id] ||
-              levelPickerStudent.access_level ||
-              "executivo"
-            : "executivo"
+              levelPickerStudent.tier_id ||
+              ""
+            : ""
         }
+        tiers={accessTiers}
         onSelect={(value) => {
           if (!levelPickerStudent) return;
 
-          setDraftLevels((prev) => ({
-            ...prev,
+          setDraftLevels((previous) => ({
+            ...previous,
             [levelPickerStudent.id]: value,
           }));
         }}
         onClose={() => setLevelPickerStudentId(null)}
+      />
+
+      <TierFormModal
+        open={tierModalOpen}
+        editingTier={editingTier}
+        form={tierForm}
+        saving={tierSaving}
+        error={tierFormError}
+        onChange={setTierForm}
+        onClose={closeTierModal}
+        onSubmit={saveTier}
+      />
+
+      <DeleteTierModal
+        tier={deleteTier}
+        deleting={deletingTier}
+        error={deleteTierError}
+        onClose={closeDeleteTier}
+        onConfirm={confirmDeleteTier}
       />
 
       <AnimatePresence>
@@ -945,7 +1459,7 @@ export default function AdminNiveisPage() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="fixed inset-0 z-[120] bg-black/30"
-              onClick={() => setSelectedStudent(null)}
+              onClick={() => setSelectedStudentId(null)}
             />
 
             <motion.div
@@ -958,30 +1472,26 @@ export default function AdminNiveisPage() {
               <div className="sticky top-0 z-10 border-b border-[#e5e5e5] bg-white px-6 py-5">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex min-w-0 items-center gap-4">
-                    <AvatarCell name={getDisplayName(selectedStudent)} size={58} />
-
+                    <AvatarCell
+                      name={getDisplayName(selectedStudent)}
+                      size={58}
+                    />
                     <div className="min-w-0">
                       <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8a8f9d]">
                         Nível e permissão do aluno
                       </p>
-
                       <h2 className="mt-2 truncate text-[26px] font-semibold tracking-[-0.035em] text-[#141414]">
                         {getDisplayName(selectedStudent)}
                       </h2>
-
                       <p className="mt-1 text-[13px] text-[#666b76]">
-                        Nível atual:{" "}
-                        {getLevelLabel(
-                          draftLevels[selectedStudent.id] ||
-                            selectedStudent.access_level,
-                        )}
+                        Nível atual: {selectedStudent.tier_name || "Sem nível"}
                       </p>
                     </div>
                   </div>
 
                   <button
                     type="button"
-                    onClick={() => setSelectedStudent(null)}
+                    onClick={() => setSelectedStudentId(null)}
                     className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] border border-[#e5e5e5] text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836]"
                     aria-label="Fechar"
                   >
@@ -1003,7 +1513,10 @@ export default function AdminNiveisPage() {
                     />
                     <DetailRow label="E-mail" value={selectedStudent.email} />
                     <DetailRow label="Telefone" value={selectedStudent.phone} />
-                    <DetailRow label="Login MMN" value={selectedStudent.mmn_login} />
+                    <DetailRow
+                      label="Login MMN"
+                      value={selectedStudent.mmn_login}
+                    />
                     <DetailRow
                       label="Patrocínio / Líder"
                       value={selectedStudent.leader_name}
@@ -1022,28 +1535,41 @@ export default function AdminNiveisPage() {
 
                   <div className="mt-4 max-w-[360px]">
                     <LevelPickerButton
-                      value={
-                        draftLevels[selectedStudent.id] ||
-                        selectedStudent.access_level ||
-                        "executivo"
+                      tier={
+                        draftLevels[selectedStudent.id]
+                          ? (tierById.get(draftLevels[selectedStudent.id]) ??
+                            null)
+                          : selectedStudent.tier_id
+                            ? (tierById.get(selectedStudent.tier_id) ?? null)
+                            : null
                       }
-                      onClick={() => setLevelPickerStudentId(selectedStudent.id)}
+                      onClick={() =>
+                        setLevelPickerStudentId(selectedStudent.id)
+                      }
+                      disabled={accessTiers.every((tier) => !tier.is_active)}
                     />
                   </div>
 
                   <p className="mt-4 text-[14px] leading-6 text-[#666b76]">
-                    Este nível será utilizado para determinar quais conteúdos, trilhas,
-                    aulas e materiais o aluno poderá acessar.
+                    A alteração atualiza diretamente o campo tier_id do perfil
+                    do aluno, que é utilizado pelas regras reais de permissão.
                   </p>
 
                   <div className="mt-5">
                     <button
                       type="button"
                       onClick={() => saveStudentLevel(selectedStudent)}
-                      disabled={savingId === selectedStudent.id}
+                      disabled={
+                        savingId === selectedStudent.id ||
+                        !draftLevels[selectedStudent.id]
+                      }
                       className="inline-flex h-11 items-center justify-center gap-2 rounded-[10px] bg-[#DBC094] px-5 text-[14px] font-semibold text-black transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      <Save className="h-4 w-4" />
+                      {savingId === selectedStudent.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Save className="h-4 w-4" />
+                      )}
                       {savingId === selectedStudent.id
                         ? "Salvando..."
                         : "Salvar nível"}
@@ -1055,7 +1581,6 @@ export default function AdminNiveisPage() {
                   <h3 className="text-[20px] font-semibold tracking-[-0.03em] text-[#141414]">
                     Endereço informado
                   </h3>
-
                   <p className="mt-3 text-[15px] leading-7 text-[#52525b]">
                     {selectedStudent.full_address?.trim() || "—"}
                   </p>
