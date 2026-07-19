@@ -3,16 +3,18 @@
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Check,
+  Download,
   Eye,
+  LockKeyhole,
   Mail,
   Phone,
   RefreshCw,
   Search,
+  UnlockKeyhole,
   UserRound,
   X,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { supabaseBrowser } from "@/lib/supabase/browser";
 
 type ActiveStudent = {
   id: string;
@@ -28,6 +30,10 @@ type ActiveStudent = {
   full_address: string | null;
   status: string | null;
   created_at: string | null;
+  auth_user_id: string | null;
+  access_status: "active" | "blocked" | "no_login" | "unavailable";
+  is_blocked: boolean;
+  banned_until: string | null;
 };
 
 function cn(...classes: Array<string | false | null | undefined>) {
@@ -112,11 +118,41 @@ function FilterSelect({
   );
 }
 
-function StatusBadge() {
+function getAccessStatusLabel(student: ActiveStudent) {
+  if (student.access_status === "blocked") return "Bloqueado";
+  if (student.access_status === "no_login") return "Sem login";
+  if (student.access_status === "unavailable") return "Indisponível";
+  return "Ativo";
+}
+
+function StatusBadge({ student }: { student: ActiveStudent }) {
+  const blocked = student.access_status === "blocked";
+  const unavailable =
+    student.access_status === "no_login" ||
+    student.access_status === "unavailable";
+
   return (
-    <span className="inline-flex items-center gap-2 rounded-full bg-[#f3eee5] px-3 py-1.5 text-[13px] font-semibold text-[#8a6836]">
-      <span className="h-2 w-2 rounded-full bg-[#DBC094]" />
-      Ativo
+    <span
+      className={cn(
+        "inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[13px] font-semibold",
+        blocked
+          ? "bg-red-50 text-red-700"
+          : unavailable
+            ? "bg-[#f3f4f6] text-[#666b76]"
+            : "bg-green-50 text-green-700",
+      )}
+    >
+      <span
+        className={cn(
+          "h-2 w-2 rounded-full",
+          blocked
+            ? "bg-red-500"
+            : unavailable
+              ? "bg-[#a1a1aa]"
+              : "bg-green-500",
+        )}
+      />
+      {getAccessStatusLabel(student)}
     </span>
   );
 }
@@ -125,17 +161,20 @@ function ActionButton({
   title,
   children,
   onClick,
+  disabled,
 }: {
   title: string;
   children: React.ReactNode;
   onClick?: () => void;
+  disabled?: boolean;
 }) {
   return (
     <button
       type="button"
       title={title}
       onClick={onClick}
-      className="inline-flex h-9 w-9 items-center justify-center rounded-[10px] border border-[#e5e5e5] bg-white text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836]"
+      disabled={disabled}
+      className="inline-flex h-9 w-9 items-center justify-center rounded-[10px] border border-[#e5e5e5] bg-white text-[#52525b] transition hover:border-[#DBC094] hover:text-[#8a6836] disabled:cursor-not-allowed disabled:opacity-50"
     >
       {children}
     </button>
@@ -163,14 +202,17 @@ function DetailItem({
 }
 
 export default function AdminAlunosAtivosPage() {
-  const supabase = useMemo(() => supabaseBrowser(), []);
   const [students, setStudents] = useState<ActiveStudent[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+  const [updatingStudentId, setUpdatingStudentId] = useState<string | null>(null);
 
   const [showCount, setShowCount] = useState("10");
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [selectedStudent, setSelectedStudent] = useState<ActiveStudent | null>(
     null,
   );
@@ -181,35 +223,185 @@ export default function AdminAlunosAtivosPage() {
 
     setError(null);
 
-    const { data, error: fetchError } = await supabase
-      .from("student_registration_requests")
-      .select(
-        "id, full_name, first_name, last_name, email, phone, mmn_login, leader_name, city, state, full_address, status, created_at",
-      )
-      .eq("status", "approved")
-      .order("created_at", { ascending: false });
+    try {
+      const response = await fetch("/api/admin/student-status", {
+        method: "GET",
+        cache: "no-store",
+      });
 
-    if (fetchError) {
-      console.error("Erro ao buscar alunos ativos:", fetchError);
-      setError(fetchError.message || "Não foi possível carregar os alunos ativos.");
+      const payload = (await response.json()) as {
+        students?: ActiveStudent[];
+        message?: string;
+      };
+
+      if (!response.ok) {
+        throw new Error(
+          payload.message || "Não foi possível carregar os alunos.",
+        );
+      }
+
+      const rows = payload.students ?? [];
+
+      setStudents(rows);
+      setSelectedStudent((current) =>
+        current
+          ? rows.find((student) => student.id === current.id) ?? null
+          : null,
+      );
+    } catch (loadError) {
+      console.error("Erro ao buscar alunos:", loadError);
+      setError(
+        loadError instanceof Error
+          ? loadError.message
+          : "Não foi possível carregar os alunos.",
+      );
       setStudents([]);
-    } else {
-      setStudents((data as ActiveStudent[]) ?? []);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }
+
+  async function toggleStudentAccess(student: ActiveStudent) {
+    if (!student.auth_user_id) {
+      setActionError(
+        "Este aluno ainda não possui login no Supabase Auth e não pode ser bloqueado.",
+      );
+      setActionSuccess(null);
+      return;
     }
 
-    setLoading(false);
-    setRefreshing(false);
+    const nextBlocked = !student.is_blocked;
+
+    setUpdatingStudentId(student.id);
+    setActionError(null);
+    setActionSuccess(null);
+
+    try {
+      const response = await fetch("/api/admin/student-status", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          registration_id: student.id,
+          blocked: nextBlocked,
+        }),
+      });
+
+      const payload = (await response.json()) as {
+        student?: ActiveStudent;
+        message?: string;
+      };
+
+      if (!response.ok || !payload.student) {
+        throw new Error(
+          payload.message || "Não foi possível atualizar o acesso do aluno.",
+        );
+      }
+
+      const updatedStudent = payload.student;
+
+      setStudents((current) =>
+        current.map((item) =>
+          item.id === updatedStudent.id ? updatedStudent : item,
+        ),
+      );
+
+      setSelectedStudent((current) =>
+        current?.id === updatedStudent.id ? updatedStudent : current,
+      );
+
+      setActionSuccess(
+        payload.message ||
+          (nextBlocked
+            ? "Acesso do aluno bloqueado com sucesso."
+            : "Acesso do aluno desbloqueado com sucesso."),
+      );
+    } catch (updateError) {
+      console.error("Erro ao atualizar acesso do aluno:", updateError);
+      setActionError(
+        updateError instanceof Error
+          ? updateError.message
+          : "Não foi possível atualizar o acesso do aluno.",
+      );
+    } finally {
+      setUpdatingStudentId(null);
+    }
+  }
+
+  function downloadStudentsCsv() {
+    if (students.length === 0) {
+      setActionError("Não há alunos disponíveis para exportação.");
+      setActionSuccess(null);
+      return;
+    }
+
+    const escapeCsvValue = (value: string | null | undefined) => {
+      const normalized = (value ?? "").replace(/\r?\n/g, " ").trim();
+      return `"${normalized.replace(/"/g, '""')}"`;
+    };
+
+    const headers = [
+      "Nome completo",
+      "E-mail",
+      "Telefone",
+      "Login MMN",
+      "Líder",
+      "Cidade",
+      "Estado",
+      "Endereço",
+      "Status do acesso",
+      "Possui login",
+      "Data do cadastro",
+    ];
+
+    const rows = students.map((student) => [
+      getDisplayName(student),
+      student.email,
+      student.phone,
+      student.mmn_login,
+      student.leader_name,
+      student.city,
+      student.state,
+      student.full_address,
+      getAccessStatusLabel(student),
+      student.auth_user_id ? "Sim" : "Não",
+      formatDateTime(student.created_at),
+    ]);
+
+    const csvContent = [
+      headers.map(escapeCsvValue).join(";"),
+      ...rows.map((row) => row.map(escapeCsvValue).join(";")),
+    ].join("\r\n");
+
+    const blob = new Blob(["\uFEFF", csvContent], {
+      type: "text/csv;charset=utf-8;",
+    });
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const date = new Date().toISOString().slice(0, 10);
+
+    link.href = url;
+    link.download = `alunos-e-status-${date}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+
+    setActionError(null);
+    setActionSuccess("Listagem de alunos baixada com sucesso.");
   }
 
   useEffect(() => {
     loadStudents();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const filteredStudents = useMemo(() => {
     const query = search.trim().toLowerCase();
 
-    const base = !query
+    let base = !query
       ? students
       : students.filter((item) => {
           const values = [
@@ -220,6 +412,7 @@ export default function AdminAlunosAtivosPage() {
             item.leader_name,
             item.city,
             item.state,
+            getAccessStatusLabel(item),
           ];
 
           return values.some((value) =>
@@ -227,14 +420,22 @@ export default function AdminAlunosAtivosPage() {
           );
         });
 
+    if (statusFilter !== "all") {
+      base = base.filter((item) => item.access_status === statusFilter);
+    }
+
     const limit = Number(showCount);
 
     return Number.isFinite(limit) ? base.slice(0, limit) : base;
-  }, [students, search, showCount]);
+  }, [students, search, showCount, statusFilter]);
 
-  const totalActive = students.length;
-  const withEmail = students.filter((student) => student.email).length;
-  const withPhone = students.filter((student) => student.phone).length;
+  const totalStudents = students.length;
+  const totalActive = students.filter(
+    (student) => student.access_status === "active",
+  ).length;
+  const totalBlocked = students.filter(
+    (student) => student.access_status === "blocked",
+  ).length;
 
   return (
     <>
@@ -254,49 +455,61 @@ export default function AdminAlunosAtivosPage() {
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={() => loadStudents(true)}
-            disabled={refreshing}
-            className="inline-flex h-12 items-center justify-center gap-3 self-start rounded-[12px] bg-[#DBC094] px-5 text-[14px] font-semibold text-black transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60 lg:self-auto"
-          >
-            <RefreshCw
-              className={cn("h-4 w-4", refreshing && "animate-spin")}
-              strokeWidth={1.9}
-            />
-            {refreshing ? "Atualizando" : "Atualizar lista"}
-          </button>
+          <div className="flex flex-wrap items-center gap-3 self-start lg:self-auto">
+            <button
+              type="button"
+              onClick={downloadStudentsCsv}
+              disabled={loading || students.length === 0}
+              className="inline-flex h-12 items-center justify-center gap-3 rounded-[12px] border border-[#DBC094] bg-white px-5 text-[14px] font-semibold text-[#8a6836] transition hover:bg-[#faf7f0] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Download className="h-4 w-4" strokeWidth={1.9} />
+              Baixar listagem
+            </button>
+
+            <button
+              type="button"
+              onClick={() => loadStudents(true)}
+              disabled={refreshing || Boolean(updatingStudentId)}
+              className="inline-flex h-12 items-center justify-center gap-3 rounded-[12px] bg-[#DBC094] px-5 text-[14px] font-semibold text-black transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <RefreshCw
+                className={cn("h-4 w-4", refreshing && "animate-spin")}
+                strokeWidth={1.9}
+              />
+              {refreshing ? "Atualizando" : "Atualizar lista"}
+            </button>
+          </div>
         </section>
 
         <section className="overflow-hidden rounded-[18px] border border-[#e5e5e5] bg-white">
           <div className="grid divide-y divide-[#e5e5e5] md:grid-cols-3 md:divide-x md:divide-y-0">
             <div className="p-5">
               <p className="text-[13px] font-medium text-[#666b76]">
-                Total de alunos ativos
+                Total de alunos
               </p>
 
               <strong className="mt-3 block text-[36px] font-semibold leading-none tracking-[-0.05em] text-[#141414]">
+                {totalStudents}
+              </strong>
+            </div>
+
+            <div className="p-5">
+              <p className="text-[13px] font-medium text-[#666b76]">
+                Acessos ativos
+              </p>
+
+              <strong className="mt-3 block text-[36px] font-semibold leading-none tracking-[-0.05em] text-green-700">
                 {totalActive}
               </strong>
             </div>
 
             <div className="p-5">
               <p className="text-[13px] font-medium text-[#666b76]">
-                Com e-mail informado
+                Acessos bloqueados
               </p>
 
-              <strong className="mt-3 block text-[36px] font-semibold leading-none tracking-[-0.05em] text-[#141414]">
-                {withEmail}
-              </strong>
-            </div>
-
-            <div className="p-5">
-              <p className="text-[13px] font-medium text-[#666b76]">
-                Com telefone informado
-              </p>
-
-              <strong className="mt-3 block text-[36px] font-semibold leading-none tracking-[-0.05em] text-[#141414]">
-                {withPhone}
+              <strong className="mt-3 block text-[36px] font-semibold leading-none tracking-[-0.05em] text-red-700">
+                {totalBlocked}
               </strong>
             </div>
           </div>
@@ -316,6 +529,18 @@ export default function AdminAlunosAtivosPage() {
                   className="h-11 w-full rounded-[12px] border border-[#e5e5e5] bg-white pl-11 pr-4 text-[14px] font-medium text-[#27272a] outline-none transition placeholder:text-[#8a8f9d] focus:border-[#DBC094]"
                 />
               </div>
+
+              <FilterSelect
+                value={statusFilter}
+                onChange={setStatusFilter}
+                options={[
+                  { label: "Todos os status", value: "all" },
+                  { label: "Ativos", value: "active" },
+                  { label: "Bloqueados", value: "blocked" },
+                  { label: "Sem login", value: "no_login" },
+                  { label: "Indisponíveis", value: "unavailable" },
+                ]}
+              />
 
               <div className="flex items-center gap-2">
                 <span className="text-[13px] font-medium text-[#666b76]">
@@ -341,6 +566,18 @@ export default function AdminAlunosAtivosPage() {
           </div>
 
           <div className="px-5 py-5">
+            {actionSuccess ? (
+              <div className="mb-4 rounded-[12px] border border-green-200 bg-green-50 px-4 py-3 text-[14px] font-medium text-green-700">
+                {actionSuccess}
+              </div>
+            ) : null}
+
+            {actionError ? (
+              <div className="mb-4 rounded-[12px] border border-red-200 bg-red-50 px-4 py-3 text-[14px] font-medium text-red-700">
+                {actionError}
+              </div>
+            ) : null}
+
             {loading ? (
               <div className="divide-y divide-[#ededed]">
                 {Array.from({ length: 6 }).map((_, index) => (
@@ -364,7 +601,7 @@ export default function AdminAlunosAtivosPage() {
                 <UserRound className="h-8 w-8 text-[#DBC094]" />
 
                 <h2 className="mt-4 text-[22px] font-semibold tracking-[-0.03em] text-[#141414]">
-                  Nenhum aluno ativo encontrado
+                  Nenhum aluno encontrado
                 </h2>
 
                 <p className="mt-2 max-w-[520px] text-[14px] leading-6 text-[#666b76]">
@@ -454,16 +691,28 @@ export default function AdminAlunosAtivosPage() {
                             </td>
 
                             <td className="px-4 py-5">
-                              <StatusBadge />
+                              <StatusBadge student={item} />
                             </td>
 
                             <td className="px-4 py-5">
-                              <div className="flex justify-end">
+                              <div className="flex justify-end gap-2">
                                 <ActionButton
                                   title="Visualizar aluno"
                                   onClick={() => setSelectedStudent(item)}
                                 >
                                   <Eye className="h-4 w-4" />
+                                </ActionButton>
+
+                                <ActionButton
+                                  title={item.is_blocked ? "Desbloquear acesso" : "Bloquear acesso"}
+                                  onClick={() => toggleStudentAccess(item)}
+                                  disabled={!item.auth_user_id || updatingStudentId === item.id}
+                                >
+                                  {item.is_blocked ? (
+                                    <UnlockKeyhole className="h-4 w-4" />
+                                  ) : (
+                                    <LockKeyhole className="h-4 w-4" />
+                                  )}
                                 </ActionButton>
                               </div>
                             </td>
@@ -506,14 +755,28 @@ export default function AdminAlunosAtivosPage() {
                         </div>
 
                         <div className="mt-4 flex items-center justify-between gap-3">
-                          <StatusBadge />
+                          <StatusBadge student={item} />
 
-                          <ActionButton
-                            title="Visualizar aluno"
-                            onClick={() => setSelectedStudent(item)}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </ActionButton>
+                          <div className="flex items-center gap-2">
+                            <ActionButton
+                              title="Visualizar aluno"
+                              onClick={() => setSelectedStudent(item)}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </ActionButton>
+
+                            <ActionButton
+                              title={item.is_blocked ? "Desbloquear acesso" : "Bloquear acesso"}
+                              onClick={() => toggleStudentAccess(item)}
+                              disabled={!item.auth_user_id || updatingStudentId === item.id}
+                            >
+                              {item.is_blocked ? (
+                                <UnlockKeyhole className="h-4 w-4" />
+                              ) : (
+                                <LockKeyhole className="h-4 w-4" />
+                              )}
+                            </ActionButton>
+                          </div>
                         </div>
                       </div>
                     );
@@ -553,7 +816,7 @@ export default function AdminAlunosAtivosPage() {
 
                     <div className="min-w-0">
                       <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8a8f9d]">
-                        Aluno ativo
+                        {getAccessStatusLabel(selectedStudent)}
                       </p>
 
                       <h2 className="mt-2 truncate text-[26px] font-semibold tracking-[-0.035em] text-[#141414]">
@@ -617,15 +880,55 @@ export default function AdminAlunosAtivosPage() {
 
                 <section className="pt-6">
                   <h3 className="text-[20px] font-semibold tracking-[-0.03em] text-[#141414]">
-                    Status do aluno
+                    Status do acesso
                   </h3>
 
-                  <div className="mt-4 flex items-center gap-3">
-                    <Check className="h-5 w-5 text-[#b89a65]" />
-                    <p className="text-[15px] font-medium text-[#52525b]">
-                      Cadastro aprovado e listado como aluno ativo.
+                  <div className="mt-4">
+                    <StatusBadge student={selectedStudent} />
+                  </div>
+
+                  <div className="mt-4 flex items-start gap-3">
+                    {selectedStudent.is_blocked ? (
+                      <LockKeyhole className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
+                    ) : (
+                      <Check className="mt-0.5 h-5 w-5 shrink-0 text-green-600" />
+                    )}
+
+                    <p className="text-[15px] leading-6 text-[#52525b]">
+                      {selectedStudent.is_blocked
+                        ? "O login deste aluno está bloqueado e ele não pode acessar a plataforma."
+                        : selectedStudent.auth_user_id
+                          ? "O login deste aluno está ativo e o acesso à plataforma está liberado."
+                          : "Este cadastro ainda não possui um login vinculado no Supabase Auth."}
                     </p>
                   </div>
+
+                  <button
+                    type="button"
+                    onClick={() => toggleStudentAccess(selectedStudent)}
+                    disabled={
+                      !selectedStudent.auth_user_id ||
+                      updatingStudentId === selectedStudent.id
+                    }
+                    className={cn(
+                      "mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-[10px] px-5 text-[14px] font-semibold transition disabled:cursor-not-allowed disabled:opacity-50",
+                      selectedStudent.is_blocked
+                        ? "bg-green-600 text-white hover:bg-green-700"
+                        : "bg-red-600 text-white hover:bg-red-700",
+                    )}
+                  >
+                    {selectedStudent.is_blocked ? (
+                      <UnlockKeyhole className="h-4 w-4" />
+                    ) : (
+                      <LockKeyhole className="h-4 w-4" />
+                    )}
+
+                    {updatingStudentId === selectedStudent.id
+                      ? "Atualizando..."
+                      : selectedStudent.is_blocked
+                        ? "Desbloquear acesso"
+                        : "Bloquear acesso"}
+                  </button>
                 </section>
               </div>
             </motion.div>

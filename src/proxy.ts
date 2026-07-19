@@ -55,6 +55,12 @@ export async function proxy(req: NextRequest) {
   const { data, error } = await supabase.auth.getUser();
 
   if (error || !data.user) {
+    const authErrorMessage = error?.message.toLowerCase() ?? "";
+
+    if (authErrorMessage.includes("banned")) {
+      return redirectToBlocked(req, "student_blocked");
+    }
+
     return redirectToLogin(req);
   }
 

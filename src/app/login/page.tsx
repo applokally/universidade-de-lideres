@@ -68,6 +68,14 @@ function traduzirErroLogin(mensagem: string): string {
     return "E-mail ou senha inválidos.";
   }
 
+  if (
+    texto.includes("user is banned") ||
+    texto.includes("user_banned") ||
+    texto.includes("banned")
+  ) {
+    return "Seu acesso à plataforma foi bloqueado pelo administrador.";
+  }
+
   if (texto.includes("email not confirmed")) {
     return "Seu e-mail ainda não foi confirmado.";
   }
@@ -90,6 +98,10 @@ function traduzirBloqueio(valor: string | null): string | null {
 
   if (valor === "student_not_approved") {
     return "Seu cadastro ainda não foi aprovado para acessar a área do aluno.";
+  }
+
+  if (valor === "student_blocked") {
+    return "Seu acesso à plataforma foi bloqueado pelo administrador.";
   }
 
   return null;
