@@ -9,9 +9,8 @@ import {
   useMotionValue,
   animate,
 } from "framer-motion";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabaseBrowser } from "@/lib/supabase/browser";
 
 function GlowFollowBorderCard({
   children,
@@ -55,10 +54,14 @@ function GlowFollowBorderCard({
       className={`group relative ${roundedClass} ${className}`}
       style={
         {
-          ["--mx" as any]: "50%",
-          ["--my" as any]: "50%",
-          ["--glow-opacity" as any]: 0,
-        } as React.CSSProperties
+          "--mx": "50%",
+          "--my": "50%",
+          "--glow-opacity": 0,
+        } as React.CSSProperties & {
+          "--mx": string;
+          "--my": string;
+          "--glow-opacity": number;
+        }
       }
     >
       <div className={`absolute inset-0 border border-white/8 ${roundedClass}`} />
@@ -293,7 +296,6 @@ const initialFormState: FormState = {
 
 export default function RegisterPage() {
   const router = useRouter();
-  const supabase = useMemo(() => supabaseBrowser(), []);
   const [form, setForm] = useState<FormState>(initialFormState);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -316,101 +318,52 @@ export default function RegisterPage() {
     setBusy(true);
     setError(null);
 
-    const fullAddress = [
-      form.street.trim(),
-      form.number.trim(),
-      form.neighborhood.trim(),
-      form.city.trim(),
-      form.state.trim(),
-      form.zipCode.trim(),
-    ]
-      .filter(Boolean)
-      .join(", ");
-
-    const payload = {
-      first_name: form.firstName.trim(),
-      last_name: form.lastName.trim(),
-      full_name: `${form.firstName.trim()} ${form.lastName.trim()}`.trim(),
-      phone: form.phone.trim(),
-      email: form.email.trim().toLowerCase(),
-      requested_password: form.password,
-      mmn_login: form.mmnLogin.trim(),
-      leader_name: form.leaderName.trim(),
-      street: form.street.trim(),
-      number: form.number.trim(),
-      neighborhood: form.neighborhood.trim(),
-      city: form.city.trim(),
-      state: form.state.trim(),
-      zip_code: form.zipCode.trim(),
-      full_address: fullAddress,
-      status: "pending",
-    };
-
-    const { error: signUpError } = await supabase.auth.signUp({
-      email: payload.email,
-      password: form.password,
-      options: {
-        data: {
-          full_name: payload.full_name,
-          first_name: payload.first_name,
-          last_name: payload.last_name,
-          phone: payload.phone,
-          role: "member",
+    try {
+      const response = await fetch("/api/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      },
-    });
-
-    if (signUpError) {
-      console.error("Supabase auth signUp error:", {
-        message: signUpError.message,
-        status: signUpError.status,
-        name: signUpError.name,
+        body: JSON.stringify({
+          first_name: form.firstName,
+          last_name: form.lastName,
+          phone: form.phone,
+          email: form.email,
+          password: form.password,
+          mmn_login: form.mmnLogin,
+          leader_name: form.leaderName,
+          street: form.street,
+          number: form.number,
+          neighborhood: form.neighborhood,
+          city: form.city,
+          state: form.state,
+          zip_code: form.zipCode,
+        }),
       });
 
+      const data = (await response.json().catch(() => null)) as {
+        ok?: boolean;
+        message?: string;
+      } | null;
+
+      if (!response.ok || !data?.ok) {
+        setError(
+          data?.message ||
+            "Não foi possível registrar a solicitação agora.",
+        );
+        return;
+      }
+
+      setForm(initialFormState);
+      setSuccessOpen(true);
+    } catch (requestError) {
+      console.error("Erro ao enviar cadastro:", requestError);
+      setError(
+        "Não foi possível conectar ao servidor. Tente novamente em instantes.",
+      );
+    } finally {
       setBusy(false);
-
-      const message = signUpError.message.toLowerCase();
-
-      if (message.includes("already") || message.includes("registered")) {
-        setError(
-          "Este e-mail já possui uma solicitação ou login registrado. Acesse a tela de login ou aguarde o retorno da equipe responsável."
-        );
-        return;
-      }
-
-      setError(signUpError.message || "Não foi possível registrar a solicitação agora.");
-      return;
     }
-
-    const { error: insertError } = await supabase
-      .from("student_registration_requests")
-      .insert(payload);
-
-    await supabase.auth.signOut();
-
-    setBusy(false);
-
-    if (insertError) {
-      console.error("Supabase insert error:", {
-        message: insertError.message,
-        code: insertError.code,
-        details: insertError.details,
-        hint: insertError.hint,
-      });
-
-      if (insertError.code === "23505") {
-        setError(
-          "Já existe uma solicitação pendente com este e-mail e identificação informada. Aguarde o retorno da equipe responsável."
-        );
-        return;
-      }
-
-      setError(insertError.message || "Não foi possível enviar a solicitação de orientação agora.");
-      return;
-    }
-
-    setForm(initialFormState);
-    setSuccessOpen(true);
   }
 
   return (
