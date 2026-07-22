@@ -302,6 +302,7 @@ export function StudentHeader() {
   const notificationMenuRef = useRef<HTMLDivElement | null>(null);
   const searchRef = useRef<HTMLDivElement | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const accessRedirectingRef = useRef(false);
 
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -319,6 +320,66 @@ export function StudentHeader() {
   const [favorites, setFavorites] = useState<StudentFavorite[]>([]);
   const [loadingFavorites, setLoadingFavorites] = useState(false);
   const [communityHeaderNotifications, setCommunityHeaderNotifications] = useState<HeaderNotification[]>([]);
+
+  useEffect(() => {
+    let active = true;
+
+    async function verifyStudentAccess() {
+      if (accessRedirectingRef.current) return;
+
+      try {
+        const response = await fetch("/api/student/access-status", {
+          method: "GET",
+          cache: "no-store",
+        });
+
+        const data = (await response.json().catch(() => null)) as {
+          blocked?: boolean;
+        } | null;
+
+        if (!active || data?.blocked !== true) return;
+
+        accessRedirectingRef.current = true;
+
+        try {
+          const supabase = supabaseBrowser();
+          await supabase.auth.signOut();
+        } catch {
+          // O redirecionamento deve ocorrer mesmo se a limpeza da sessão falhar.
+        }
+
+        window.location.replace("/login?blocked=student_blocked");
+      } catch {
+        // Falhas temporárias de rede não devem expulsar um aluno com acesso válido.
+      }
+    }
+
+    void verifyStudentAccess();
+
+    const interval = window.setInterval(() => {
+      void verifyStudentAccess();
+    }, 15_000);
+
+    function handleVisibilityChange() {
+      if (document.visibilityState === "visible") {
+        void verifyStudentAccess();
+      }
+    }
+
+    function handleWindowFocus() {
+      void verifyStudentAccess();
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", handleWindowFocus);
+
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", handleWindowFocus);
+    };
+  }, [pathname]);
 
   useEffect(() => {
     function handleScroll() {
