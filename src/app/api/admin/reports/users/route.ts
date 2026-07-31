@@ -38,24 +38,33 @@ export async function GET() {
 
   try {
     const service = serviceClient();
-    const authUsers: AuthUserSummary[] = [];
+    const profilesResult = await service
+      .from("profiles")
+      .select("id,role,full_name,tier_id,created_at");
+    if (profilesResult.error) throw profilesResult.error;
 
-    for (let page = 1; page <= 20; page += 1) {
-      const { data, error } = await service.auth.admin.listUsers({
-        page,
-        perPage: 1000,
-      });
-      if (error) throw error;
-      authUsers.push(...(data.users as AuthUserSummary[]));
-      if (data.users.length < 1000) break;
-    }
-
-    const userIds = authUsers.map((item) => item.id);
+    const studentProfiles = (profilesResult.data ?? []).filter(
+      (profile) => profile.role !== "admin" && profile.role !== "super_admin",
+    );
+    const userIds = studentProfiles.map((profile) => profile.id);
     if (userIds.length === 0) return NextResponse.json({ users: [], summary: {} });
 
-    const [profilesResult, tiersResult, progressResult, attemptsResult, ledgerResult] =
+    const authUsers: AuthUserSummary[] = [];
+    const bulkResult = await service.auth.admin.listUsers({ page: 1, perPage: 1000 });
+
+    if (!bulkResult.error) {
+      authUsers.push(...(bulkResult.data.users as AuthUserSummary[]));
+    } else {
+      for (let page = 1; page <= 5000; page += 1) {
+        const pageResult = await service.auth.admin.listUsers({ page, perPage: 1 });
+        if (pageResult.error) continue;
+        if (pageResult.data.users.length === 0) break;
+        authUsers.push(...(pageResult.data.users as AuthUserSummary[]));
+      }
+    }
+
+    const [tiersResult, progressResult, attemptsResult, ledgerResult] =
       await Promise.all([
-        service.from("profiles").select("id,role,full_name,tier_id").in("id", userIds),
         service.from("access_tiers").select("id,name,rank"),
         service
           .from("lesson_progress")
@@ -72,16 +81,13 @@ export async function GET() {
       ]);
 
     const failure =
-      profilesResult.error ||
       tiersResult.error ||
       progressResult.error ||
       attemptsResult.error ||
       ledgerResult.error;
     if (failure) throw failure;
 
-    const profiles = new Map(
-      (profilesResult.data ?? []).map((profile) => [profile.id, profile]),
-    );
+    const authUsersById = new Map(authUsers.map((authUser) => [authUser.id, authUser]));
     const tiers = new Map(
       (tiersResult.data ?? []).map((tier) => [tier.id, tier]),
     );
@@ -143,28 +149,27 @@ export async function GET() {
       getStats(row.user_id).points += Number(row.points ?? 0);
     });
 
-    const users = authUsers
-      .filter((authUser) => profiles.get(authUser.id)?.role !== "admin")
-      .map((authUser) => {
-        const profile = profiles.get(authUser.id);
-        const tier = profile?.tier_id ? tiers.get(profile.tier_id) : null;
-        const userStats = getStats(authUser.id);
-        registerActivity(userStats, authUser.last_sign_in_at ?? null);
+    const users = studentProfiles
+      .map((profile) => {
+        const authUser = authUsersById.get(profile.id);
+        const tier = profile.tier_id ? tiers.get(profile.tier_id) : null;
+        const userStats = getStats(profile.id);
+        registerActivity(userStats, authUser?.last_sign_in_at ?? null);
         return {
-          id: authUser.id,
+          id: profile.id,
           name:
-            profile?.full_name ||
-            authUser.user_metadata?.full_name ||
-            authUser.email?.split("@")[0] ||
+            profile.full_name ||
+            authUser?.user_metadata?.full_name ||
+            authUser?.email?.split("@")[0] ||
             "Aluno",
-          email: authUser.email ?? "",
+          email: authUser?.email ?? "",
           tier_name: tier?.name ?? "Sem nível",
           tier_rank: tier?.rank ?? 0,
-          created_at: authUser.created_at,
+          created_at: authUser?.created_at ?? profile.created_at,
           last_access_at: userStats.lastActivity,
           is_blocked:
-            Boolean(authUser.banned_until) &&
-            new Date(authUser.banned_until as string).getTime() > Date.now(),
+            Boolean(authUser?.banned_until) &&
+            new Date(authUser?.banned_until as string).getTime() > Date.now(),
           watched_seconds: userStats.watchedSeconds,
           completed_lessons: userStats.completedLessons,
           assessment_attempts: userStats.attempts,
