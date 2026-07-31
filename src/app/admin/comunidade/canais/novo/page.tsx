@@ -13,6 +13,7 @@ import {
   X,
 } from "lucide-react";
 import { supabaseBrowser } from "@/lib/supabase/browser";
+import { AccessTierSelect } from "../../../_components/AccessTierSelect";
 
 type Visibility = "all" | "rank";
 
@@ -485,13 +486,9 @@ export default function AdminNovoCanalComunidadePage() {
 
             <div>
               <label className={labelClass}>Nível mínimo</label>
-              <input
-                type="number"
-                min="0"
+              <AccessTierSelect
                 value={form.requiredRank}
-                onChange={(event) =>
-                  updateField("requiredRank", event.target.value)
-                }
+                onChange={(value) => updateField("requiredRank", value)}
                 disabled={form.visibility === "all"}
                 className={`${inputClass} disabled:bg-[#f5f6fb] disabled:text-[#9aa0ae]`}
               />

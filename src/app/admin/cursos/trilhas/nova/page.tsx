@@ -14,6 +14,7 @@ import {
   Upload,
 } from "lucide-react";
 import { supabaseBrowser } from "@/lib/supabase/browser";
+import { AccessTierSelect } from "../../../_components/AccessTierSelect";
 
 type StatusTrilha = "draft" | "published" | "archived";
 type PreferredCardFormat = "vertical" | "horizontal" | "featured";
@@ -769,14 +770,11 @@ export default function NovaTrilhaPage() {
 
               <div className="xl:col-span-4">
                 <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
-                  Rank mínimo exigido
+                  Nível mínimo exigido
                 </label>
-                <input
-                  type="number"
-                  min={0}
+                <AccessTierSelect
                   value={form.requiredRank}
-                  onChange={(e) => updateField("requiredRank", e.target.value)}
-                  placeholder="0"
+                  onChange={(value) => updateField("requiredRank", value)}
                   className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none placeholder:text-[#8a8f9d] transition focus:border-[#DBC094] focus:bg-white"
                 />
               </div>

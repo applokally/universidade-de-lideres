@@ -33,6 +33,7 @@ import {
   Link as LinkIcon,
 } from "lucide-react";
 import { supabaseBrowser } from "@/lib/supabase/browser";
+import * as tus from "tus-js-client";
 
 type StatusGeral = "draft" | "published" | "archived" | string;
 type StatusModulo = "draft" | "published" | "archived";
@@ -514,6 +515,17 @@ function buildLessonMaterialPath(cursoId: string, aulaId: string, assetType: str
   return `courses/${cursoId}/lessons/${aulaId}/materials/${assetType}/${unique}.${ext}`;
 }
 
+function inferMaterialType(file: File) {
+  const extension = file.name.split(".").pop()?.toLowerCase();
+  if (file.type === "application/pdf" || extension === "pdf") return "pdf";
+  if (file.type.startsWith("image/")) return "image";
+  if (file.type.startsWith("audio/")) return "audio";
+  if (["doc", "docx", "odt", "txt"].includes(extension ?? "")) return "document";
+  if (["xls", "xlsx", "ods", "csv"].includes(extension ?? "")) return "spreadsheet";
+  if (["ppt", "pptx", "odp"].includes(extension ?? "")) return "presentation";
+  return "download";
+}
+
 export default function AdminCursoModulosPage({ params }: PaginaProps) {
   const supabase = useMemo(() => supabaseBrowser(), []);
 
@@ -556,6 +568,8 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
   const [erroNovaAula, setErroNovaAula] = useState<string | null>(null);
   const [formAula, setFormAula] = useState<FormAulaState>(formAulaInicial());
   const [arquivoConteudoPrincipal, setArquivoConteudoPrincipal] = useState<File | null>(null);
+  const [arquivosMateriaisNovaAula, setArquivosMateriaisNovaAula] = useState<File[]>([]);
+  const [progressoUpload, setProgressoUpload] = useState(0);
 
   const [modalMateriaisAberto, setModalMateriaisAberto] = useState(false);
   const [aulaSelecionadaParaMateriais, setAulaSelecionadaParaMateriais] =
@@ -1076,6 +1090,10 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
     setModuloSelecionadoParaAula(null);
     setErroNovaAula(null);
     setArquivoConteudoPrincipal(null);
+    setArquivosMateriaisNovaAula([]);
+    setProgressoUpload(0);
+    setArquivosMateriaisNovaAula([]);
+    setProgressoUpload(0);
   }
 
   function validarAula() {
@@ -1142,6 +1160,64 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
     return null;
   }
 
+  async function uploadStorageFile(
+    bucket: string,
+    path: string,
+    file: File,
+    onProgress?: (percentage: number) => void,
+  ) {
+    const useResumable = file.size >= 6 * 1024 * 1024 || file.type.startsWith("video/");
+
+    if (!useResumable) {
+      const { error } = await supabase.storage.from(bucket).upload(path, file, {
+        upsert: false,
+        contentType: file.type || undefined,
+      });
+      if (error) throw error;
+      onProgress?.(100);
+      return;
+    }
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    if (!session?.access_token || !supabaseUrl) {
+      throw new Error("Sessão expirada. Entre novamente antes de enviar o arquivo.");
+    }
+
+    await new Promise<void>((resolve, reject) => {
+      const upload = new tus.Upload(file, {
+        endpoint: `${supabaseUrl}/storage/v1/upload/resumable`,
+        retryDelays: [0, 1000, 3000, 5000, 10000],
+        headers: {
+          authorization: `Bearer ${session.access_token}`,
+          "x-upsert": "false",
+        },
+        uploadDataDuringCreation: true,
+        removeFingerprintOnSuccess: true,
+        chunkSize: 6 * 1024 * 1024,
+        metadata: {
+          bucketName: bucket,
+          objectName: path,
+          contentType: file.type || "application/octet-stream",
+          cacheControl: "3600",
+        },
+        onError: (error) => reject(error),
+        onProgress: (uploaded, total) =>
+          onProgress?.(total > 0 ? Math.round((uploaded / total) * 100) : 0),
+        onSuccess: () => resolve(),
+      });
+
+      upload.findPreviousUploads().then((previousUploads) => {
+        if (previousUploads.length > 0) {
+          upload.resumeFromPreviousUpload(previousUploads[0]);
+        }
+        upload.start();
+      }).catch(reject);
+    });
+  }
+
   async function uploadConteudoPrincipal(): Promise<{
     primaryAssetPath: string | null;
     primaryAssetName: string | null;
@@ -1164,14 +1240,12 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
       arquivoConteudoPrincipal
     );
 
-    const { error } = await supabase.storage
-      .from(LESSON_CONTENT_BUCKET)
-      .upload(path, arquivoConteudoPrincipal, {
-        upsert: false,
-        contentType: arquivoConteudoPrincipal.type || undefined,
-      });
-
-    if (error) throw error;
+    await uploadStorageFile(
+      LESSON_CONTENT_BUCKET,
+      path,
+      arquivoConteudoPrincipal,
+      setProgressoUpload,
+    );
 
     return {
       primaryAssetPath: path,
@@ -1285,13 +1359,49 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
           : null,
       };
 
-      const { error: insertError } = await supabase.from("lessons").insert(payload);
+      const { data: insertedLesson, error: insertError } = await supabase
+        .from("lessons")
+        .insert(payload)
+        .select("id")
+        .single<{ id: string }>();
 
-      if (insertError) throw insertError;
+      if (insertError || !insertedLesson?.id) {
+        throw insertError ?? new Error("A aula foi enviada, mas não pôde ser registrada.");
+      }
+
+      for (const [index, materialFile] of arquivosMateriaisNovaAula.entries()) {
+        const assetType = inferMaterialType(materialFile);
+        const storagePath = buildLessonMaterialPath(
+          cursoId,
+          insertedLesson.id,
+          assetType,
+          materialFile,
+        );
+        await uploadStorageFile(
+          LESSON_MATERIALS_BUCKET,
+          storagePath,
+          materialFile,
+        );
+        const { error: materialError } = await supabase
+          .from("lesson_assets")
+          .insert({
+            lesson_id: insertedLesson.id,
+            asset_type: assetType,
+            title: materialFile.name.replace(/\.[^/.]+$/, ""),
+            storage_path: storagePath,
+            file_name: materialFile.name,
+            mime_type: materialFile.type || null,
+            size_bytes: materialFile.size,
+            sort_order: index,
+          });
+        if (materialError) throw materialError;
+      }
 
       setModalNovaAulaAberto(false);
       setModuloSelecionadoParaAula(null);
       setArquivoConteudoPrincipal(null);
+      setArquivosMateriaisNovaAula([]);
+      setProgressoUpload(0);
       await carregarEstrutura(cursoId);
     } catch (error) {
       const mensagem =
@@ -1549,14 +1659,12 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
       arquivoEditarConteudoPrincipal
     );
 
-    const { error } = await supabase.storage
-      .from(LESSON_CONTENT_BUCKET)
-      .upload(path, arquivoEditarConteudoPrincipal, {
-        upsert: false,
-        contentType: arquivoEditarConteudoPrincipal.type || undefined,
-      });
-
-    if (error) throw error;
+    await uploadStorageFile(
+      LESSON_CONTENT_BUCKET,
+      path,
+      arquivoEditarConteudoPrincipal,
+      setProgressoUpload,
+    );
 
     return {
       primaryAssetPath: path,
@@ -3098,10 +3206,50 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                     <div className="md:col-span-2 rounded-[12px] border border-[#e5e5e5] bg-white p-4">
                       <div className="flex items-start gap-3">
                         <Paperclip className="mt-0.5 h-4 w-4 text-[#8a6836]" />
-                        <div>
+                        <div className="min-w-0 flex-1">
                           <div className="text-[14px] font-semibold text-[#141414]">
                             Materiais para download
                           </div>
+                          <p className="mt-1 text-[13px] text-[#666b76]">
+                            Selecione PDFs, documentos, planilhas, imagens ou apresentações. Eles serão salvos junto com a aula.
+                          </p>
+                          <label className="mt-3 inline-flex cursor-pointer items-center gap-2 rounded-[10px] border border-[#DBC094] px-4 py-2 text-[13px] font-semibold text-[#8a6836]">
+                            <FileUp className="h-4 w-4" />
+                            Adicionar arquivos
+                            <input
+                              type="file"
+                              multiple
+                              className="sr-only"
+                              onChange={(event) => {
+                                const selected = Array.from(event.target.files ?? []);
+                                setArquivosMateriaisNovaAula((current) => [...current, ...selected]);
+                                event.currentTarget.value = "";
+                              }}
+                            />
+                          </label>
+                          {arquivosMateriaisNovaAula.length > 0 ? (
+                            <div className="mt-3 space-y-2">
+                              {arquivosMateriaisNovaAula.map((file, index) => (
+                                <div key={`${file.name}-${file.size}-${index}`} className="flex items-center gap-3 rounded-[10px] bg-[#f7f7f8] px-3 py-2 text-[13px]">
+                                  <FileText className="h-4 w-4 text-[#8a6836]" />
+                                  <span className="min-w-0 flex-1 truncate">{file.name}</span>
+                                  <span className="text-[#8a8f9d]">{formatarTamanho(file.size)}</span>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setArquivosMateriaisNovaAula((current) =>
+                                        current.filter((_, fileIndex) => fileIndex !== index),
+                                      )
+                                    }
+                                    className="text-rose-600"
+                                    aria-label={`Remover ${file.name}`}
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          ) : null}
                         </div>
                       </div>
                     </div>
@@ -3153,7 +3301,11 @@ export default function AdminCursoModulosPage({ params }: PaginaProps) {
                       ) : (
                         <Plus className="h-4 w-4" />
                       )}
-                      {salvandoAula ? "Salvando..." : "Salvar aula"}
+                      {salvandoAula
+                        ? progressoUpload > 0 && progressoUpload < 100
+                          ? `Enviando ${progressoUpload}%`
+                          : "Salvando..."
+                        : "Salvar aula"}
                     </button>
                   </div>
                 </form>

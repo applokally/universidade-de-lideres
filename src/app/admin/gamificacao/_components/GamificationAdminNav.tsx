@@ -8,12 +8,14 @@ import {
   LayoutDashboard,
   ListChecks,
   Medal,
+  Target,
   Trophy,
 } from "lucide-react";
 
 const tabs = [
   { label: "Visão geral", href: "/admin/gamificacao", icon: LayoutDashboard },
   { label: "Regras", href: "/admin/gamificacao/regras", icon: ListChecks },
+  { label: "Desafios", href: "/admin/gamificacao/desafios", icon: Target },
   { label: "Ranking", href: "/admin/gamificacao/ranking", icon: Trophy },
   { label: "Recompensas", href: "/admin/gamificacao/recompensas", icon: Gift },
   { label: "Resgates", href: "/admin/gamificacao/resgates", icon: Award },

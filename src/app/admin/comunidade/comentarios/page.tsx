@@ -30,6 +30,7 @@ export default function AdminCommunityCommentsPage() {
       const { data, error } = await supabase
         .from("community_comments")
         .select("id,post_id,author_id,body,status,created_at")
+        .neq("status", "deleted")
         .order("created_at", { ascending: false })
         .limit(120);
 
@@ -75,6 +76,12 @@ export default function AdminCommunityCommentsPage() {
 
     if (error) {
       setMessage(error.message);
+      return;
+    }
+
+    if (status === "deleted") {
+      setComments((current) => current.filter((comment) => comment.id !== id));
+      setMessage("Comentário excluído.");
       return;
     }
 

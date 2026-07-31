@@ -14,6 +14,7 @@ type ProfileRow = {
   full_name: string | null;
   phone: string | null;
   avatar_url: string | null;
+  tier_id: string | null;
 };
 
 type RegistrationAccessRow = {
@@ -107,6 +108,27 @@ function getAccessLevelLabel(value: string | null | undefined) {
   return labels[normalized] ?? "Executivo";
 }
 
+async function getTierAccessLevel(tierId: string | null | undefined) {
+  if (!tierId) return null;
+
+  const serviceClient = createSupabaseServiceClient();
+  if (!serviceClient) return null;
+
+  const { data } = await serviceClient
+    .from("access_tiers")
+    .select("name,rank")
+    .eq("id", tierId)
+    .maybeSingle<{ name: string; rank: number }>();
+
+  if (!data?.name) return null;
+
+  return {
+    access_level: normalizeAccessLevel(data.name),
+    access_level_label: data.name,
+    access_level_rank: Number(data.rank ?? 0),
+  };
+}
+
 async function getRegistrationAccessLevel(email: string | null | undefined) {
   if (!email || !supabaseUrl || !supabaseServiceRoleKey) {
     return {
@@ -164,11 +186,18 @@ async function getStudentContext() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id,role,full_name,phone,avatar_url")
+    .select("id,role,full_name,phone,avatar_url,tier_id")
     .eq("id", user.id)
     .maybeSingle<ProfileRow>();
 
-  const access = await getRegistrationAccessLevel(user.email ?? null);
+  const tierAccess = await getTierAccessLevel(profile?.tier_id);
+  const registrationAccess = tierAccess
+    ? null
+    : await getRegistrationAccessLevel(user.email ?? null);
+  const access = tierAccess ?? registrationAccess ?? {
+    access_level: "executivo",
+    access_level_label: "Executivo",
+  };
 
   return {
     supabase,
@@ -359,7 +388,7 @@ export async function PATCH(request: Request) {
     .upsert(profilePayload, {
       onConflict: "id",
     })
-    .select("id,role,full_name,phone,avatar_url")
+    .select("id,role,full_name,phone,avatar_url,tier_id")
     .maybeSingle<ProfileRow>();
 
   if (error || !profile) {
@@ -372,7 +401,9 @@ export async function PATCH(request: Request) {
     );
   }
 
-  const access = await getRegistrationAccessLevel(context.user.email ?? null);
+  const access =
+    (await getTierAccessLevel(profile.tier_id)) ??
+    (await getRegistrationAccessLevel(context.user.email ?? null));
 
   return NextResponse.json({
     user: {

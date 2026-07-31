@@ -27,6 +27,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { supabaseBrowser } from "@/lib/supabase/browser";
+import { AccessTierSelect } from "../_components/AccessTierSelect";
 
 type StatusCurso = "draft" | "published" | "archived" | string;
 type StatusTrilha = "draft" | "published" | "archived";
@@ -1390,14 +1391,12 @@ export default function AdminCursosPage() {
 
                   <div>
                     <label className="mb-2 block text-[14px] font-semibold text-[#52525b]">
-                      Rank mínimo exigido
+                      Nível mínimo exigido
                     </label>
-                    <input
-                      type="number"
-                      min={0}
+                    <AccessTierSelect
                       value={formEditarTrilha.requiredRank}
-                      onChange={(e) =>
-                        updateFormEditarTrilha("requiredRank", e.target.value)
+                      onChange={(value) =>
+                        updateFormEditarTrilha("requiredRank", value)
                       }
                       className="h-12 w-full rounded-[12px] border border-[#e5e5e5] bg-white px-4 text-[14px] text-[#141414] outline-none transition focus:border-[#DBC094] focus:bg-white"
                     />

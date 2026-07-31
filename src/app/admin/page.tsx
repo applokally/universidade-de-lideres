@@ -6,6 +6,7 @@ import {
   Clock3,
   FileText,
   GraduationCap,
+  Target,
   UserCheck,
   Users,
 } from "lucide-react";
@@ -14,7 +15,29 @@ import { supabaseServer } from "@/lib/supabase/server";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-type CountFilter = (query: any) => any;
+type DynamicQueryResult = {
+  count: number | null;
+  data?: unknown[] | null;
+  error: unknown;
+};
+
+type DynamicQuery = PromiseLike<DynamicQueryResult> & {
+  eq: (column: string, value: string) => DynamicQuery;
+  in: (column: string, values: readonly string[]) => DynamicQuery;
+  limit: (limit: number) => DynamicQuery;
+  neq: (column: string, value: string) => DynamicQuery;
+};
+
+type DynamicSupabaseClient = {
+  from: (table: string) => {
+    select: (
+      columns: string,
+      options?: { count?: "exact"; head?: boolean },
+    ) => DynamicQuery;
+  };
+};
+
+type CountFilter = (query: DynamicQuery) => DynamicQuery;
 
 type CourseRow = {
   id: string;
@@ -38,7 +61,7 @@ type ProfileRow = {
 async function getCount(table: string, filter?: CountFilter) {
   try {
     const supabase = await supabaseServer();
-    let query = (supabase as any)
+    let query = (supabase as unknown as DynamicSupabaseClient)
       .from(table)
       .select("*", { count: "exact", head: true });
 
@@ -58,7 +81,7 @@ async function getRows<T>(table: string, select: string, limit = 4) {
   try {
     const supabase = await supabaseServer();
 
-    const { data, error } = await (supabase as any)
+    const { data, error } = await (supabase as unknown as DynamicSupabaseClient)
       .from(table)
       .select(select)
       .limit(limit);
@@ -214,6 +237,11 @@ export default async function AdminPage() {
       label: "Alunos ativos",
       href: "/admin/alunos",
       icon: Users,
+    },
+    {
+      label: "Criar desafio",
+      href: "/admin/gamificacao/desafios",
+      icon: Target,
     },
   ];
 

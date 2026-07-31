@@ -1,6 +1,7 @@
 import Link from "next/link";
 import {
   CalendarClock,
+  CircleHelp,
   Eye,
   Image as ImageIcon,
   MonitorPlay,
@@ -160,13 +161,22 @@ export default async function AdminLivesPage() {
           </p>
         </div>
 
-        <Link
-          href="/admin/lives/nova"
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-[#141414] px-5 text-[14px] font-semibold text-white transition hover:bg-[#2a2a2a]"
-        >
-          <Plus className="h-4 w-4" />
-          Nova live
-        </Link>
+        <div className="flex flex-wrap gap-3">
+          <Link
+            href="/admin/lives/guia"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-[#dfe3ec] bg-white px-5 text-[14px] font-semibold"
+          >
+            <CircleHelp className="h-4 w-4" />
+            Como configurar
+          </Link>
+          <Link
+            href="/admin/lives/nova"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-[#141414] px-5 text-[14px] font-semibold text-white transition hover:bg-[#2a2a2a]"
+          >
+            <Plus className="h-4 w-4" />
+            Nova live
+          </Link>
+        </div>
       </section>
 
       <section className="grid gap-3 md:grid-cols-3">
