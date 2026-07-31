@@ -64,6 +64,7 @@ type CommunityComment = {
   post_id: string;
   author_id: string;
   body: string;
+  image_path: string | null;
   status: string | null;
   created_at: string | null;
 };
@@ -99,6 +100,7 @@ type FeedComment = {
   initials: string;
   avatarUrl: string;
   body: string;
+  imageUrl: string;
   time: string;
 };
 
@@ -114,6 +116,7 @@ type FeedPost = {
   channelId: string;
   channel: string;
   text: string;
+  imageUrl: string;
   comments: number;
   likes: number;
   liked: boolean;
@@ -124,6 +127,26 @@ type FeedPost = {
   notificationId?: string;
   allowComments: boolean;
   commentsList: FeedComment[];
+};
+
+type CommunitySettings = {
+  allow_student_posts: boolean;
+  require_post_approval: boolean;
+  allow_student_comments: boolean;
+  require_comment_approval: boolean;
+  allow_media_uploads: boolean;
+  allow_reports: boolean;
+  community_rules: string;
+};
+
+const defaultCommunitySettings: CommunitySettings = {
+  allow_student_posts: true,
+  require_post_approval: false,
+  allow_student_comments: true,
+  require_comment_approval: false,
+  allow_media_uploads: true,
+  allow_reports: true,
+  community_rules: "",
 };
 
 const fallbackTabs: Array<{
@@ -201,6 +224,14 @@ function resolvePublicUrl(bucket: string, path: string | null | undefined) {
 
 function resolveAvatarUrl(url: string | null | undefined) {
   return resolvePublicUrl("avatars", url);
+}
+
+function findImageUrl(text: string) {
+  return (
+    text.match(
+      /https?:\/\/[^\s)]+\.(?:png|jpe?g|webp|gif)(?:\?[^\s)]*)?/i,
+    )?.[0] ?? ""
+  );
 }
 
 function getRelativeTime(value: string | null) {
@@ -312,6 +343,11 @@ function Composer({
   onChannelChange,
   onSubmit,
   publishing,
+  image,
+  imagePreview,
+  allowMedia,
+  onImageChange,
+  onRemoveImage,
 }: {
   currentUser: ProfileUser | null;
   text: string;
@@ -321,9 +357,14 @@ function Composer({
   onChannelChange: (value: string) => void;
   onSubmit: () => void;
   publishing: boolean;
+  image: File | null;
+  imagePreview: string;
+  allowMedia: boolean;
+  onImageChange: (file: File | null) => void;
+  onRemoveImage: () => void;
 }) {
   const availableChannels = channels.filter((channel) => !channel.is_locked);
-  const disabled = text.trim().length === 0 || !channelId || publishing;
+  const disabled = (text.trim().length === 0 && !image) || !channelId || publishing;
 
   return (
     <section className="border-b border-white/10 px-4 py-5 sm:px-5">
@@ -343,15 +384,33 @@ function Composer({
             className="min-h-[92px] w-full resize-none border-0 bg-transparent py-1 text-[18px] leading-7 text-white outline-none placeholder:text-white/34"
           />
 
-          <div className="mt-3 flex flex-col gap-3 border-t border-white/10 pt-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex flex-wrap items-center gap-3 text-[#DBC094]">
+          {imagePreview ? (
+            <div className="relative mt-3 overflow-hidden rounded-[16px] border border-white/10">
+              <img src={imagePreview} alt="Prévia da publicação" className="max-h-[360px] w-full object-cover" />
               <button
                 type="button"
-                className="transition hover:text-white"
-                aria-label="Adicionar imagem"
+                onClick={onRemoveImage}
+                className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-black/75 text-white"
+                aria-label="Remover imagem"
               >
-                <ImageIcon className="h-4 w-4" />
+                <X className="h-4 w-4" />
               </button>
+            </div>
+          ) : null}
+
+          <div className="mt-3 flex flex-col gap-3 border-t border-white/10 pt-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-wrap items-center gap-3 text-[#DBC094]">
+              {allowMedia ? (
+                <label className="cursor-pointer transition hover:text-white" aria-label="Adicionar imagem">
+                  <ImageIcon className="h-4 w-4" />
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    className="sr-only"
+                    onChange={(event) => onImageChange(event.target.files?.[0] ?? null)}
+                  />
+                </label>
+              ) : null}
 
               <select
                 value={channelId}
@@ -394,6 +453,11 @@ function CommentsDropdown({
   onCommentChange,
   onSubmitComment,
   onShowMore,
+  commentImage,
+  commentImagePreview,
+  allowMedia,
+  onCommentImageChange,
+  onRemoveCommentImage,
 }: {
   post: FeedPost;
   commentText: string;
@@ -402,6 +466,11 @@ function CommentsDropdown({
   onCommentChange: (value: string) => void;
   onSubmitComment: () => void;
   onShowMore: () => void;
+  commentImage: File | null;
+  commentImagePreview: string;
+  allowMedia: boolean;
+  onCommentImageChange: (file: File | null) => void;
+  onRemoveCommentImage: () => void;
 }) {
   const visibleComments = post.commentsList.slice(0, visibleCount);
   const hasMore = post.commentsList.length > visibleCount;
@@ -417,10 +486,22 @@ function CommentsDropdown({
           className="min-h-[54px] flex-1 resize-none rounded-[14px] border border-white/10 bg-black/24 px-3 py-2 text-[14px] leading-5 text-white outline-none placeholder:text-white/32 focus:border-[#DBC094]/60"
         />
 
+        {allowMedia ? (
+          <label className="flex h-[54px] w-[44px] shrink-0 cursor-pointer items-center justify-center rounded-[14px] border border-white/10 text-[#DBC094] hover:border-[#DBC094]/50">
+            <ImageIcon className="h-4 w-4" />
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              className="sr-only"
+              onChange={(event) => onCommentImageChange(event.target.files?.[0] ?? null)}
+            />
+          </label>
+        ) : null}
+
         <button
           type="button"
           onClick={onSubmitComment}
-          disabled={!commentText.trim() || submitting}
+          disabled={(!commentText.trim() && !commentImage) || submitting}
           className="flex h-[54px] w-[54px] shrink-0 items-center justify-center rounded-[14px] bg-[#DBC094] text-black transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-45"
           aria-label="Enviar comentário"
         >
@@ -431,6 +512,15 @@ function CommentsDropdown({
           )}
         </button>
       </div>
+
+      {commentImagePreview ? (
+        <div className="relative mt-3 inline-block overflow-hidden rounded-[12px] border border-white/10">
+          <img src={commentImagePreview} alt="Prévia do comentário" className="max-h-[180px] max-w-[280px] object-cover" />
+          <button type="button" onClick={onRemoveCommentImage} className="absolute right-2 top-2 rounded-full bg-black/75 p-1.5">
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      ) : null}
 
       <div className="mt-4 divide-y divide-white/10">
         {visibleComments.length > 0 ? (
@@ -450,6 +540,13 @@ function CommentsDropdown({
                   <p className="mt-1 whitespace-pre-line text-[13px] leading-5 text-white/62">
                     {comment.body}
                   </p>
+                  {comment.imageUrl ? (
+                    <img
+                      src={comment.imageUrl}
+                      alt="Imagem do comentário"
+                      className="mt-2 max-h-[320px] max-w-full rounded-[12px] object-cover"
+                    />
+                  ) : null}
                 </div>
               </div>
             </div>
@@ -490,6 +587,13 @@ function Post({
   onSubmitComment,
   onShowMoreComments,
   currentUserId,
+  allowReports,
+  allowMedia,
+  commentImage,
+  commentImagePreview,
+  onCommentImageChange,
+  onRemoveCommentImage,
+  commentsAllowed,
 }: {
   post: FeedPost;
   currentUserId: string;
@@ -506,6 +610,13 @@ function Post({
   onCommentChange: (id: string, value: string) => void;
   onSubmitComment: (id: string) => void;
   onShowMoreComments: (id: string) => void;
+  allowReports: boolean;
+  allowMedia: boolean;
+  commentImage: File | null;
+  commentImagePreview: string;
+  onCommentImageChange: (id: string, file: File | null) => void;
+  onRemoveCommentImage: (id: string) => void;
+  commentsAllowed: boolean;
 }) {
   const isNotification = post.sourceType === "notification";
 
@@ -546,18 +657,43 @@ function Post({
               </p>
             </div>
 
-            <button
-              type="button"
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white/34 transition hover:bg-white/8 hover:text-white"
-              aria-label="Mais opções"
-            >
-              <MoreHorizontal className="h-5 w-5" />
-            </button>
+            {!isNotification ? (
+              <details className="relative">
+                <summary
+                  className="flex h-8 w-8 cursor-pointer list-none items-center justify-center rounded-full text-white/34 transition hover:bg-white/8 hover:text-white [&::-webkit-details-marker]:hidden"
+                  aria-label="Mais opções"
+                >
+                  <MoreHorizontal className="h-5 w-5" />
+                </summary>
+                <div className="absolute right-0 z-20 mt-1 w-44 overflow-hidden rounded-[12px] border border-white/10 bg-[#17181d] py-1 shadow-2xl">
+                  <button type="button" onClick={() => onSave(post.id)} className="block w-full px-4 py-2 text-left text-sm text-white/75 hover:bg-white/8">
+                    {post.saved ? "Remover dos salvos" : "Salvar publicação"}
+                  </button>
+                  {allowReports ? (
+                    <button type="button" onClick={() => onReport(post.id)} className="block w-full px-4 py-2 text-left text-sm text-white/75 hover:bg-white/8">
+                      Denunciar
+                    </button>
+                  ) : null}
+                  {post.authorId === currentUserId ? (
+                    <button type="button" onClick={() => onDelete(post.id)} className="block w-full px-4 py-2 text-left text-sm text-red-300 hover:bg-white/8">
+                      Excluir
+                    </button>
+                  ) : null}
+                </div>
+              </details>
+            ) : null}
           </header>
 
           <p className="mt-2 whitespace-pre-line text-[15px] leading-7 text-white/78">
             {post.text}
           </p>
+          {post.imageUrl ? (
+            <img
+              src={post.imageUrl}
+              alt="Imagem da publicação"
+              className="mt-4 max-h-[620px] w-full rounded-[18px] border border-white/10 object-cover"
+            />
+          ) : null}
 
           {isNotification ? (
             <div className="mt-4 inline-flex rounded-full border border-[#DBC094]/18 bg-[#DBC094]/8 px-3 py-1.5 text-[12px] font-semibold text-[#DBC094]">
@@ -597,14 +733,16 @@ function Post({
                   {post.saved ? "Salvo" : "Salvar"}
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() => onReport(post.id)}
-                  className="flex items-center gap-2 transition hover:text-[#DBC094]"
-                >
-                  <Flag className="h-4 w-4" />
-                  Denunciar
-                </button>
+                {allowReports ? (
+                  <button
+                    type="button"
+                    onClick={() => onReport(post.id)}
+                    className="flex items-center gap-2 transition hover:text-[#DBC094]"
+                  >
+                    <Flag className="h-4 w-4" />
+                    Denunciar
+                  </button>
+                ) : null}
 
                 {post.authorId === currentUserId ? (
                   <button
@@ -618,7 +756,7 @@ function Post({
                 ) : null}
               </footer>
 
-              {!post.allowComments ? (
+              {!commentsAllowed ? (
                 <p className="mt-3 text-[12px] text-white/36">Comentários bloqueados pela administração.</p>
               ) : commentsOpen ? (
                 <CommentsDropdown
@@ -629,6 +767,11 @@ function Post({
                   onCommentChange={(value) => onCommentChange(post.id, value)}
                   onSubmitComment={() => onSubmitComment(post.id)}
                   onShowMore={() => onShowMoreComments(post.id)}
+                  commentImage={commentImage}
+                  commentImagePreview={commentImagePreview}
+                  allowMedia={allowMedia}
+                  onCommentImageChange={(file) => onCommentImageChange(post.id, file)}
+                  onRemoveCommentImage={() => onRemoveCommentImage(post.id)}
                 />
               ) : null}
             </>
@@ -657,6 +800,8 @@ export default function AlunoComunidadePage() {
   const [activeTab, setActiveTab] = useState<FeedTab>("para-voce");
   const [searchTerm, setSearchTerm] = useState("");
   const [composerText, setComposerText] = useState("");
+  const [composerImage, setComposerImage] = useState<File | null>(null);
+  const [composerImagePreview, setComposerImagePreview] = useState("");
   const [composerChannelId, setComposerChannelId] = useState("");
   const [currentUser, setCurrentUser] = useState<ProfileUser | null>(null);
   const [channels, setChannels] = useState<CommunityChannel[]>([]);
@@ -667,8 +812,11 @@ export default function AlunoComunidadePage() {
   const [openComments, setOpenComments] = useState<Record<string, boolean>>({});
   const [visibleComments, setVisibleComments] = useState<Record<string, number>>({});
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
+  const [commentImages, setCommentImages] = useState<Record<string, File | null>>({});
+  const [commentImagePreviews, setCommentImagePreviews] = useState<Record<string, string>>({});
   const [submittingCommentId, setSubmittingCommentId] = useState("");
   const [focusedNotificationId, setFocusedNotificationId] = useState("");
+  const [communitySettings, setCommunitySettings] = useState(defaultCommunitySettings);
 
   const supabase = useMemo(() => supabaseBrowser(), []);
 
@@ -702,7 +850,7 @@ export default function AlunoComunidadePage() {
 
       setCurrentUser(userProfile);
 
-      const [channelsResponse, postsResponse, notificationsResponse] =
+      const [channelsResponse, postsResponse, notificationsResponse, settingsResponse] =
         await Promise.all([
           supabase
             .from("community_channels")
@@ -723,11 +871,29 @@ export default function AlunoComunidadePage() {
             .order("sent_at", { ascending: false, nullsFirst: false })
             .order("created_at", { ascending: false })
             .limit(50),
+          supabase
+            .from("community_settings")
+            .select("key,value")
+            .in("key", Object.keys(defaultCommunitySettings)),
         ]);
 
       if (channelsResponse.error) throw channelsResponse.error;
       if (postsResponse.error) throw postsResponse.error;
       if (notificationsResponse.error) throw notificationsResponse.error;
+
+      if (!settingsResponse.error) {
+        const loadedSettings = { ...defaultCommunitySettings };
+        (settingsResponse.data ?? []).forEach((row) => {
+          if (!(row.key in loadedSettings)) return;
+          if (row.key === "community_rules") {
+            loadedSettings.community_rules = String(row.value ?? "");
+          } else {
+            (loadedSettings as unknown as Record<string, boolean | string>)[row.key] =
+              row.value === true || row.value === "true";
+          }
+        });
+        setCommunitySettings(loadedSettings);
+      }
 
       const loadedChannels =
         (channelsResponse.data ?? []) as unknown as CommunityChannel[];
@@ -757,7 +923,7 @@ export default function AlunoComunidadePage() {
           postIds.length > 0
             ? supabase
                 .from("community_comments")
-                .select("id,post_id,author_id,body,status,created_at")
+                .select("id,post_id,author_id,body,image_path,status,created_at")
                 .in("post_id", postIds)
                 .eq("status", "published")
                 .order("created_at", { ascending: false })
@@ -836,6 +1002,7 @@ export default function AlunoComunidadePage() {
           initials: getInitials(authorName),
           avatarUrl: resolveAvatarUrl(author?.avatar_url),
           body: comment.body,
+          imageUrl: resolvePublicUrl("community-media", comment.image_path),
           time: getRelativeTime(comment.created_at),
         });
 
@@ -894,6 +1061,9 @@ export default function AlunoComunidadePage() {
           channelId: post.channel_id,
           channel: channel?.name ?? "Comunidade",
           text: post.body,
+          imageUrl:
+            resolvePublicUrl("community-media", post.image_path) ||
+            findImageUrl(post.body),
           comments: postComments.length,
           likes: likesByPost.get(post.id) ?? 0,
           liked: likedPostIds.has(post.id),
@@ -934,6 +1104,7 @@ export default function AlunoComunidadePage() {
           channelId: notification.channel_id ?? "",
           channel: notificationChannel?.name ?? "Avisos oficiais",
           text: [cleanTitle, cleanBody].filter(Boolean).join("\n\n"),
+          imageUrl: findImageUrl([cleanTitle, cleanBody].filter(Boolean).join("\n\n")),
           comments: 0,
           likes: 0,
           liked: false,
@@ -1003,10 +1174,83 @@ export default function AlunoComunidadePage() {
     });
   }, [activeTab, posts, searchTerm]);
 
+  function validateImage(file: File) {
+    if (!["image/jpeg", "image/png", "image/webp", "image/gif"].includes(file.type)) {
+      return "Envie uma imagem JPG, PNG, WEBP ou GIF.";
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      return "A imagem deve ter no máximo 10 MB.";
+    }
+    return "";
+  }
+
+  function selectComposerImage(file: File | null) {
+    if (!file) return;
+    const validation = validateImage(file);
+    if (validation) {
+      setMessage(validation);
+      return;
+    }
+    if (composerImagePreview) URL.revokeObjectURL(composerImagePreview);
+    setComposerImage(file);
+    setComposerImagePreview(URL.createObjectURL(file));
+  }
+
+  function removeComposerImage() {
+    if (composerImagePreview) URL.revokeObjectURL(composerImagePreview);
+    setComposerImage(null);
+    setComposerImagePreview("");
+  }
+
+  function selectCommentImage(postId: string, file: File | null) {
+    if (!file) return;
+    const validation = validateImage(file);
+    if (validation) {
+      setMessage(validation);
+      return;
+    }
+    const existing = commentImagePreviews[postId];
+    if (existing) URL.revokeObjectURL(existing);
+    setCommentImages((current) => ({ ...current, [postId]: file }));
+    setCommentImagePreviews((current) => ({
+      ...current,
+      [postId]: URL.createObjectURL(file),
+    }));
+  }
+
+  function removeCommentImage(postId: string) {
+    const existing = commentImagePreviews[postId];
+    if (existing) URL.revokeObjectURL(existing);
+    setCommentImages((current) => ({ ...current, [postId]: null }));
+    setCommentImagePreviews((current) => ({ ...current, [postId]: "" }));
+  }
+
+  async function uploadCommunityImage(
+    file: File,
+    userId: string,
+    kind: "posts" | "comments",
+  ) {
+    const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
+    const path = `${kind}/${userId}/${crypto.randomUUID()}.${extension}`;
+    const { error } = await supabase.storage
+      .from("community-media")
+      .upload(path, file, {
+        cacheControl: "3600",
+        contentType: file.type,
+        upsert: false,
+      });
+    if (error) throw error;
+    return path;
+  }
+
   async function handlePublish() {
     const cleanText = composerText.trim();
 
-    if (!cleanText || !composerChannelId || publishing) return;
+    if ((!cleanText && !composerImage) || !composerChannelId || publishing) return;
+    if (!communitySettings.allow_student_posts) {
+      setMessage("Novas publicações estão desativadas pela administração.");
+      return;
+    }
 
     setPublishing(true);
     setMessage("");
@@ -1021,20 +1265,32 @@ export default function AlunoComunidadePage() {
         return;
       }
 
+      const imagePath =
+        composerImage && communitySettings.allow_media_uploads
+          ? await uploadCommunityImage(composerImage, user.id, "posts")
+          : null;
+
       const { error } = await supabase.from("community_posts").insert({
         channel_id: composerChannelId,
         author_id: user.id,
         title: null,
-        body: cleanText,
-        status: "published",
-        published_at: new Date().toISOString(),
+        body: cleanText || "Imagem compartilhada",
+        image_path: imagePath,
+        status: communitySettings.require_post_approval ? "pending" : "published",
+        published_at: communitySettings.require_post_approval
+          ? null
+          : new Date().toISOString(),
       });
 
       if (error) throw error;
 
       setComposerText("");
+      removeComposerImage();
       setActiveTab("para-voce");
       await loadCommunity();
+      if (communitySettings.require_post_approval) {
+        setMessage("Publicação enviada para aprovação da moderação.");
+      }
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (error) {
       setMessage(
@@ -1096,8 +1352,13 @@ export default function AlunoComunidadePage() {
     if (!post || post.sourceType === "notification" || !post.allowComments) return;
 
     const body = commentInputs[postId]?.trim();
+    const image = commentImages[postId] ?? null;
 
-    if (!body) return;
+    if (!body && !image) return;
+    if (!communitySettings.allow_student_comments) {
+      setMessage("Comentários estão desativados pela administração.");
+      return;
+    }
 
     setSubmittingCommentId(postId);
 
@@ -1111,11 +1372,17 @@ export default function AlunoComunidadePage() {
         return;
       }
 
+      const imagePath =
+        image && communitySettings.allow_media_uploads
+          ? await uploadCommunityImage(image, user.id, "comments")
+          : null;
+
       const { error } = await supabase.from("community_comments").insert({
         post_id: postId,
         author_id: user.id,
-        body,
-        status: "published",
+        body: body || "Imagem compartilhada",
+        image_path: imagePath,
+        status: communitySettings.require_comment_approval ? "hidden" : "published",
       });
 
       if (error) {
@@ -1127,6 +1394,7 @@ export default function AlunoComunidadePage() {
         ...current,
         [postId]: "",
       }));
+      removeCommentImage(postId);
       setOpenComments((current) => ({
         ...current,
         [postId]: true,
@@ -1137,6 +1405,9 @@ export default function AlunoComunidadePage() {
       }));
 
       await loadCommunity();
+      if (communitySettings.require_comment_approval) {
+        setMessage("Comentário enviado para aprovação da moderação.");
+      }
     } finally {
       setSubmittingCommentId("");
     }
@@ -1321,16 +1592,38 @@ export default function AlunoComunidadePage() {
           </div>
         ) : null}
 
-        <Composer
-          currentUser={currentUser}
-          text={composerText}
-          channelId={composerChannelId}
-          channels={channels}
-          onTextChange={setComposerText}
-          onChannelChange={setComposerChannelId}
-          onSubmit={handlePublish}
-          publishing={publishing}
-        />
+        {communitySettings.community_rules ? (
+          <details className="border-b border-white/10 px-5 py-3 text-sm">
+            <summary className="cursor-pointer font-semibold text-[#DBC094]">
+              Regras da comunidade
+            </summary>
+            <p className="mt-3 whitespace-pre-line leading-6 text-white/55">
+              {communitySettings.community_rules}
+            </p>
+          </details>
+        ) : null}
+
+        {communitySettings.allow_student_posts ? (
+          <Composer
+            currentUser={currentUser}
+            text={composerText}
+            channelId={composerChannelId}
+            channels={channels}
+            onTextChange={setComposerText}
+            onChannelChange={setComposerChannelId}
+            onSubmit={handlePublish}
+            publishing={publishing}
+            image={composerImage}
+            imagePreview={composerImagePreview}
+            allowMedia={communitySettings.allow_media_uploads}
+            onImageChange={selectComposerImage}
+            onRemoveImage={removeComposerImage}
+          />
+        ) : (
+          <div className="border-b border-white/10 px-5 py-4 text-sm text-white/45">
+            Novas publicações estão temporariamente desativadas.
+          </div>
+        )}
 
         {loading ? (
           <div className="flex items-center justify-center gap-3 px-5 py-16 text-[14px] text-white/52">
@@ -1364,6 +1657,15 @@ export default function AlunoComunidadePage() {
               }
               onSubmitComment={handleSubmitComment}
               onShowMoreComments={showMoreComments}
+              allowReports={communitySettings.allow_reports}
+              allowMedia={communitySettings.allow_media_uploads}
+              commentImage={commentImages[post.id] ?? null}
+              commentImagePreview={commentImagePreviews[post.id] ?? ""}
+              onCommentImageChange={selectCommentImage}
+              onRemoveCommentImage={removeCommentImage}
+              commentsAllowed={
+                communitySettings.allow_student_comments && post.allowComments
+              }
             />
           ))
         ) : (

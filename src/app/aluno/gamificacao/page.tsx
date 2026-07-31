@@ -69,6 +69,17 @@ type RankingRow = {
   last_activity_at: string | null;
 };
 
+type Challenge = {
+  id: string;
+  title: string;
+  description: string | null;
+  event_type: string;
+  target_count: number;
+  points_reward: number;
+  starts_at: string | null;
+  ends_at: string | null;
+};
+
 function formatPoints(value: number | null | undefined) {
   return new Intl.NumberFormat("pt-BR").format(value ?? 0);
 }
@@ -298,6 +309,7 @@ export default function AlunoGamificacaoPage() {
   const [redemptions, setRedemptions] = useState<Redemption[]>([]);
   const [badges, setBadges] = useState<Badge[]>([]);
   const [ranking, setRanking] = useState<RankingRow[]>([]);
+  const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
 
@@ -325,6 +337,7 @@ export default function AlunoGamificacaoPage() {
         redemptionsResponse,
         badgesResponse,
         rankingResponse,
+        challengesResponse,
       ] = await Promise.all([
         supabase.from("profiles").select("id,full_name,avatar_url").eq("id", user.id).single(),
         supabase
@@ -352,6 +365,11 @@ export default function AlunoGamificacaoPage() {
           .select("user_id,full_name,avatar_url,earned_points,entries_count,last_activity_at")
           .order("earned_points", { ascending: false })
           .limit(50),
+        supabase
+          .from("gamification_challenges")
+          .select("id,title,description,event_type,target_count,points_reward,starts_at,ends_at")
+          .eq("is_active", true)
+          .order("sort_order", { ascending: true }),
       ]);
 
       setProfile((profileResponse.data ?? null) as ProfileRow | null);
@@ -360,6 +378,7 @@ export default function AlunoGamificacaoPage() {
       setRedemptions((redemptionsResponse.data ?? []) as Redemption[]);
       setBadges((badgesResponse.data ?? []) as Badge[]);
       setRanking((rankingResponse.data ?? []) as RankingRow[]);
+      setChallenges((challengesResponse.data ?? []) as Challenge[]);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Não foi possível carregar a gamificação.");
     } finally {
@@ -543,6 +562,55 @@ export default function AlunoGamificacaoPage() {
             
             {/* LEFT COLUMN: Skill Tree & Rewards */}
             <div className="space-y-16">
+
+              {challenges.length > 0 ? (
+                <section className="py-4">
+                  <div className="mb-8 border-b border-white/10 pb-7">
+                    <h2 className="flex items-center gap-2 text-[24px] font-black uppercase tracking-tight">
+                      <Crosshair className="h-6 w-6 text-[#dbc094]" />
+                      Desafios ativos
+                    </h2>
+                    <p className="mt-2 text-[15px] text-white/50">
+                      Complete as metas do período e avance na Arena UNL.
+                    </p>
+                  </div>
+                  <div className="grid gap-5 md:grid-cols-2">
+                    {challenges.map((challenge) => {
+                      const progress = ledger.filter((entry) => {
+                        if (entry.event_type !== challenge.event_type) return false;
+                        const created = new Date(entry.created_at).getTime();
+                        if (challenge.starts_at && created < new Date(challenge.starts_at).getTime()) return false;
+                        if (challenge.ends_at && created > new Date(challenge.ends_at).getTime()) return false;
+                        return true;
+                      }).length;
+                      const percent = Math.min(
+                        100,
+                        Math.round((progress / challenge.target_count) * 100),
+                      );
+                      return (
+                        <article key={challenge.id} className="rounded-[20px] border border-white/10 bg-white/[0.035] p-5">
+                          <div className="flex items-start justify-between gap-4">
+                            <div>
+                              <h3 className="font-black uppercase tracking-wide">{challenge.title}</h3>
+                              <p className="mt-2 text-sm leading-6 text-white/45">{challenge.description || "Complete a meta para vencer este desafio."}</p>
+                            </div>
+                            <span className="shrink-0 rounded-full bg-[#dbc094]/12 px-3 py-1 text-xs font-black text-[#dbc094]">
+                              +{challenge.points_reward} pts
+                            </span>
+                          </div>
+                          <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/10">
+                            <div className="h-full rounded-full bg-[#dbc094]" style={{ width: `${percent}%` }} />
+                          </div>
+                          <div className="mt-2 flex justify-between text-xs font-bold text-white/45">
+                            <span>{Math.min(progress, challenge.target_count)} de {challenge.target_count}</span>
+                            <span>{percent}%</span>
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </div>
+                </section>
+              ) : null}
               
               {/* SKILL TREE (Trilha) */}
               <section className="relative py-4">

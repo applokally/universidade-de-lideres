@@ -72,6 +72,7 @@ export default function AdminCommunityPostDetailPage() {
           .from("community_comments")
           .select("id,post_id,author_id,body,status,created_at")
           .eq("post_id", postId)
+          .neq("status", "deleted")
           .order("created_at", { ascending: true }),
       ]);
 

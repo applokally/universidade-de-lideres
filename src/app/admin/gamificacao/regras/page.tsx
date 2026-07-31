@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ChevronRight, Loader2, Save } from "lucide-react";
+import { ChevronRight, Loader2, Plus, Save } from "lucide-react";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 import { GamificationAdminNav } from "../_components/GamificationAdminNav";
 import { GamificationRule } from "../_components/gamificationHelpers";
@@ -12,6 +12,13 @@ export default function AdminGamificationRulesPage() {
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState("");
   const [message, setMessage] = useState("");
+  const [creating, setCreating] = useState(false);
+  const [newRule, setNewRule] = useState({
+    event_type: "lesson_completed",
+    title: "Aula concluída",
+    description: "Pontos concedidos ao concluir uma aula.",
+    points: 10,
+  });
 
   async function loadRules() {
     setLoading(true);
@@ -31,7 +38,10 @@ export default function AdminGamificationRulesPage() {
   }
 
   useEffect(() => {
-    void loadRules();
+    const timer = window.setTimeout(() => {
+      void loadRules();
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   function updateLocalRule(id: string, values: Partial<GamificationRule>) {
@@ -67,6 +77,30 @@ export default function AdminGamificationRulesPage() {
     setSavingId("");
   }
 
+  async function createRule() {
+    setCreating(true);
+    setMessage("");
+    const { error } = await supabase.from("gamification_point_rules").insert({
+      event_type: newRule.event_type.trim(),
+      title: newRule.title.trim(),
+      description: newRule.description.trim() || null,
+      points: Number(newRule.points),
+      is_active: true,
+      sort_order: rules.length,
+    });
+    if (error) {
+      setMessage(
+        error.code === "23505"
+          ? "Já existe uma regra para este evento. Edite a regra abaixo."
+          : "Não foi possível criar a regra. Tente novamente.",
+      );
+    } else {
+      setMessage("Nova regra criada.");
+      await loadRules();
+    }
+    setCreating(false);
+  }
+
   return (
     <>
       <GamificationAdminNav />
@@ -83,9 +117,73 @@ export default function AdminGamificationRulesPage() {
         </p>
       </header>
 
+      <section className="mb-5 rounded-[20px] border border-[#e7e9f0] bg-white p-5">
+        <div className="flex items-center gap-2">
+          <Plus className="h-5 w-5 text-[#9b7539]" />
+          <h2 className="text-[17px] font-semibold text-[#1f2230]">Criar regra de pontos</h2>
+        </div>
+        <div className="mt-4 grid gap-3 lg:grid-cols-[220px_1fr_1fr_120px_auto]">
+          <select
+            value={newRule.event_type}
+            onChange={(event) =>
+              setNewRule((current) => ({ ...current, event_type: event.target.value }))
+            }
+            className="h-11 rounded-[12px] border border-[#dfe3ec] px-3 text-sm"
+          >
+            <option value="lesson_completed">Aula concluída</option>
+            <option value="course_completed">Curso concluído</option>
+            <option value="trail_completed">Trilha concluída</option>
+            <option value="assessment_passed">Avaliação aprovada</option>
+            <option value="live_attended">Participação em live</option>
+            <option value="community_post_created">Publicação na comunidade</option>
+            <option value="community_comment_created">Comentário na comunidade</option>
+            <option value="community_like_received">Curtida recebida</option>
+            <option value="daily_streak">Sequência diária</option>
+          </select>
+          <input
+            value={newRule.title}
+            onChange={(event) =>
+              setNewRule((current) => ({ ...current, title: event.target.value }))
+            }
+            placeholder="Nome exibido"
+            className="h-11 rounded-[12px] border border-[#dfe3ec] px-3 text-sm"
+          />
+          <input
+            value={newRule.description}
+            onChange={(event) =>
+              setNewRule((current) => ({ ...current, description: event.target.value }))
+            }
+            placeholder="Descrição"
+            className="h-11 rounded-[12px] border border-[#dfe3ec] px-3 text-sm"
+          />
+          <input
+            type="number"
+            min={0}
+            value={newRule.points}
+            onChange={(event) =>
+              setNewRule((current) => ({ ...current, points: Number(event.target.value) }))
+            }
+            className="h-11 rounded-[12px] border border-[#dfe3ec] px-3 text-sm"
+          />
+          <button
+            type="button"
+            onClick={createRule}
+            disabled={creating || !newRule.title.trim()}
+            className="h-11 rounded-[12px] bg-[#DBC094] px-5 text-sm font-semibold text-black disabled:opacity-50"
+          >
+            {creating ? "Criando..." : "Criar regra"}
+          </button>
+        </div>
+      </section>
+
       {message ? (
         <div className="mb-4 rounded-[14px] border border-amber-200 bg-amber-50 px-4 py-3 text-[13px] text-amber-700">
-          {message}
+          {message}{" "}
+          {message.includes("carregar") || message.includes("fetch") ? (
+            <button type="button" onClick={loadRules} className="font-semibold underline">
+              Tentar novamente
+            </button>
+          ) : null}
         </div>
       ) : null}
 

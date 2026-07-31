@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Award,
+  BarChart3,
   Bell,
   BookOpen,
   ChevronRight,
@@ -142,6 +143,11 @@ const navGroups: NavGroup[] = [
   {
     label: "Acadêmico",
     children: [
+      {
+        label: "Uso e desempenho",
+        href: "/admin/relatorios",
+        icon: BarChart3,
+      },
       {
         label: "Avaliações",
         href: "/admin/avaliacoes",

@@ -53,9 +53,9 @@ function GlowFollowBorderCard({
       className={`group relative ${roundedClass} ${className}`}
       style={
         {
-          ["--mx" as any]: "50%",
-          ["--my" as any]: "50%",
-          ["--glow-opacity" as any]: 0,
+          "--mx": "50%",
+          "--my": "50%",
+          "--glow-opacity": 0,
         } as React.CSSProperties
       }
     >
@@ -191,7 +191,14 @@ export default function ForgotPasswordPage() {
     setBusy(false);
 
     if (resetError) {
-      setError(resetError.message);
+      const detail = resetError.message.toLowerCase();
+      setError(
+        detail.includes("rate limit")
+          ? "Muitas tentativas foram feitas. Aguarde alguns minutos e tente novamente."
+          : detail.includes("email") || detail.includes("smtp")
+            ? "O serviço de e-mail está temporariamente indisponível. Tente novamente em alguns minutos ou fale com o suporte."
+            : "Não foi possível enviar o link agora. Tente novamente em alguns minutos.",
+      );
       return;
     }
 

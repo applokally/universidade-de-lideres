@@ -9,6 +9,7 @@ import {
   ListChecks,
   Medal,
   Trophy,
+  Target,
   Users,
 } from "lucide-react";
 import { supabaseBrowser } from "@/lib/supabase/browser";
@@ -22,9 +23,16 @@ type Metrics = {
   rewards: number;
   pendingRedemptions: number;
   badges: number;
+  challenges: number;
 };
 
 const modules = [
+  {
+    title: "Desafios",
+    description: "Criar metas por período com progresso e bônus de pontos.",
+    href: "/admin/gamificacao/desafios",
+    icon: Target,
+  },
   {
     title: "Regras de pontos",
     description: "Configurar pontuação por aula, curso, live, comunidade e avaliação.",
@@ -66,11 +74,12 @@ export default function AdminGamificationPage() {
     rewards: 0,
     pendingRedemptions: 0,
     badges: 0,
+    challenges: 0,
   });
 
   useEffect(() => {
     async function loadMetrics() {
-      const [rules, ranking, rewards, pendingRedemptions, badges] = await Promise.all([
+      const [rules, ranking, rewards, pendingRedemptions, badges, challenges] = await Promise.all([
         supabase.from("gamification_point_rules").select("id", { count: "exact", head: true }),
         supabase.from("gamification_public_ranking").select("user_id,earned_points"),
         supabase
@@ -83,6 +92,10 @@ export default function AdminGamificationPage() {
           .eq("status", "pending"),
         supabase
           .from("gamification_badges")
+          .select("id", { count: "exact", head: true })
+          .eq("is_active", true),
+        supabase
+          .from("gamification_challenges")
           .select("id", { count: "exact", head: true })
           .eq("is_active", true),
       ]);
@@ -99,6 +112,7 @@ export default function AdminGamificationPage() {
         rewards: rewards.count ?? 0,
         pendingRedemptions: pendingRedemptions.count ?? 0,
         badges: badges.count ?? 0,
+        challenges: challenges.count ?? 0,
       });
     }
 
@@ -123,7 +137,7 @@ export default function AdminGamificationPage() {
         </div>
       </header>
 
-      <section className="mb-5 grid gap-3 md:grid-cols-3 xl:grid-cols-6">
+      <section className="mb-5 grid gap-3 md:grid-cols-3 xl:grid-cols-7">
         {[
           ["Regras", metrics.rules],
           ["Pontos gerados", formatPoints(metrics.totalPoints)],
@@ -131,6 +145,7 @@ export default function AdminGamificationPage() {
           ["Recompensas", metrics.rewards],
           ["Resgates pendentes", metrics.pendingRedemptions],
           ["Conquistas", metrics.badges],
+          ["Desafios", metrics.challenges],
         ].map(([label, value]) => (
           <div
             key={label}

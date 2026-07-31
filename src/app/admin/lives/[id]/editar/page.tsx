@@ -15,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 import { supabaseBrowser } from "@/lib/supabase/browser";
+import { AccessTierSelect } from "../../../_components/AccessTierSelect";
 
 type LiveStatus = "draft" | "scheduled" | "live" | "ended" | "cancelled";
 
@@ -811,14 +812,10 @@ export default function AdminEditarLivePage({ params }: PaginaProps) {
               </div>
 
               <div className="xl:col-span-3">
-                <label className={labelClass}>Nível/rank mínimo</label>
-                <input
-                  type="number"
-                  min="0"
+                <label className={labelClass}>Nível mínimo de acesso</label>
+                <AccessTierSelect
                   value={form.requiredRank}
-                  onChange={(event) =>
-                    updateField("requiredRank", event.target.value)
-                  }
+                  onChange={(value) => updateField("requiredRank", value)}
                   className={inputClass}
                 />
               </div>

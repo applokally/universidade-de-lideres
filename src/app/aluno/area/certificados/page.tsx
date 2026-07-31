@@ -10,10 +10,12 @@ import {
   FileCheck2,
   Loader2,
   Medal,
+  QrCode,
   RefreshCcw,
   ShieldCheck,
   Trash2,
 } from "lucide-react";
+import QRCode from "qrcode";
 import { StudentAreaShell } from "../../_components/StudentAreaShell";
 
 type StudentCertificate = {
@@ -105,6 +107,7 @@ export default function StudentCertificatesPage() {
   const [loading, setLoading] = useState(true);
   const [feedback, setFeedback] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [qrCodes, setQrCodes] = useState<Record<string, string>>({});
 
   const issuedCertificates = useMemo(
     () => certificates.filter((certificate) => certificate.status === "issued"),
@@ -175,6 +178,27 @@ export default function StudentCertificatesPage() {
   useEffect(() => {
     void loadCertificates();
   }, [loadCertificates]);
+
+  useEffect(() => {
+    if (certificates.length === 0) return;
+    let active = true;
+    void Promise.all(
+      certificates.map(async (certificate) => {
+        const verificationUrl = `${window.location.origin}/certificados/verificar/${certificate.id}`;
+        const dataUrl = await QRCode.toDataURL(verificationUrl, {
+          width: 220,
+          margin: 1,
+          color: { dark: "#111111", light: "#ffffff" },
+        });
+        return [certificate.id, dataUrl] as const;
+      }),
+    ).then((entries) => {
+      if (active) setQrCodes(Object.fromEntries(entries));
+    });
+    return () => {
+      active = false;
+    };
+  }, [certificates]);
 
   async function handleDeleteCertificate(certificate: StudentCertificate) {
     const confirmed = window.confirm(
@@ -355,6 +379,28 @@ export default function StudentCertificatesPage() {
                   </div>
 
                   <div className="flex w-full flex-col gap-3 sm:w-auto sm:min-w-[190px]">
+                    <div className="rounded-xl border border-white/10 bg-white p-3 text-center">
+                      {qrCodes[certificate.id] ? (
+                        <img
+                          src={qrCodes[certificate.id]}
+                          alt="QR Code para validar certificado"
+                          className="mx-auto h-[130px] w-[130px]"
+                        />
+                      ) : (
+                        <QrCode className="mx-auto h-[70px] w-[70px] text-black/30" />
+                      )}
+                      <a
+                        href={`/certificados/verificar/${certificate.id}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-2 block text-xs font-bold text-black underline"
+                      >
+                        Validar autenticidade
+                      </a>
+                      <p className="mt-1 text-[10px] text-black/55">
+                        Compartilhe este QR ou link público.
+                      </p>
+                    </div>
                     {certificate.certificate_url ? (
                       <>
                         <a
